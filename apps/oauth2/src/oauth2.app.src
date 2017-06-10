@@ -1,0 +1,18 @@
+{application, oauth2,
+   [
+      {description, "oauth2 server"},
+      {vsn,         "1.0.0"},
+      {modules,     []},
+      {registered,  []},
+      {applications,[
+         kernel
+        ,stdlib
+        ,lager
+        ,knet
+        ,restd
+        ,permit
+      ]},
+      {mod, {oauth2_app, []}},
+      {env, []}
+   ]
+}.
