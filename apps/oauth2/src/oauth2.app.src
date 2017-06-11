@@ -11,6 +11,7 @@
         ,knet
         ,restd
         ,permit
+        ,erlcloud
       ]},
       {mod, {oauth2_app, []}},
       {env, []}
