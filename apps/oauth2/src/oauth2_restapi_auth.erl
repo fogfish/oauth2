@@ -27,23 +27,58 @@ content_accepted(_Req) ->
    [either ||
       %% @todo: make a single use for token
       permit:code(oauth2ux, 600),
-      signin_ux(Uri, _),
+      signin_ux(uri:q(Uri), _),
       oauth2_signin:ux(_)
    ].
 
-signin_ux(Uri, Token) ->
-   {ok, #{
-      ux => #{
-         access_token  => Token,
-         response_type => lens:get(lens:pair(<<"response_type">>), uri:q(Uri)),
-         client_id     => lens:get(lens:pair(<<"client_id">>), uri:q(Uri)),
-         state         => lens:get(lens:pair(<<"state">>, undefined), uri:q(Uri))
-      }
-   }}.
+signin_ux(Env, Token) ->
+   {ok, [$.||
+      fmap(#{ux => #{access_token => Token}}),
+      signin_ux_error(Env, _),
+      signin_ux_response_type(Env, _),
+      signin_ux_client_id(Env, _),
+      signin_ux_state(Env, _)
+   ]}.
+
+signin_ux_error(Env, Ux) ->
+   case lens:get(lens:pair(<<"error">>, undefined), Env) of
+      undefined ->
+         Ux;
+      <<"unauthorized">> ->
+         signin_ux_error_message(<<"Invalid credentials.">>, Ux);
+      _ ->
+         signin_ux_error_message(<<"System error, try later!">>, Ux)
+   end.
+
+signin_ux_error_message(Msg, Ux) ->
+   lens:put(lens:map(ux), lens:map(error, undefined), Msg, Ux).
+
+signin_ux_response_type(Env, Ux) ->
+   lens:put(
+      lens:map(ux), lens:map(response_type, undefined),
+      lens:get(lens:pair(<<"response_type">>), Env),
+      Ux
+   ).
+
+signin_ux_client_id(Env, Ux) ->
+   lens:put(
+      lens:map(ux), lens:map(client_id, undefined),
+      lens:get(lens:pair(<<"client_id">>), Env),
+      Ux
+   ).
+
+signin_ux_state(Env, Ux) ->
+   lens:put(
+      lens:map(ux), lens:map(state, undefined),
+      lens:get(lens:pair(<<"state">>, undefined), Env),
+      Ux
+   ).
+
 
 %%
 'POST'(_Type, Req, {Uri, Head, Env}) ->
    Request = permit_oauth2:decode(Req),
+   io:format("==> ~p~n", [Request]),
    case 
       [either ||
          validate_access_token(Request),
@@ -56,10 +91,10 @@ signin_ux(Uri, Token) ->
          {302, [{'Location', Location}], <<>>};
 
       {error, expired} ->
-         'GET'(undefined, undefined, {uri:q(Request, Uri), Head, Env});         
+         'GET'(undefined, undefined, {uri:q(Request, Uri), Head, Env});
 
-      {error, _} = Error ->
-         Error
+      {error, Reason}  ->
+         'GET'(undefined, undefined, {uri:q([{<<"error">>, Reason} | Request], Uri), Head, Env})
    end.
 
 

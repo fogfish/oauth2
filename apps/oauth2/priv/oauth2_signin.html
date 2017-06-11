@@ -33,6 +33,11 @@
    padding: 0px 2rem 0px 2rem;
 }
 
+.dc-toast
+{
+   padding: 0 0 .8rem 0;
+}
+
 input {
    width: 100%;
 }
@@ -48,7 +53,14 @@ input {
          <div class="dc-dialog__body">
             <h3 class="dc-dialog__title">Sign in</h3>
             <h4 class="dc-dialog__subtitle">with</h4>
-            <p>&nbsp;</p>
+            {if error}
+               <div class="dc-toast dc-toast--top">
+                  <div class="dc-toast__content dc-toast__content--error">{error}</div>
+               </div>
+            {else}
+               <p>&nbsp;</p>
+            {/if}
+
             <div class="form">
                <label class="dc-label" for="requiredInput">
                   Email
