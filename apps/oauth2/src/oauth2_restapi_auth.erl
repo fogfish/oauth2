@@ -24,7 +24,12 @@ content_accepted(_Req) ->
 %%
 %%
 'GET'(_Type, _, {Uri, _Head, _Env}) ->
-   oauth2_ux:signin(uri:q(Uri)).
+   case uri:q(Uri) of
+      undefined ->
+         oauth2_ux:signin([{<<"response_type">>, <<"code">>}, {<<"client_id">>, <<"oauth2ux">>}]);
+      Query ->
+         oauth2_ux:signin(Query)
+   end.
 
 %%
 %%
