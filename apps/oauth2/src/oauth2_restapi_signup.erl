@@ -29,7 +29,7 @@ content_accepted(_Req) ->
 'POST'(_Type, Req, {Uri, Head, Env}) ->
    case 
       [either ||
-         oauth2_req:new(Req),
+         fmap(permit_oauth2:decode(Req)),
          oauth2_req:accept_access_code(_),
          oauth2_req:accept_client_id(_),
          oauth2_req:define_pubkey(_),

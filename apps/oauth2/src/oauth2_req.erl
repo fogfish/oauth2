@@ -4,9 +4,6 @@
 -compile({parse_transform, category}).
 
 -export([
-   new/0,
-   new/1,
-
    access_code/0,
    response_type/0,
    client_id/0,
@@ -17,22 +14,12 @@
 
    define_access_code/1,
    accept_access_code/1,
-
    define_pubkey/1,
    accept_pubkey/1,
-
    accept_client_id/1,
-
    redirect_uri/1
 ]).
 
-%%
-%%
-new() ->
-   {ok, []}.
-
-new(Req) ->
-   {ok, permit_oauth2:decode(Req)}.
 
 %%
 %%
