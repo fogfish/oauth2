@@ -53,7 +53,7 @@ accept_client_id(Req) ->
       fmap(lens:get(client_id(), Req)),
       %% @todo: use client registry to get redirection api
       permit:code(_, 0),
-      fmap(lens:put(redirect_uri(), <<"http://localhost:8765/path">>, Req))
+      fmap(lens:put(redirect_uri(), <<"http://localhost:8080/widget/introspect.html">>, Req))
    ].
 
 %%

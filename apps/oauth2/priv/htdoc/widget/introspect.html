@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href="/css/dress-code.min.css" rel="stylesheet">
+<link href="/css/oauth2.css" rel="stylesheet">
+<style type="text/css">
+#access_token
+{
+   word-break: break-all;
+}
+</style>
+
+<body class="dc-body">
+<div class="dc-page">
+<div class="dc-container dc-container-limited">
+
+   <div class="dc-dialog">
+      <div class="dc-dialog__content">
+      <div class="dc-dialog__body">
+         <h3 class="dc-dialog__title">OAuth2</h3>
+         <h4 class="dc-dialog__subtitle">Introspect</h4>
+         <p id="access_token"></p>
+      </div>
+      </div>
+   </div>
+</div>
+</div>
+
+<script type="text/javascript">
+
+function url_query(name, url) 
+{
+   if (!url)
+      url = window.location.href;
+
+   name = name.replace(/[\[\]]/g, "\\$&");
+   var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+       results = regex.exec(url);
+   
+   if (!results) return null;
+   if (!results[2]) return '';
+   return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+var xhr = new XMLHttpRequest();
+xhr.open('POST', '/oauth2/token');
+xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+xhr.send('grant_type=authorization_code&client_id=oauth2ux&code=' + url_query('code'));
+xhr.onreadystatechange = function() 
+{
+   var DONE = 4
+   var OK = 200
+   if (xhr.readyState === DONE)
+   {
+      if (xhr.status === OK)
+      {
+         var json = JSON.parse(xhr.responseText)
+         document.getElementById("access_token").innerHTML = json.access_token
+      } else {
+      }
+   }
+}
+</script>
+</body>
