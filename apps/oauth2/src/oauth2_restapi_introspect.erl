@@ -1,4 +1,7 @@
--module(oauth2_restapi_token).
+%% @doc
+%%   introspection endpoint
+%%   https://tools.ietf.org/html/rfc7662
+-module(oauth2_restapi_introspect).
 -compile({parse_transform, category}).
 
 -export([
@@ -22,10 +25,13 @@ content_accepted(_Req) ->
    [{application, 'x-www-form-urlencoded'}].
 
 %%
+%% 2.1. Introspection Request
+%%   To prevent token scanning attacks, the endpoint MUST also require
+%%   some form of authorization to access this endpoint
 authorize(_Mthd, {_Uri, Head, _Env}) ->
    case permit_oauth2:authenticate(Head) of
       {error, undefined} ->
-         ok;
+         {error, unauthorized};
       {ok, _Access} ->
          ok;
       {error, _} = Error ->
@@ -33,8 +39,10 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
    end.
 
 %%
-'POST'(_Type, Req, {_Uri, Head, _Env}) ->
+'POST'(_Type, Req, {_Uri, _Head, _Env}) ->
    [either ||
-      permit_oauth2:issue_token(Head, Req, 3600),
+      fmap(permit_oauth2:decode(Req)),
+      fmap(lens:get(lens:pair(<<"token">>), _)),
+      permit:validate(_),
       fmap(jsx:encode(_))
    ].   
