@@ -1,4 +1,4 @@
--module(oauth2_restapi_auth).
+-module(oauth2_restapi_signup).
 -compile({parse_transform, category}).
 
 -export([
@@ -22,11 +22,9 @@ content_accepted(_Req) ->
    [{application, 'x-www-form-urlencoded'}].
 
 %%
-%%
 'GET'(_Type, _, {Uri, _Head, _Env}) ->
-   oauth2_ux:signin(uri:q(Uri)).
+   oauth2_ux:signup(uri:q(Uri)).
 
-%%
 %%
 'POST'(_Type, Req, {Uri, Head, Env}) ->
    case 
@@ -34,7 +32,7 @@ content_accepted(_Req) ->
          oauth2_req:new(Req),
          oauth2_req:accept_access_code(_),
          oauth2_req:accept_client_id(_),
-         oauth2_req:accept_pubkey(_),
+         oauth2_req:define_pubkey(_),
          oauth2_req:redirect_uri(_)
       ]
    of
@@ -49,3 +47,6 @@ content_accepted(_Req) ->
          UriWithError = uri:q([Error | permit_oauth2:decode(Req)], Uri),
          'GET'(undefined, undefined, {UriWithError, Head, Env})
    end.
+
+
+

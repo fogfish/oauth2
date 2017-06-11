@@ -48,10 +48,10 @@ input {
 <div class="dc-container dc-container-limited">
 
    <div class="dc-dialog">
-      <form class="form-group" action="/oauth2/authorize" method="post">
+      <form class="form-group" action="/oauth2/signup" method="post">
          <div class="dc-dialog__content">
          <div class="dc-dialog__body">
-            <h3 class="dc-dialog__title">Sign In</h3>
+            <h3 class="dc-dialog__title">Sign Up</h3>
             <h4 class="dc-dialog__subtitle">with</h4>
             {if error}
                <div class="dc-toast dc-toast--top">
@@ -81,11 +81,10 @@ input {
          </div>
          </div>
          <div class="dc-dialog__actions">
-            <a class="dc-btn dc-btn--link" href="">Forget Password</a>
-            <button id="login_button" type="submit" class="dc-btn dc-btn--primary">Sign In</button>
+            <button id="login_button" type="submit" class="dc-btn dc-btn--primary">Sign Up</button>
          </div>
          <div class="dc-dialog__actions dc-dialog__actions--secondary">
-            <a class="dc-btn dc-btn--small dc-btn--link" href="/oauth2/signup?response_type={response_type}&client_id={client_id}&state={state}">Create new Account</a>
+            <a class="dc-btn dc-btn--small dc-btn--link" href="/oauth2/authorize?response_type={response_type}&client_id={client_id}&state={state}">I do have the account.</a>
          </div>
       </form>
    </div>

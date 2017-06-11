@@ -26,7 +26,8 @@ config_root_access() ->
 %%
 %%
 config_ux() ->
-   config_ux(oauth2_signin).
+   config_ux(oauth2_signin),
+   config_ux(oauth2_signup).
 
 config_ux(Mod) ->
    Root = code:priv_dir(oauth2),
