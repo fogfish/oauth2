@@ -140,10 +140,31 @@ decode([]) ->
    {ok, undefined};   
 
 decode(Pairs) ->
-   Value = lens:get(lens:pair(<<"pubkey">>), Pairs),
-   {ok, erlang:binary_to_term(base64:decode(Value))}.
+   {ok, maps:from_list([decode_pair(X) || X <- Pairs])}.   
+
+decode_pair({<<"access">>, _} = X) ->
+   X;
+decode_pair({<<"master">>, _} = X) ->
+   X;
+decode_pair({<<"nonce">>,  X}) ->
+   {<<"nonce">>, base64:decode(X)};
+decode_pair({<<"secret">>,  X}) ->
+   {<<"secret">>, base64:decode(X)};
+decode_pair({<<"roles">>,  X}) ->
+   {<<"roles">>, binary:split(X, <<$ >>, [global, trim])}.
 
 %%
-encode(Access, PubKey) ->
-   Value = base64:encode(erlang:term_to_binary(PubKey)),
-   {ok, [{<<"access">>, Access}, {<<"pubkey">>, Value}]}.
+encode(_Access, PubKey) ->
+   {ok, [encode_pair(X) || X <- maps:to_list(PubKey)]}.   
+
+encode_pair({<<"access">>, _} = X) ->
+   X;
+encode_pair({<<"master">>, _} = X) ->
+   X;
+encode_pair({<<"nonce">>,  X}) ->
+   {<<"nonce">>, base64:encode(X)};
+encode_pair({<<"secret">>,  X}) ->
+   {<<"secret">>, base64:encode(X)};
+encode_pair({<<"roles">>,  X}) ->
+   {<<"roles">>, scalar:s(lists:join($ , X))}.
+
