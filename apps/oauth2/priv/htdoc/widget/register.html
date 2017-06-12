@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href="/css/dress-code.min.css" rel="stylesheet">
+<link href="/css/oauth2.css" rel="stylesheet">
+
+<style type="text/css">
+</style>
+
+<body class="dc-body">
+<div class="dc-page">
+<div class="dc-container dc-container-limited">
+
+   <div class="dc-dialog">
+      <form class="form-group" action="/oauth2/authorize" method="post">
+         <div class="dc-dialog__content">
+         <div class="dc-dialog__body">
+            <h3 class="dc-dialog__title">Register New Client</h3>
+            <!-- <h4 class="dc-dialog__subtitle">with</h4> -->
+            <p>&nbsp;</p>
+
+            <div class="form">
+               <label class="dc-label" for="requiredInput">
+                  Redirect Uri
+                  <span class="dc-label__sub">required</span>
+               </label>
+               <input name="redirect_uri" id="redirect_uri" type="input" class="dc-input" required="required" />
+
+               <label class="dc-label" for="requiredInput">
+                  Client Type
+               </label>
+               <input type="radio" class="dc-radio" id="r1" name="rg1" checked>
+               <label for="r1" class="dc-label">public</label>
+
+               <input type="radio" class="dc-radio" id="r2" name="rg1">
+               <label for="r2" class="dc-label">confidential</label>
+            </div>
+         </div>
+         </div>
+         <div class="dc-dialog__actions">
+            <a class="dc-btn dc-btn--link" href="">Cancel</a>
+            <button id="login_button" type="submit" class="dc-btn dc-btn--primary">Register</button>
+         </div>
+      </form>
+   </div>
+
+</div>
+</div>
+</body>
