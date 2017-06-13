@@ -23,22 +23,25 @@ content_accepted(_Req) ->
 
 %%
 authorize(_Mthd, {_Uri, Head, _Env}) ->
-   case lens:get(lens:pair('Authorization', undefined), Head) of
-      <<"Bearer ", Token/binary>> ->
-         case permit:validate(Token) of
-            {ok, _} ->
-               ok;
-            {error, _} = Error ->
-               Error
-         end;
-      _ ->
-         {error, unauthorized}
-   end.   
+   ok.
+   % case lens:get(lens:pair('Authorization', undefined), Head) of
+   %    <<"Bearer ", Token/binary>> ->
+   %       case permit:validate(Token) of
+   %          {ok, _} ->
+   %             ok;
+   %          {error, _} = Error ->
+   %             Error
+   %       end;
+   %    _ ->
+   %       {error, unauthorized}
+   % end.   
 
 %%
 'POST'(_Type, _Req, {_Uri, Head, _Env}) ->
-   <<"Bearer ", Token/binary>> = lens:get(lens:pair('Authorization', undefined), Head),
-   [either ||
-      permit:pubkey(Token, [oauth2client]),
-      fmap(jsx:encode(_))
-   ].
+   io:format("==> ~p~n", [_Req]),
+   ok.
+   % <<"Bearer ", Token/binary>> = lens:get(lens:pair('Authorization', undefined), Head),
+   % [either ||
+   %    permit:pubkey(Token, [oauth2client]),
+   %    fmap(jsx:encode(_))
+   % ].

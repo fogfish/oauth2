@@ -1,89 +1,80 @@
 %% @doc
 %%   oauth2 request 
 -module(oauth2_req).
+-include("oauth2.hrl").
 -compile({parse_transform, category}).
 
 -export([
-   access_code/0,
-   response_type/0,
-   client_id/0,
-   redirect_uri/0,
-   state/0,
-   access/0,
-   secret/0,
-
-   define_access_code/1,
-   accept_access_code/1,
-   define_pubkey/1,
-   accept_pubkey/1,
-   accept_client_id/1,
+   auth_access_code/1,
+   issue_access_code/1,
+   auth_client_id/1,
+   auth_pubkey/1,
+   issue_pubkey/1,
    redirect_uri/1
 ]).
 
+%%
+%% authenticate one-time-use access code to prevent replay.
+-spec auth_access_code(_) -> {ok, _} | {error, _}.
 
-%%
-%%
-access_code() -> lens:pair(<<"code">>, undefined).
-response_type() -> lens:pair(<<"response_type">>, undefined).
-client_id() -> lens:pair(<<"client_id">>, undefined).
-state() -> lens:pair(<<"state">>, undefined).
-redirect_uri() -> lens:pair(<<"redirect_uri">>, undefined).
-access() -> lens:pair(<<"access">>, undefined).
-secret() -> lens:pair(<<"secret">>, undefined).
-
-%%
-%% @todo: make a single use for token
-define_access_code(Req) ->
+auth_access_code(#{<<"access_code">> := Code} = Request) ->
    [either ||
-      permit:code(oauth2ux, 300),
-      fmap(lens:put(access_code(), _, Req))
-   ].   
-
-accept_access_code(Req) ->
-   [either ||
-      fmap(lens:get(access_code(), Req)),
-      permit:validate(_, [oauth2ux]),
-      fmap(Req)
+      permit:validate(Code),
+      lens:get(lens:map(?OAUTH2_UX), _),
+      fmap(Request)
    ].
 
 %%
 %%
-accept_client_id(Req) ->
+-spec issue_access_code(_) -> {ok, _} | {error, _}.
+
+issue_access_code(Request) ->
    [either ||
-      fmap(lens:get(client_id(), Req)),
-      %% @todo: use client registry to get redirection api
-      permit:code(_, 0),
-      fmap(lens:put(redirect_uri(), <<"http://localhost:8080/widget/introspect.html">>, Req))
+      permit:issue(?OAUTH2_UX, 300),
+      fmap(Request#{<<"access_code">> => _})
+   ].
+
+%%
+%% authenticate client id and its registry profile
+-spec auth_client_id(_) -> {ok, _} | {error, _}.
+
+auth_client_id(#{<<"client_id">> := AppId} = Request) ->
+   [either ||
+      %% @todo: read registry
+      permit:issue(AppId, 0),
+      fmap(Request#{<<"redirect_uri">> => ?OAUTH2_UX_CALLBACK})
+   ].
+
+%%
+%% authenticate access/secret key 
+-spec auth_pubkey(_) -> {ok, _} | {error, _}. 
+
+auth_pubkey(#{<<"access">> := Access, <<"secret">> := Secret} = Request) ->
+   [either ||
+      permit:auth(Access, Secret, 600),
+      fmap(Request#{<<"access_code">> => _})
+   ].
+
+%%
+%% issue new pubkey based on defined credentials
+-spec issue_pubkey(_) -> {ok, _} | {error, _}. 
+
+issue_pubkey(#{<<"access">> := Access, <<"secret">> := Secret} = Request) ->
+   [either ||
+      permit:create(Access, Secret),
+      fmap(Request#{<<"access_code">> => _})
    ].
 
 %%
 %%
-define_pubkey(Req) ->
-   [either ||
-      permit:create(
-         lens:get(access(), Req),
-         lens:get(secret(), Req)
-      ),
-      fmap(lens:put(access_code(), _, Req))
-   ].
+-spec redirect_uri(_) -> {ok, _} | {error, _}. 
 
-accept_pubkey(Req) ->
-   [either ||
-      permit:auth(
-         lens:get(access(), Req),
-         lens:get(secret(), Req),
-         600
-      ),
-      fmap(lens:put(access_code(), _, Req))
-   ].
-   
-%%
-%%
-redirect_uri(Req) ->
-   Uri   = lens:get(redirect_uri(), Req),
-   Code  = lens:get(access_code(), Req),
-   State = lens:get(state(), Req),
+redirect_uri(#{
+   <<"response_type">> := <<"code">>,
+   <<"redirect_uri">> := Uri, 
+   <<"access_code">> := Code, 
+   <<"state">> := State}) ->
+
    Query = [{<<"code">>, Code}, {<<"state">>, State}],
    {ok, uri:s(uri:q(Query, uri:new(Uri)))}.
-   
 

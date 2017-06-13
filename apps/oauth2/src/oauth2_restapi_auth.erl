@@ -1,4 +1,5 @@
 -module(oauth2_restapi_auth).
+-include("oauth2.hrl").
 -compile({parse_transform, category}).
 
 -export([
@@ -26,9 +27,9 @@ content_accepted(_Req) ->
 'GET'(_Type, _, {Uri, _Head, _Env}) ->
    case uri:q(Uri) of
       undefined ->
-         oauth2_ux:signin([{<<"response_type">>, <<"code">>}, {<<"client_id">>, <<"oauth2ux">>}]);
+         oauth2_ux:signin(#{<<"response_type">> => <<"code">>, <<"client_id">> => ?OAUTH2_UX});
       Query ->
-         oauth2_ux:signin(Query)
+         oauth2_ux:signin(maps:from_list(Query))
    end.
 
 %%
@@ -37,12 +38,13 @@ content_accepted(_Req) ->
    case 
       [either ||
          fmap(permit_oauth2:decode(Req)),
-         oauth2_req:accept_access_code(_),
-         oauth2_req:accept_client_id(_),
-         oauth2_req:accept_pubkey(_),
+         oauth2_req:auth_access_code(_),
+         oauth2_req:auth_client_id(_),
+         oauth2_req:auth_pubkey(_),
          oauth2_req:redirect_uri(_)
       ]
    of
+      %% @todo: make error by standard
       {ok, Location}   ->
          {302, [{'Location', Location}], <<>>};
 

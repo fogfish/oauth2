@@ -4,11 +4,16 @@
 <link href="/css/oauth2.css" rel="stylesheet">
 
 <style type="text/css">
+.dc-h1
+{
+   border-bottom: 1px solid #d1d1d1; 
+}
 </style>
 
 <body class="dc-body">
 <div class="dc-page">
 <div class="dc-container dc-container-limited">
+   <h1 class="dc-h1">Developer settings</h1>
 
    <h2 class="dc-h2">OAuth2 applications</h2>
    <a href="/widget/register.html" class="dc-btn dc-btn--link dc-btn--small dc-right">New Application</a>
@@ -18,7 +23,7 @@
             <tr class="dc-table__tr">
                <th class="dc-table__th">ID</th>
                <th class="dc-table__th">Type</th>
-               <th class="dc-table__th">Redirect Uri</th>
+               <th class="dc-table__th">Callback Uri</th>
                <th class="dc-table__th">Status</th>
             </tr>
          </thead>

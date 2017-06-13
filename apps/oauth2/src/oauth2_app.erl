@@ -1,5 +1,6 @@
 -module(oauth2_app).
 -behaviour(application).
+-include("oauth2.hrl").
 
 -export([
    start/2
@@ -21,7 +22,7 @@ stop(_State) ->
 %%
 %%
 config_root_access() ->
-   permit:create(oauth2ux, crypto:strong_rand_bytes(30), [oauth2ux]).
+   permit:create(?OAUTH2_UX, crypto:strong_rand_bytes(30), [?OAUTH2_UX]).
 
 %%
 %%

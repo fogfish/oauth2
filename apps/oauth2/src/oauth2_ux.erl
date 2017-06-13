@@ -26,17 +26,17 @@ signup(Env) ->
 %%
 build_ux(Mod, Env) ->
    [either ||
-      oauth2_req:define_access_code(Env),
+      oauth2_req:issue_access_code(Env),
       fmap(build_ux_error(_)),
       build_ux_spec(_),
       Mod:ux(_)
    ].
 
 build_ux_spec(Env) ->
-   {ok, #{ux => [{scalar:atom(Key), Val} || {Key, Val} <- Env]}}.
+   {ok, #{ux => [{scalar:atom(Key), Val} || {Key, Val} <- maps:to_list(Env)]}}.
 
 build_ux_error(Env) ->
-   Lens = lens:pair(<<"error">>, undefined),
+   Lens = lens:map(<<"error">>, undefined),
    case lens:get(Lens, Env) of
       undefined ->
          Env;

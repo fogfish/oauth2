@@ -23,16 +23,16 @@ content_accepted(_Req) ->
 
 %%
 'GET'(_Type, _, {Uri, _Head, _Env}) ->
-   oauth2_ux:signup(uri:q(Uri)).
+   oauth2_ux:signup(maps:from_list(uri:q(Uri))).
 
 %%
 'POST'(_Type, Req, {Uri, Head, Env}) ->
    case 
       [either ||
          fmap(permit_oauth2:decode(Req)),
-         oauth2_req:accept_access_code(_),
-         oauth2_req:accept_client_id(_),
-         oauth2_req:define_pubkey(_),
+         oauth2_req:auth_access_code(_),
+         oauth2_req:auth_client_id(_),
+         oauth2_req:issue_pubkey(_),
          oauth2_req:redirect_uri(_)
       ]
    of
@@ -49,4 +49,12 @@ content_accepted(_Req) ->
    end.
 
 
+      % TODO: define vs auth
+      % [either ||
+      %    fmap(permit_oauth2:decode(Req)),
+      %    oauth2_req:accept_access_code(_),
+      %    oauth2_req:accept_client_id(_),
+      %    oauth2_req:define_pubkey(_),
+      %    oauth2_req:redirect_uri(_)
+      % ]
 
