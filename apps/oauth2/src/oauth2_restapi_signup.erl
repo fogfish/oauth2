@@ -47,14 +47,3 @@ content_accepted(_Req) ->
          UriWithError = uri:q([Error | permit_oauth2:decode(Req)], Uri),
          'GET'(undefined, undefined, {UriWithError, Head, Env})
    end.
-
-
-      % TODO: define vs auth
-      % [either ||
-      %    fmap(permit_oauth2:decode(Req)),
-      %    oauth2_req:accept_access_code(_),
-      %    oauth2_req:accept_client_id(_),
-      %    oauth2_req:define_pubkey(_),
-      %    oauth2_req:redirect_uri(_)
-      % ]
-

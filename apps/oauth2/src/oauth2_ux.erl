@@ -33,9 +33,11 @@ build_ux(Mod, Env) ->
    ].
 
 build_ux_spec(Env) ->
+   %% @todo: protect template from injections
    {ok, #{ux => [{scalar:atom(Key), Val} || {Key, Val} <- maps:to_list(Env)]}}.
 
 build_ux_error(Env) ->
+   %% @todo: move errors localization into template
    Lens = lens:map(<<"error">>, undefined),
    case lens:get(Lens, Env) of
       undefined ->

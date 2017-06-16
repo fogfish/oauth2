@@ -22,6 +22,19 @@ init([]) ->
    {ok,
       {
          {one_for_one, 4, 1800},
-         []
+         [
+            ?CHILD(worker, pts, spec())
+         ]
       }
    }.
+
+spec() ->
+   Backend = opts:val(backend, oauth2),
+   Storage = opts:val(profile, oauth2),
+   [oauth2profile, 
+      [
+         'read-through',
+         {factory, temporary},
+         {entity,  {Backend, start_link, [Storage]}}
+      ]
+   ].   

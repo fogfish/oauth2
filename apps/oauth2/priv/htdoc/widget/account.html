@@ -2,11 +2,18 @@
 <meta charset="utf-8">
 <link href="/css/dress-code.min.css" rel="stylesheet">
 <link href="/css/oauth2.css" rel="stylesheet">
+<script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
 
 <style type="text/css">
 .dc-h1
 {
    border-bottom: 1px solid #d1d1d1; 
+}
+
+.oauth2__token
+{
+   word-break: break-all;
+   font-size: 8;
 }
 </style>
 
@@ -14,6 +21,11 @@
 <div class="dc-page">
 <div class="dc-container dc-container-limited">
    <h1 class="dc-h1">Developer settings</h1>
+
+   <h2 class="dc-h2">Token introspect</h2>
+   <div class="dc-card">
+      <p class="oauth2__token"></p>
+   </div>
 
    <h2 class="dc-h2">OAuth2 applications</h2>
    <a href="/widget/register.html" class="dc-btn dc-btn--link dc-btn--small dc-right">New Application</a>
@@ -33,4 +45,9 @@
 
 </div>
 </div>
+
+<script type="text/javascript">
+$('.oauth2__token').text(window.localStorage.getItem('access_token'))
+
+</script>
 </body>

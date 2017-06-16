@@ -5,4 +5,4 @@
 
 %%
 %% build-in oauth profile callback
--define(OAUTH2_UX_CALLBACK,  <<"/widget/introspect.html">>).
+-define(OAUTH2_UX_CALLBACK,  <<"/widget/oauth2.html">>).

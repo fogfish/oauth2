@@ -2,16 +2,21 @@
 <meta charset="utf-8">
 <link href="/css/dress-code.min.css" rel="stylesheet">
 <link href="/css/oauth2.css" rel="stylesheet">
+<script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
 
 <style type="text/css">
+.dc-dialog
+{
+   display: none
+}
 </style>
 
 <body class="dc-body">
 <div class="dc-page">
 <div class="dc-container dc-container-limited">
 
-   <div class="dc-dialog">
-      <form class="form-group" action="/oauth2/app" method="post">
+   <div class="dc-dialog dc-dialog__register">
+      <form class="form-group form--app">
          <div class="dc-dialog__content">
          <div class="dc-dialog__body">
             <h3 class="dc-dialog__title">Register</h3>
@@ -28,21 +33,71 @@
                <label class="dc-label" for="requiredInput">
                   Application Type
                </label>
-               <input type="radio" class="dc-radio" id="public" name="public" checked>
-               <label for="r1" class="dc-label">public</label>
-
-               <input type="radio" class="dc-radio" id="confidential" name="confidential">
-               <label for="r2" class="dc-label">confidential</label>
+               <select class="dc-select dc-select--small" name="type" id="type">
+                  <option value="public">public</option>
+                  <option value="confidential">confidential</option>
+               </select>
             </div>
          </div>
          </div>
          <div class="dc-dialog__actions">
-            <a class="dc-btn dc-btn--link" href="/widget/profile.html">Cancel</a>
+            <a class="dc-btn dc-btn--link" href="/widget/account.html">Cancel</a>
             <button id="login_button" type="submit" class="dc-btn dc-btn--primary">Register</button>
          </div>
       </form>
    </div>
 
+   <div class="dc-dialog dc-dialog__credentials">
+      <form class="form-group form--app">
+         <div class="dc-dialog__content">
+         <div class="dc-dialog__body">
+            <h3 class="dc-dialog__title">Credentials</h3>
+            <h4 class="dc-dialog__subtitle">for OAuth2 Application</h4>
+            <p>&nbsp;</p>
+
+            <label class="dc-label">Access Key</label>
+            <p class="oauth2__access"></p>
+
+            <label class="dc-label">Secret Key</label>
+            <p class="oauth2__secret"></p>
+         </div>
+         </div>
+         <div class="dc-dialog__actions">
+            <a class="dc-btn dc-btn--primary" href="/widget/account.html">OK</a>
+         </div>
+      </form>
+   </div>
+   
+
 </div>
 </div>
+
+<script type="text/javascript">
+$('.dc-dialog__register').show()
+$('form').on('submit',
+   function(e)
+   {
+      e.preventDefault()
+      $.ajax({
+         type: 'post', 
+         url: '/oauth2/app',
+         headers: {'Authorization': localStorage.getItem('access_token')},
+         data: $(this).serialize()
+      }).done(
+         function(json)
+         {
+            $('.dc-dialog__register').hide()
+            $('.dc-dialog__credentials').show()
+            $('.oauth2__access').text(json.access)
+            $('.oauth2__secret').text(json.secret)
+         }
+      ).fail(
+         function(x)
+         {
+           console.log(x)
+         }
+      )
+   }
+)
+</script>
 </body>

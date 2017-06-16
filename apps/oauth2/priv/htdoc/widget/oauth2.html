@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script type="text/javascript">
+//
+// identity of built-in ouath2 client
+var client_id = 'oauth2ux'
+var redirect_url = '/widget/account.html'
+
+//
+//
+function url_query(name, url)
+{
+   if (!url)
+      url = window.location.href;
+
+   name = name.replace(/[\[\]]/g, "\\$&");
+   var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+       results = regex.exec(url);
+   
+   if (!results) return null;
+   if (!results[2]) return '';
+   return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+var access_token = url_query('access_token')
+if (access_token)
+{
+   window.localStorage.setItem('access_token', 'Bearer ' + access_token)
+   window.location.replace(redirect_url)
+} else {
+   var xhr = new XMLHttpRequest();
+   xhr.open('POST', '/oauth2/token');
+   xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+   xhr.send('grant_type=authorization_code&client_id=' + client_id + '&code=' + url_query('code'));
+   xhr.onreadystatechange = function() 
+   {
+      var DONE = 4
+      var OK = 200
+      if (xhr.readyState === DONE)
+      {
+         if (xhr.status === OK)
+         {
+            var json = JSON.parse(xhr.responseText)
+            window.localStorage.setItem('access_token', 'Bearer ' + json.access_token)
+            window.location.replace(redirect_url)
+         } else {
+         }
+      }
+   }
+}
+</script>
+

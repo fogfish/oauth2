@@ -22,12 +22,17 @@
 
 .dc-dialog__actions--secondary
 {
-   padding: 0px 2rem 0px 2rem;
+   padding: 0 2rem 0 2rem;
 }
 
 .dc-toast
 {
    padding: 0 0 .8rem 0;
+}
+
+.dc-h2
+{
+   margin: 2.4rem 0 2.4rem 0;
 }
 
 input 
