@@ -30,10 +30,15 @@
    padding: 0 0 .8rem 0;
 }
 
-.dc-h2
+.dc-card
+{
+   margin-bottom: 2.4rem;
+}
+
+/*.dc-h1
 {
    margin: 2.4rem 0 2.4rem 0;
-}
+}*/
 
 input 
 {

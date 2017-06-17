@@ -7,31 +7,35 @@
 <script type="text/javascript" src="/js/monad.js"></script>
 
 <style type="text/css">
-.dc-h1
+.dc-h2
 {
-   border-bottom: 1px solid #d1d1d1; 
+   display: flex;
 }
 
-.oauth2__token
+.dc-h2 a
 {
-   word-break: break-all;
-   font-size: 8;
+   margin-left: auto;
 }
 </style>
 
 <body class="dc-body">
 <div class="dc-page">
 <div class="dc-container dc-container-limited">
+   <h1 class="dc-h1">Account</h1>
+
+   <div class="dc-card">
+   <h2 class="dc-h2">Roles</h2>
+   
+   </div>   
+
    <h1 class="dc-h1">Developer settings</h1>
 
-   <h2 class="dc-h2">Token introspect</h2>
    <div class="dc-card">
-      <p class="oauth2__token"></p>
-   </div>
+   <h2 class="dc-h2">
+      OAuth2 applications
+      <a href="/widget/register.html" class="dc-btn dc-btn--link dc-btn--small">New Application</a>
+   </h2>
 
-   <h2 class="dc-h2">OAuth2 applications</h2>
-   <a href="/widget/register.html" class="dc-btn dc-btn--link dc-btn--small">New Application</a>
-   <div class="dc-card">
       <table class="dc-table">
          <thead class="dc-table__thead">
             <tr class="dc-table__tr">
@@ -160,9 +164,6 @@ monad.do([
       console.log(x)
    }
 ]).fail(ui.fail)
-
-
-$('.oauth2__token').text(window.localStorage.getItem('access_token'))
 
 </script>
 </body>
