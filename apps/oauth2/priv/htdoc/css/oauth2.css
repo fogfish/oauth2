@@ -44,3 +44,13 @@ input
 {
    width: 100%;
 }
+
+.oauth2-chip
+{
+   display: inline-block;
+   padding: 0 25px;
+   height: 32px;
+   line-height: 30px;
+   border-radius: 16px;
+   background-color: #f1f1f1;
+}
