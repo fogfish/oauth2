@@ -61,6 +61,7 @@ auth_pubkey(#{<<"access">> := Access, <<"secret">> := Secret} = Request) ->
 
 issue_pubkey(#{<<"access">> := Access, <<"secret">> := Secret} = Request) ->
    [either ||
+      %% @todo: scopes
       permit:create(Access, Secret),
       fmap(Request#{<<"access_code">> => _})
    ].

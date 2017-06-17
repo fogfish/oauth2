@@ -13,8 +13,7 @@
    init/1, 
    free/2, 
    none/3,
-   pair/3,
-   t/1
+   some/3
 ]).
 
 %%
@@ -42,7 +41,7 @@ init([Uri, Ns, Key]) ->
       {ok, #state{val = undefined} = State} ->
          {ok, none, State};
       {ok, State} ->
-         {ok, pair, State}
+         {ok, some, State}
    end.
 
 free(_, _PubKey) ->
@@ -59,7 +58,7 @@ none({put, _Key, Val}, Pipe, State0) ->
    case commit(State0#state{val = Val}) of
       {ok, State1} ->
          pipe:ack(Pipe, {ok, Val}),
-         {next_state, pair, State1};
+         {next_state, some, State1};
       {error,   _} = Error ->
          pipe:ack(Pipe, Error),
          {stop, normal, State0}
@@ -78,25 +77,25 @@ none({match, _Index, _Query}, Pipe, State) ->
    {stop, normal, State}.
 
 %%
-pair({put, _Key, Val}, Pipe, State0) ->
+some({put, _Key, Val}, Pipe, State0) ->
    case commit(State0#state{val = Val}) of
       {ok, State1} ->
          pipe:ack(Pipe, {ok, Val}),
-         {next_state, pair, State1};
+         {next_state, some, State1};
       {error,   _} = Error ->
          pipe:ack(Pipe, Error),
          {stop, normal, State0}
    end;
 
-pair({get, _Access}, Pipe, #state{val = Val} = State) ->
+some({get, _Access}, Pipe, #state{val = Val} = State) ->
    pipe:ack(Pipe, {ok, Val}),
-   {next_state, pair, State};
+   {next_state, some, State};
 
-pair({remove, _Access}, Pipe, #state{val = Val} = State) ->
+some({remove, _Access}, Pipe, #state{val = Val} = State) ->
    pipe:ack(Pipe, {ok, Val}),
    {stop, normal, State};
 
-pair({match, Index, Query}, Pipe, #state{config = Conf, bucket = Bucket}=State) ->
+some({match, Index, Query}, Pipe, #state{config = Conf, bucket = Bucket}=State) ->
    case 
       erlcloud_ddb2:q(Bucket, Query, [{index_name, scalar:s(Index)}], Conf)
    of 
@@ -105,7 +104,7 @@ pair({match, Index, Query}, Pipe, #state{config = Conf, bucket = Bucket}=State) 
       {error, _} = Error ->
          pipe:ack(Pipe, Error)
    end,
-   {next_state, pair, State}.
+   {next_state, some, State}.
 
 
 
@@ -114,14 +113,6 @@ pair({match, Index, Query}, Pipe, #state{config = Conf, bucket = Bucket}=State) 
 %% private
 %%
 %%-----------------------------------------------------------------------------
-
-t(Uri) ->
-   {ok, Conf} = erlcloud_aws:auto_config(),
-   Conf#aws_config{
-         ddb_scheme = scalar:c(uri:schema(Uri)) ++ "://",
-         ddb_host   = scalar:c(uri:host(Uri)),
-         ddb_port   = uri:port(Uri)
-      }.
 
 %% 
 config(Uri, Key) ->

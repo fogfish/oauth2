@@ -3,6 +3,8 @@
 <link href="/css/dress-code.min.css" rel="stylesheet">
 <link href="/css/oauth2.css" rel="stylesheet">
 <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/js/whiskers.min.js"></script>
+<script type="text/javascript" src="/js/monad.js"></script>
 
 <style type="text/css">
 .dc-h1
@@ -28,7 +30,7 @@
    </div>
 
    <h2 class="dc-h2">OAuth2 applications</h2>
-   <a href="/widget/register.html" class="dc-btn dc-btn--link dc-btn--small dc-right">New Application</a>
+   <a href="/widget/register.html" class="dc-btn dc-btn--link dc-btn--small">New Application</a>
    <div class="dc-card">
       <table class="dc-table">
          <thead class="dc-table__thead">
@@ -36,7 +38,7 @@
                <th class="dc-table__th">ID</th>
                <th class="dc-table__th">Type</th>
                <th class="dc-table__th">Callback Uri</th>
-               <th class="dc-table__th">Status</th>
+               <th class="dc-table__th"></th>
             </tr>
          </thead>
          <tbody class="dc-table__tbody"></tbody>
@@ -46,7 +48,120 @@
 </div>
 </div>
 
+<script type="text/template" id="oauth2-clients">
+   {for app in clients}
+   <tr class="dc-table__tr dc-table__tr--interactive {app.access}">
+      <td class="dc-table__td">{app.access}</td>
+      <td class="dc-table__td">{app.type}</td>
+      <td class="dc-table__td">{app.redirect_uri}</td>
+      <td class="dc-table__td">
+         <a class="dc-btn dc-btn--link dc-btn--small dc-btn--remove" data-access={app.access}>revoke</a>
+      </td>
+   </tr>
+   {/for}
+</script>
+
+
 <script type="text/javascript">
+//
+//
+var ui = {}
+ui.clients = whiskers.compile($('#oauth2-clients').text())
+ui.fail = function(error)
+{
+   if (error.code == 401)
+   {
+      window.location.replace('/oauth2/authorize')
+   }
+   console.error(error)
+}
+
+//
+//
+var action = {}
+
+action.UI  = {}
+action.UI.click = function(match, accept, reject)
+{
+   $(document).on('click', match,
+      function(e)
+      {
+         accept($(this).data())
+         e.preventDefault()
+      }
+   )
+}.$_()
+
+action.IO  = {}
+
+//
+action.IO.fail = function(xhr)
+{
+   return {code: xhr.status, text: xhr.statusText, error: xhr.responseJSON}
+}
+
+// f: url -> IO json
+action.IO.json = function(url, accept, reject)
+{
+   $.ajax(
+      {
+         url: url, 
+         type: 'get', 
+         dataType: 'json',
+         headers: {'Authorization': window.localStorage.getItem('access_token')}
+      }
+   )
+   .done(function(json){accept(json)})
+   .fail(function(xhr){reject(action.IO.fail(xhr))})
+}.$_()
+
+action.IO.remove = function(url, accept, reject)
+{
+   $.ajax(
+      {
+         url: url,
+         type: 'delete',
+         dataType: 'json',
+         headers: {'Authorization': window.localStorage.getItem('access_token')}
+      }
+   )
+   .done(function(json){accept(json)})
+   .fail(function(xhr){reject(action.IO.fail(xhr))})
+}.$_()
+
+//
+//
+var escape = function(x)
+{
+   return x.split('/').join('\\/').split('+').join('\\+')
+}
+
+//
+// account details
+monad.do([
+   monad.IO(action.IO.json('/oauth2/account')),
+   function(json)
+   {
+      $('.dc-table__tbody').html( ui.clients(json) )
+   }
+]).fail(ui.fail)
+
+//
+// remove oauth2 client from profile
+monad.do([
+   monad.UI(action.UI.click('.dc-btn--remove')),
+   function(data)
+   {
+      $('.' + escape(data.access)).remove()
+      return monad.IO( action.IO.remove('/oauth2/client/' + encodeURIComponent(data.access)) )
+   },
+   function(x)
+   {
+      console.log(x)
+   }
+]).fail(ui.fail)
+
+
 $('.oauth2__token').text(window.localStorage.getItem('access_token'))
 
 </script>

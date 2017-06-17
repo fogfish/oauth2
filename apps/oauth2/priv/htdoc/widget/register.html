@@ -80,7 +80,7 @@ $('form').on('submit',
       e.preventDefault()
       $.ajax({
          type: 'post', 
-         url: '/oauth2/app',
+         url: '/oauth2/client',
          headers: {'Authorization': localStorage.getItem('access_token')},
          data: $(this).serialize()
       }).done(
