@@ -6,3 +6,8 @@ rebar3
 *.dump
 *.tar.gz
 
+##
+## created dynamically by rebar3/relx
+## it shall be ignored otherwise release is dirty
+relx.config
+
