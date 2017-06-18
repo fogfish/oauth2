@@ -17,7 +17,7 @@ profile(Access) ->
       permit:lookup(Access),
       fmap(maps:with([<<"access">>, <<"roles">>], _)),
       lookup_clients(_)
-   ].   
+   ].
 
 lookup_clients(#{<<"access">> := Access} = Profile) ->
    [either ||

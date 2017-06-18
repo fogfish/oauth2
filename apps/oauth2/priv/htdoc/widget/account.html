@@ -25,10 +25,7 @@
 
    <div class="dc-card">
    <h2 class="dc-h2">Roles</h2>
-   <div class="oauth2-chip">John Doe</div>
-   <div class="oauth2-chip">John Doe</div>
-   <div class="oauth2-chip">John Doe</div>
-   <div class="oauth2-chip">John Doe</div>
+      <div class="oauth2__roles"></div>
    </div>   
 
    <h1 class="dc-h1">Developer settings</h1>
@@ -68,12 +65,18 @@
    {/for}
 </script>
 
+<script type="text/template" id="oauth2-roles">
+   {for role in roles}
+      <div class="oauth2-chip">{role}</div>
+   {/for}
+</script>
 
 <script type="text/javascript">
 //
 //
 var ui = {}
 ui.clients = whiskers.compile($('#oauth2-clients').text())
+ui.roles = whiskers.compile($('#oauth2-roles').text())
 ui.fail = function(error)
 {
    if (error.code == 401)
@@ -150,6 +153,7 @@ monad.do([
    function(json)
    {
       $('.dc-table__tbody').html( ui.clients(json) )
+      $('.oauth2__roles').html( ui.roles(json) )
    }
 ]).fail(ui.fail)
 
