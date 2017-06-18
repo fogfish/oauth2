@@ -22,7 +22,7 @@ TEST   ?= ${APP}
 S3     ?=
 VMI    ?= fogfish/erlang
 NET    ?= lo0
-URL    ?= undefined
+URL    ?= fogfish
 LATEST ?= latest
 
 ## rebar version (no spaces at end)

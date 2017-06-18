@@ -4,7 +4,11 @@ rebar3
 *.lock
 *.sublime-*
 *.dump
+
+##
+## release artifacts
 *.tar.gz
+*.bundle
 
 ##
 ## created dynamically by rebar3/relx

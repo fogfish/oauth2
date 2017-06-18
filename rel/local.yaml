@@ -1,7 +1,22 @@
+##
+##
 version: '2'
 services:
+  
+  ##
   aws-ddb:
     build: ./ddb/
     ports:
-     - "8000:8000"
+      - "8000:8000"
 
+  ##
+  oauth2:
+    image: fogfish/oauth2
+    ports:
+      - "8080:8080"
+
+    environment:
+      - "AWS_ACCESS_KEY_ID=access"
+      - "AWS_SECRET_ACCESS_KEY=secret"
+      - "DB_URL_PUBKEY=http://aws-ddb:8000/oauth2pubkey?hashkey=access"
+      - "DB_URL_CLIENT=http://aws-ddb:8000/oauth2client?hashkey=access"
