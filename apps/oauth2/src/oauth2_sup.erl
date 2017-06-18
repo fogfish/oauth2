@@ -29,12 +29,10 @@ init([]) ->
    }.
 
 spec() ->
-   Backend = opts:val(backend, oauth2),
-   Storage = opts:val(profile, oauth2),
-   [oauth2profile, 
+   [oauth2client,
       [
          'read-through',
          {factory, temporary},
-         {entity,  {Backend, start_link, [Storage]}}
+         {entity,  {oauth2_client, start_link, [opts:val(db_url_client, oauth2)]}}
       ]
    ].   

@@ -22,6 +22,15 @@ profile(Access) ->
 lookup_clients(#{<<"access">> := Access} = Profile) ->
    [either ||
       pts:call(permit, Access, {match, <<"master">>, [{<<"master">>, Access}]}),
+      lookup_clients_info(_),
       fmap(Profile#{<<"clients">> => _})
    ].
 
+lookup_clients_info(List) ->
+   {ok, lists:map(
+      fun(#{<<"access">> := Access} = Basic) ->
+         {ok, Client} = oauth2_client:lookup(Access),
+         maps:merge(Basic, Client)
+      end,
+      List
+   )}.

@@ -33,10 +33,11 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
 
 %%
 %% 
-'GET'(_Type, _Req, {_Uri, Head, Env}) ->
+'GET'(_Type, _Req, {_Uri, _Head, Env}) ->
    [either ||
       category:maybeT(badarg, lens:get(lens:pair(<<"id">>), Env))
-     ,oauth2_client:lookup(oauth2_restapi:access_token(Head), _)
+     % ,oauth2_client:lookup(oauth2_restapi:access_token(Head), _)
+     ,oauth2_client:lookup(_)
      ,fmap(jsx:encode(_))
    ].
 
@@ -53,9 +54,13 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
 
 %%
 %%
-'DELETE'(_Type, _Req, {_Uri, Head, Env}) ->
+'DELETE'(_Type, _Req, {_Uri, _Head, Env}) ->
+   %% find user by id from token
+   %% validate that user owns resource
+   %% delete the resource
    [either ||
       category:maybeT(badarg, uri:unescape(lens:get(lens:pair(<<"id">>), Env)))
-     ,oauth2_client:remove(oauth2_restapi:access_token(Head), _)
+     % ,oauth2_client:remove(oauth2_restapi:access_token(Head), _)
+     ,oauth2_client:remove(_)
      ,fmap(jsx:encode(_))
    ].

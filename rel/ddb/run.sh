@@ -12,18 +12,20 @@ java \
 ##
 ##
 echo "==> config ddb"
-DDBTABLE=oauth2pubkey
 SERVICE=http://localhost:8000
 export AWS_ACCESS_KEY_ID="aws-access-key-id"
 export AWS_SECRET_ACCESS_KEY="aws-secret-key"
 
+##
+##
+DDB_PUBKEY=oauth2pubkey
 aws dynamodb describe-table \
-   --table-name ${DDBTABLE} \
+   --table-name ${DDB_PUBKEY} \
    --endpoint-url ${SERVICE} \
    --region aws-region \
 && echo " " \
 || aws dynamodb create-table \
-   --table-name ${DDBTABLE} \
+   --table-name ${DDB_PUBKEY} \
    --attribute-definitions \
       AttributeName=access,AttributeType=S \
       AttributeName=master,AttributeType=S \
@@ -31,6 +33,42 @@ aws dynamodb describe-table \
       AttributeName=access,KeyType=HASH \
    --global-secondary-indexes \
       IndexName=master,KeySchema=["{AttributeName=master,KeyType=HASH}"],Projection="{ProjectionType=INCLUDE,NonKeyAttributes=[access]}",ProvisionedThroughput="{ReadCapacityUnits=5,WriteCapacityUnits=5}" \
+   --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+   --endpoint-url ${SERVICE} \
+   --region aws-region
+
+##
+##
+DDB_CLIENT=oauth2client
+aws dynamodb describe-table \
+   --table-name ${DDB_CLIENT} \
+   --endpoint-url ${SERVICE} \
+   --region aws-region \
+&& echo " " \
+|| aws dynamodb create-table \
+   --table-name ${DDB_CLIENT} \
+   --attribute-definitions \
+      AttributeName=access,AttributeType=S \
+   --key-schema \
+      AttributeName=access,KeyType=HASH \
+   --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+   --endpoint-url ${SERVICE} \
+   --region aws-region
+
+##
+##
+DDB_ACCOUNT=oauth2account
+aws dynamodb describe-table \
+   --table-name ${DDB_ACCOUNT} \
+   --endpoint-url ${SERVICE} \
+   --region aws-region \
+&& echo " " \
+|| aws dynamodb create-table \
+   --table-name ${DDB_ACCOUNT} \
+   --attribute-definitions \
+      AttributeName=access,AttributeType=S \
+   --key-schema \
+      AttributeName=access,KeyType=HASH \
    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
    --endpoint-url ${SERVICE} \
    --region aws-region
