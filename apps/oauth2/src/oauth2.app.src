@@ -8,10 +8,15 @@
          kernel
         ,stdlib
         ,lager
+        ,datum
+        ,pipe
+        ,pts
+        ,ek
         ,knet
         ,restd
         ,permit
         ,erlcloud
+        ,swirl
       ]},
       {mod, {oauth2_app, []}},
       {env, []}

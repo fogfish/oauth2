@@ -4,3 +4,5 @@ rebar3
 *.lock
 *.sublime-*
 *.dump
+*.tar.gz
+
