@@ -33,7 +33,7 @@ docker-compose -f rel/local.yaml up
 
 This starts a local instances of required backing services (e.g. DynamoDB, Redis, etc), authorization service itself and exposed OAuth 2.0 services using REST API on port 8080. By default, it is bound to `localhost` on Mac OS and Linux. If you're using a different platform, please check your Docker configuration.
 
-Open `http://localhost:8080/oauth2/authorization` in your web browser to manage accounts and integrate OAuth 2.0 clients. 
+Open `http://localhost:8080/oauth2/authorize` in your web browser to manage accounts and integrate OAuth 2.0 clients. 
 
 
 ## Next Steps
