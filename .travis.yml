@@ -1,8 +1,9 @@
 language: erlang
+dist: trusty
 
 script: 
    - make
-   - make test
+   - ./rebar3 ct
    - ./rebar3 coveralls send
 
 otp_release:
