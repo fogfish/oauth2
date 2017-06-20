@@ -2,8 +2,7 @@
 
 The microservice based implementation of OAuth 2.0 Authorization Framework, [RFC 6749](https://tools.ietf.org/html/rfc6749). It provides an out-of-the-box, cross-platform solution for identity management. This appliance implements an automated and immutable operation of the OAuth 2.0 framework and all required cloud resources. It provides Infrastructure-as-a-Code templates to spawn required cloud resources and treats them as backing services from the appliance perspective.
 
-[![Build Status](https://secure.travis-ci.org/fogfish/oauth2.svg?branch=master)](http://travis-ci.org/fogfish/oauth2) [![GitHub release](https://img.shields.io/github/release/fogfish/oauth2.svg)](https://github.com/fogfish/oauth2/releases/latest)
-
+[![Build Status](https://secure.travis-ci.org/fogfish/oauth2.svg?branch=master)](http://travis-ci.org/fogfish/oauth2) [![GitHub release](https://img.shields.io/github/release/fogfish/oauth2.svg)](https://github.com/fogfish/oauth2/releases/latest) [![Coverage Status](https://coveralls.io/repos/github/fogfish/oauth2/badge.svg?branch=master)](https://coveralls.io/github/fogfish/oauth2?branch=master)
 
 ## Key Features and Functionality
 
