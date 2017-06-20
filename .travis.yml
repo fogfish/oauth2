@@ -1,5 +1,10 @@
-script: make && make test && ./rebar3 coveralls send
 language: erlang
+
+script: 
+   - make
+   - make test
+   - ./rebar3 coveralls send
+
 otp_release:
    - 19.2
 
