@@ -4,6 +4,7 @@ rebar3
 *.lock
 *.sublime-*
 *.dump
+*.beam
 
 ##
 ## release artifacts
