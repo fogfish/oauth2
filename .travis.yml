@@ -3,7 +3,7 @@ dist: trusty
 
 script: 
    - make
-   - ./rebar3 ct
+   - make test
    - ./rebar3 coveralls send
 
 otp_release:
