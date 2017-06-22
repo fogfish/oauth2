@@ -27,9 +27,10 @@
 %%
 %%
 start(_Type, _Args) ->
+   {ok, Sup} = oauth2_sup:start_link(),
    config_root_access(),
    config_ux(),
-   oauth2_sup:start_link(). 
+   {ok, Sup}.
 
 %%
 %%

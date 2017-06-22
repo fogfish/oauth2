@@ -38,8 +38,8 @@ init([]) ->
       {
          {one_for_one, 4, 1800},
          [
-            ?CHILD(worker, oauth2_pubkey, pts, storage_pubkey())
-           ,?CHILD(worker, oauth2_client, pts, storage_client())
+            ?CHILD(supervisor, oauth2_pubkey, pts, storage_pubkey())
+           ,?CHILD(supervisor, oauth2_client, pts, storage_client())
          ]
       }
    }.
