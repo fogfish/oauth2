@@ -13,17 +13,9 @@
 %%   See the License for the specific language governing permissions and
 %%   limitations under the License.
 %%
--module(oauth2_client).
+-module(oauth2_kvs_client_ddb).
 -behaviour(pipe).
 -compile({parse_transform, category}).
-
-%%
-%% interface
--export([
-   create/2,
-   lookup/1,
-   remove/1
-]).
 
 -export([
    start_link/3,
@@ -32,35 +24,6 @@
    none/3,
    some/3   
 ]).
-
-%%
-%%
--spec create(permit:token(), map()) -> {ok, map()} | {error, _}.
-
-create(Token, Client) ->
-   [either ||
-      permit:pubkey(Token, [oauth2client]),
-      fmap(maps:merge(_, Client)),
-      create(_),
-      fmap(jsx:encode(_))
-   ].
-
-create(#{<<"access">> := Access} = Client) ->
-   pts:put(oauth2client, Access, Client).      
-
-%%
-%%
--spec lookup(permit:access()) -> {ok, _} | {error, _}.
-
-lookup(Access) ->
-   pts:get(oauth2client, Access).   
-
-%%
-%%
--spec remove(permit:access()) -> {ok, _} | {error, _}.
-
-remove(Access) ->
-   pts:remove(oauth2client, Access).
 
 %%-----------------------------------------------------------------------------
 %%

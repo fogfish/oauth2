@@ -60,12 +60,22 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
 %%
 'POST'(_Type, Req, {_Uri, Head, _Env}) ->
    [either ||
-      fmap(permit_oauth2:decode(Req))
-     ,fmap(maps:with([<<"redirect_uri">>, <<"type">>], _))
-     ,oauth2_restapi:validate_client_type(_)
-     ,oauth2_restapi:validate_redirect_uri(_)
-     ,oauth2_client:create(oauth2_restapi:access_token(Head), _)
+      oauth2_restapi:decode(Req),
+      oauth2_kvs_client:validate(_),
+      create_profile(oauth2_restapi:access_token(Head), _)
    ].
+
+create_profile(Token, Profile) ->
+   case permit:pubkey(Token, [oauth2client]) of
+      {ok, #{<<"access">> := Access} = PubKey} ->
+         [either ||
+            oauth2_kvs_client:create(Access, Profile),
+            fmap(jsx:encode(PubKey))
+         ];
+      {error,   _} = Error ->
+         Error
+   end.
+
 
 %%
 %%

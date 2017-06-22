@@ -19,10 +19,30 @@
 -compile({parse_transform, category}).
 
 -export([
+   decode/1,
    access_token/1,
    validate_client_type/1,
    validate_redirect_uri/1
 ]).
+
+
+%%
+%% decodes oauth2 request
+%% parse application/x-www-form-urlencoded to map
+-spec decode(_) -> {ok, _} | {error, _}.  
+
+decode(Request) ->
+   {ok, [$. ||
+      binary:split(scalar:s(Request), <<$&>>, [trim, global]),
+      lists:map(fun as_pair/1, _),
+      maps:from_list(_)
+   ]}.
+
+as_pair(Pair) ->
+   erlang:list_to_tuple(
+      [uri:unescape(X) || X <- binary:split(Pair, <<$=>>)]
+   ).
+
 
 %%
 %%

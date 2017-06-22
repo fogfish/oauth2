@@ -50,8 +50,9 @@ new(Uri) ->
    ].
 
 config_ddb_endpoint(Uri, Config) ->
+   Schema = case uri:schema(Uri) of [_, X] -> X; X -> X end,
    Config#aws_config{
-      ddb_scheme = scalar:c(uri:schema(Uri)) ++ "://",
+      ddb_scheme = scalar:c(Schema) ++ "://",
       ddb_host   = scalar:c(uri:host(Uri)),
       ddb_port   = uri:port(Uri)
    }.
