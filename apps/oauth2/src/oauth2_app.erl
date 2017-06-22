@@ -17,6 +17,8 @@
 %%
 -module(oauth2_app).
 -behaviour(application).
+-compile({parse_transform, category}).
+
 -include("oauth2.hrl").
 
 -export([
@@ -41,7 +43,15 @@ stop(_State) ->
 %%
 %%
 config_root_access() ->
-   permit:create(?OAUTH2_UX, crypto:strong_rand_bytes(30), [?OAUTH2_UX]).
+   [either ||
+      permit:create(?OAUTH2_UX, crypto:strong_rand_bytes(30), [?OAUTH2_UX]),
+      pts:put(oauth2client, ?OAUTH2_UX, 
+         #{
+            <<"type">>         => <<"public">>,
+            <<"redirect_uri">> => ?OAUTH2_UX_CALLBACK
+         }
+      )
+   ].
 
 %%
 %%
