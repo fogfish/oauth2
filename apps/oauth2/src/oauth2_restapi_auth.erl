@@ -13,6 +13,8 @@
 %%   See the License for the specific language governing permissions and
 %%   limitations under the License.
 %%
+%% @doc
+%%   
 -module(oauth2_restapi_auth).
 -compile({parse_transform, category}).
 -include("oauth2.hrl").
@@ -22,12 +24,13 @@
    allowed_methods/1,
    content_provided/1, 
    content_accepted/1,
+   'GET'/3,
    'POST'/3
 ]).
 
 %%
 allowed_methods(_Req) ->
-   ['POST'].
+   ['GET', 'POST'].
 
 %%
 content_provided(_Req) ->
@@ -36,6 +39,11 @@ content_provided(_Req) ->
 %%
 content_accepted(_Req) ->
    [{application, 'x-www-form-urlencoded'}].
+
+%%
+%%
+'GET'(_Type, _Req, {_Uri, _Head, _Env}) ->
+   {ok, <<>>}.
 
 %%
 %%
@@ -56,47 +64,36 @@ content_accepted(_Req) ->
 
 %%
 %%
-oauth2_grant_flow(Env) ->
-   case 
-      oauth2_grant_flow(
-         lens:get(lens:map(<<"response_type">>, undefined), Env),
-         Env
-      )
-   of
+oauth2_grant_flow(#{<<"response_type">> := <<"code">>} = Env) ->
+   case oauth2_code_grant_flow(Env) of
       {error,  Reason} ->
          oauth2_redirect_with_error(Reason, Env);
       {ok, _} = Result ->
          Result
-   end.
+   end;
 
-oauth2_grant_flow(<<"code">>, Env) ->
-   oauth2_code_grant_flow(Env);
+oauth2_grant_flow(#{<<"response_type">> := <<"token">>} = Env) ->
+   case oauth2_implicit_grant_flow(Env) of
+      {error,  Reason} ->
+         oauth2_redirect_with_error(Reason, Env);
+      {ok, _} = Result ->
+         Result
+   end;
 
-oauth2_grant_flow(<<"token">>, Env) ->
-   oauth2_implicit_grant_flow(Env);
-
-oauth2_grant_flow(_, Env) ->
+oauth2_grant_flow(Env) ->
    oauth2_redirect_with_error(unsupported_response_type, Env).
 
-
 %%
 %%
-oauth2_code_grant_flow(Env) ->
+oauth2_code_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = Env) ->
    [either ||
-      permit:auth(
-         lens:get(lens:map(<<"access">>, undefined), Env),
-         lens:get(lens:map(<<"secret">>, undefined), Env),
-         600
-      ),
+      permit:auth(Access, Secret, 600),
       oauth2_redirect_code_grant(_, Env)
    ].
 
-oauth2_redirect_code_grant(Token, Env) ->
+oauth2_redirect_code_grant(Token, #{<<"client_id">> := Access} = Env) ->
    [either ||
-      category:maybeT(invalid_request,
-         lens:get( lens:map(<<"client_id">>, undefined), Env )
-      ),
-      permit:lookup(_),
+      permit:lookup(Access),
       redirect_uri(<<"confidential">>, _),
       oauth2_redirect_to(
          _,
@@ -109,22 +106,15 @@ oauth2_redirect_code_grant(Token, Env) ->
 
 %%
 %%
-oauth2_implicit_grant_flow(Env) ->
+oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = Env) ->
    [either ||
-      permit:auth(
-         lens:get(lens:map(<<"access">>, undefined), Env),
-         lens:get(lens:map(<<"secret">>, undefined), Env),
-         3600
-      ),
+      permit:auth(Access, Secret, 3600),
       oauth2_redirect_implicit_grant(_, Env)
    ].
 
-oauth2_redirect_implicit_grant(Token, Env) ->
+oauth2_redirect_implicit_grant(Token, #{<<"client_id">> := Access} = Env) ->
    [either ||
-      category:maybeT(invalid_request,
-         lens:get( lens:map(<<"client_id">>, undefined), Env )
-      ),
-      permit:lookup(_),
+      permit:lookup(Access),
       redirect_uri(<<"public">>, _),
       oauth2_redirect_to(
          _,
@@ -135,14 +125,12 @@ oauth2_redirect_implicit_grant(Token, Env) ->
       )
    ].
 
+
 %%
 %%
-oauth2_redirect_with_error(Reason, Env) ->
+oauth2_redirect_with_error(Reason, #{<<"client_id">> := Access} = Env) ->
    [either ||
-      category:maybeT(invalid_request,
-         lens:get( lens:map(<<"client_id">>, undefined), Env )
-      ),
-      permit:lookup(_),
+      permit:lookup(Access),
       category:maybeT(server_error,
          lens:get( lens:map(<<"redirect_uri">>, undefined), Env )
       ),
@@ -170,55 +158,4 @@ redirect_uri(Type, #{<<"oauth2client">> := Type, <<"redirect_uri">> := Uri}) ->
    {ok, Uri};
 redirect_uri(_, _) ->
    {error, invalid_request}.
-
-
-
-
-
-
-
-
-
-%    'POST'(, Head).
-
-% 'POST'(Env, Head) ->
-%    case
-%       [either ||
-%          oauth2_restapi:auth_client(Env, Head),
-
-
-%          oauth2_req:new(Uri, Head, Req),
-%          oauth2_req:authenticate(_),
-%          oauth2_req:check_access_code(_),
-%          oauth2_req:check_pubkey(_),
-%          oauth2_req:redirect_to(_)
-%       ]
-%    of
-%       {ok,  Location} ->
-%          {302, [{'Location', Location}], <<>>};
-
-%       {error, Reason} ->
-%          io:format("==> ~p ~p~n", [Reason, oauth2_req:new(Uri, Head, Req)]),
-%          {ok, Error} = [either ||
-%             oauth2_req:new(Uri, Head, Req),
-%             oauth2_req:authenticate(_),
-%             oauth2_req:redirect_to(Reason, _)
-%          ],
-%          {302, [{'Location', Error}], <<>>}
-%    end.
-
-% env(undefined, A) ->
-%    A;
-% env(A, B) ->
-%    A ++ B.
-
-
-
-
-
-
-
-
-
-
 

@@ -20,7 +20,6 @@
    allowed_methods/1,
    content_provided/1, 
    content_accepted/1,
-   authorize/2,
    'POST'/3
 ]).
 
@@ -37,19 +36,48 @@ content_accepted(_Req) ->
    [{application, 'x-www-form-urlencoded'}].
 
 %%
-authorize(_Mthd, {_Uri, Head, _Env}) ->
-   case permit_oauth2:authenticate(Head) of
-      {error, undefined} ->
-         ok;
-      {ok, _Access} ->
-         ok;
-      {error, _} = Error ->
-         Error
-   end.
-
 %%
 'POST'(_Type, Req, {_Uri, Head, _Env}) ->
    [either ||
-      permit_oauth2:issue_token(Head, Req, 3600),
+      oauth2_restapi:decode(Req),
+      oauth2_restapi:auth_client(_, Head),
+      oauth2_issue_access_token(_),
       fmap(jsx:encode(_))
-   ].   
+   ].
+
+%%
+%%
+oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code} = Env) ->
+   [either ||
+      permit:validate(Code),
+      category:maybeT(server_error,
+         lens:get(lens:map(<<"sub">>), _)
+      ),
+      access_token(_)
+   ];   
+
+oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret} = Env) ->
+   [either ||
+      permit:auth(Access, Secret, 3600),
+      category:maybeT(server_error,
+         lens:get(lens:map(<<"sub">>), _)
+      ),
+      access_token(_)
+   ];   
+
+% oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>} = Env) ->
+
+% oauth2_issue_access_token(#{<<"grant_type">> := <<"refresh_token">>} = Env) ->
+
+oauth2_issue_access_token(_) ->
+   {error, invalid_request}.
+
+%%
+%%
+access_token(Access) ->
+   [either ||
+      permit:issue(Access, 3600),
+      fmap(lens:put(lens:map(<<"access_token">>, undefined), _, #{})),
+      fmap(lens:put(lens:map(<<"token_type">>, undefined), <<"bearer">>, _)),
+      fmap(lens:put(lens:map(<<"expires_in">>, undefined), 3600, _))
+   ].

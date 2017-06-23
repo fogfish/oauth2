@@ -1,6 +1,6 @@
-{application, oauth2,
+{application, account,
    [
-      {description, "oauth2 authorization server"},
+      {description, "oauth2 user experience"},
       {vsn,         "0.0.0"},
       {modules,     []},
       {registered,  []},
@@ -9,13 +9,14 @@
         ,stdlib
         ,lager
         ,datum
-        ,pipe
-        ,pts
-        ,ek
-        ,knet
-        ,restd
-        ,erlcloud
-        ,swirl
+        % ,pipe
+        % ,pts
+        % ,ek
+        % ,knet
+        % ,restd
+        % ,permit
+        % ,erlcloud
+        % ,swirl
       ]},
       {mod, {oauth2_app, []}},
       {env, []}

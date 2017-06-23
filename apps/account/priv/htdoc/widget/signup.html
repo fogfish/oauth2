@@ -8,10 +8,10 @@
 <div class="dc-container dc-container-limited">
 
    <div class="dc-dialog">
-      <form class="form-group" action="/oauth2/authorize" method="post">
+      <form class="form-group" action="/oauth2/signup" method="post">
          <div class="dc-dialog__content">
          <div class="dc-dialog__body">
-            <h3 class="dc-dialog__title">Sign In</h3>
+            <h3 class="dc-dialog__title">Sign Up</h3>
             <h4 class="dc-dialog__subtitle">with</h4>
             {if error}
                <div class="dc-toast dc-toast--top">
@@ -33,23 +33,39 @@
                </label>
                <input id="secret" name="secret" type="password" class="dc-input" required="required" />
 
-               <input id="access_code" name="access_code" type="hidden" value="{access_code}"/>
-               <input id="response_type" name="response_type" type="hidden" value="{response_type}"/>
-               <input id="client_id" name="client_id" type="hidden" value="{client_id}"/>
-               <input id="state" name="state" type="hidden" value="{state}"/>
+               <input id="response_type" name="response_type" type="hidden" value=""/>
+               <input id="client_id" name="client_id" type="hidden" value=""/>
+               <input id="state" name="state" type="hidden" value=""/>
             </div>
          </div>
          </div>
          <div class="dc-dialog__actions">
-            <!-- <a class="dc-btn dc-btn--link" href="">Forget Password</a> -->
-            <button id="login_button" type="submit" class="dc-btn dc-btn--primary">Sign In</button>
+            <button id="login_button" type="submit" class="dc-btn dc-btn--primary">Sign Up</button>
          </div>
          <div class="dc-dialog__actions dc-dialog__actions--secondary">
-            <a class="dc-btn dc-btn--small dc-btn--link" href="/oauth2/signup?response_type={response_type}&client_id={client_id}&state={state}">Create new Account</a>
+            <a class="dc-btn dc-btn--small dc-btn--link" href="">I do have the account.</a>
          </div>
       </form>
    </div>
 
 </div>
 </div>
+
+<script type="text/javascript" src="/js/oauth2.js"></script>
+<script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript">
+var req = {
+   response_type: oauth2.q('response_type', 'token'),
+   client_id: oauth2.q('client_id', 'oauth2ux'),
+   state: oauth2.q('state', '')
+}
+
+$('.response_type').val(req.response_type)
+$('.client_id').val(req.client_id)
+$('.state').val(req.state)
+
+var signup = '/widget/signin.html?' + $.param(req) 
+$('.dc-dialog__actions--secondary a').attr('href', signup)
+</script>
+
 </body>
