@@ -40,7 +40,7 @@ content_accepted(_Req) ->
 'POST'(_Type, Req, {_Uri, Head, _Env}) ->
    [either ||
       oauth2_restapi:decode(Req),
-      oauth2_restapi:auth_client(_, Head),
+      oauth2_restapi:authenticate(_, Head),
       oauth2_issue_access_token(_),
       fmap(jsx:encode(_))
    ].
@@ -54,7 +54,7 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"cod
          lens:get(lens:map(<<"sub">>), _)
       ),
       access_token(_)
-   ];   
+   ];
 
 oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret} = Env) ->
    [either ||

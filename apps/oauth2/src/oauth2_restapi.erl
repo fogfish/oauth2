@@ -21,7 +21,7 @@
 
 -export([
    decode/1,
-   auth_client/2
+   authenticate/2
 
    % decode/1,
    % authenticate/2,
@@ -54,43 +54,44 @@ as_pair(Pair) ->
 
 
 %%
-%% authenticate client request
--spec auth_client(_, _) -> ok | {error, _}.
+%% authenticate client and injects its identity into environment
+-spec authenticate(_, _) -> ok | {error, _}.
 
-auth_client(Env, Head) ->
+authenticate(#{<<"client_id">> := Access} = Env, Head) ->
    [either ||
-      category:maybeT(unauthorized_client,
-         lens:get( lens:map(<<"client_id">>, undefined), Env )
-      ),
-      permit:lookup(_),
-      auth_client_type(_, Head),
-      fmap(Env)
-   ].
+      permit:lookup(Access),
+      authenticate_client(_, Env, Head)
+   ];
 
-
-auth_client_type(#{<<"oauth2client">> := <<"public">>}, _) ->
-   ok;
-auth_client_type(#{<<"oauth2client">> := <<"confidential">>}, Head) ->
+authenticate(Env, Head) ->
    [either ||
       category:maybeT(unauthorized_client,
          lens:get( lens:pair('Authorization', undefined), Head )
       ),
-      check_client_digest(_)
-   ];
-
-auth_client_type(_, _) ->
-   {error, unauthorized_client}. 
+      authenticate_http_digest(_, Env)
+   ].
 
 %%
-check_client_digest(<<"Basic ", Digest/binary>>) ->
+authenticate_client(#{<<"oauth2client">> := <<"public">>}, Env, _) ->
+   {ok, Env};
+authenticate_client(#{<<"oauth2client">> := <<"confidential">>}, Env, Head) ->
+   [either ||
+      category:maybeT(unauthorized_client,
+         lens:get( lens:pair('Authorization', undefined), Head )
+      ),
+      authenticate_http_digest(_, Env)
+   ].
+
+
+%%
+authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
-   permit:auth(Access, Secret, 3600, #{<<"oauth2client">> => <<"confidential">>});
-
-check_client_digest(_) ->
+   [either ||
+      permit:auth(Access, Secret, 3600, #{<<"oauth2client">> => <<"confidential">>}),
+      fmap(lens:put(lens:map(<<"client_id">>, undefined), Access, Env)) 
+   ];
+authenticate_http_digest(_, _) ->
    {error, unauthorized_client}.
-
-
-
 
 
 
@@ -171,35 +172,35 @@ check_client_digest(_) ->
 %    {error, unsupported_response_type}.
 
 
-%%
-%%
--spec client_profile(_) -> {ok, _} | {error, _}.
+% %%
+% %%
+% -spec client_profile(_) -> {ok, _} | {error, _}.
 
-client_profile(#{<<"client_id">> := Access} = Request) ->
-   [either ||
-      oauth2_kvs_client:lookup(Access),
-      fmap(maps:merge(_, Request))
-   ];
-client_profile(_) ->
-   {error, invalid_request}.
+% client_profile(#{<<"client_id">> := Access} = Request) ->
+%    [either ||
+%       oauth2_kvs_client:lookup(Access),
+%       fmap(maps:merge(_, Request))
+%    ];
+% client_profile(_) ->
+%    {error, invalid_request}.
 
 
 
-%%
-%%
--spec redirect_to(_) -> {ok, _} | {error, _}. 
+% %%
+% %%
+% -spec redirect_to(_) -> {ok, _} | {error, _}. 
 
-redirect_to(#{
-   <<"type">> := <<"confidential">>, <<"response_type">> := <<"code">>,
-   <<"redirect_uri">> := Uri, <<"access_code">> := Code, <<"state">> := State}) ->
+% redirect_to(#{
+%    <<"type">> := <<"confidential">>, <<"response_type">> := <<"code">>,
+%    <<"redirect_uri">> := Uri, <<"access_code">> := Code, <<"state">> := State}) ->
 
-   Query = [{<<"code">>, Code}, {<<"state">>, State}],
-   {ok, uri:s(uri:q(Query, uri:new(Uri)))};
+%    Query = [{<<"code">>, Code}, {<<"state">>, State}],
+%    {ok, uri:s(uri:q(Query, uri:new(Uri)))};
 
-redirect_to(#{
-   <<"response_type">> := <<"token">>,
-   <<"redirect_uri">> := Uri, <<"access_token">> := Token, <<"state">> := State}) ->
+% redirect_to(#{
+%    <<"response_type">> := <<"token">>,
+%    <<"redirect_uri">> := Uri, <<"access_token">> := Token, <<"state">> := State}) ->
 
-   Query = [{<<"access_token">>, Token}, {<<"state">>, State}],
-   {ok, uri:s(uri:q(Query, uri:new(Uri)))}.
+%    Query = [{<<"access_token">>, Token}, {<<"state">>, State}],
+%    {ok, uri:s(uri:q(Query, uri:new(Uri)))}.
 

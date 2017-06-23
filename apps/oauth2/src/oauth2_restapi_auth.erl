@@ -51,7 +51,7 @@ content_accepted(_Req) ->
    case
       [either ||
          oauth2_restapi:decode(Req),
-         oauth2_restapi:auth_client(_, Head),
+         oauth2_restapi:authenticate(_, Head),
          oauth2_grant_flow(_)
       ]
    of
@@ -94,7 +94,7 @@ oauth2_code_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = Env) 
 oauth2_redirect_code_grant(Token, #{<<"client_id">> := Access} = Env) ->
    [either ||
       permit:lookup(Access),
-      redirect_uri(<<"confidential">>, _),
+      fmap(lens:get(lens:map(<<"redirect_uri">>), _)),
       oauth2_redirect_to(
          _,
          [
@@ -115,7 +115,7 @@ oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = E
 oauth2_redirect_implicit_grant(Token, #{<<"client_id">> := Access} = Env) ->
    [either ||
       permit:lookup(Access),
-      redirect_uri(<<"public">>, _),
+      fmap(lens:get(lens:map(<<"redirect_uri">>), _)),
       oauth2_redirect_to(
          _,
          [
@@ -151,11 +151,3 @@ oauth2_redirect_to(Uri, Query) ->
       uri:q(Query, _),
       uri:s(_)
    ]}.
-
-%%
-%%
-redirect_uri(Type, #{<<"oauth2client">> := Type, <<"redirect_uri">> := Uri}) ->
-   {ok, Uri};
-redirect_uri(_, _) ->
-   {error, invalid_request}.
-

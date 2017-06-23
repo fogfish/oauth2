@@ -148,29 +148,29 @@ var escape = function(x)
 
 //
 // account details
-monad.do([
-   monad.IO(action.IO.json('/oauth2/account')),
-   function(json)
-   {
-      $('.dc-table__tbody').html( ui.clients(json) )
-      $('.oauth2__roles').html( ui.roles(json) )
-   }
-]).fail(ui.fail)
+// monad.do([
+//    monad.IO(action.IO.json('/oauth2/account')),
+//    function(json)
+//    {
+//       $('.dc-table__tbody').html( ui.clients(json) )
+//       $('.oauth2__roles').html( ui.roles(json) )
+//    }
+// ]).fail(ui.fail)
 
 //
 // remove oauth2 client from profile
-monad.do([
-   monad.UI(action.UI.click('.dc-btn--remove')),
-   function(data)
-   {
-      $('.' + escape(data.access)).remove()
-      return monad.IO( action.IO.remove('/oauth2/client/' + encodeURIComponent(data.access)) )
-   },
-   function(x)
-   {
-      console.log(x)
-   }
-]).fail(ui.fail)
+// monad.do([
+//    monad.UI(action.UI.click('.dc-btn--remove')),
+//    function(data)
+//    {
+//       $('.' + escape(data.access)).remove()
+//       return monad.IO( action.IO.remove('/oauth2/client/' + encodeURIComponent(data.access)) )
+//    },
+//    function(x)
+//    {
+//       console.log(x)
+//    }
+// ]).fail(ui.fail)
 
 </script>
 </body>
