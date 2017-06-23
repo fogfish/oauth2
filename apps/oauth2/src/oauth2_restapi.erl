@@ -20,6 +20,9 @@
 -include("oauth2.hrl").
 
 -export([
+   decode/1,
+   auth_client/2
+
    % decode/1,
    % authenticate/2,
    % check_access_code/1,
@@ -31,22 +34,64 @@
 ]).
 
 
+
 %%
 %% decodes oauth2 request
 %% parse application/x-www-form-urlencoded to map
-% -spec decode(_) -> {ok, _} | {error, _}.  
+-spec decode(_) -> {ok, _} | {error, _}.  
 
-% decode(Request) ->
-%    {ok, [$. ||
-%       binary:split(scalar:s(Request), <<$&>>, [trim, global]),
-%       lists:map(fun as_pair/1, _),
-%       maps:from_list(_)
-%    ]}.
+decode(Request) ->
+   {ok, [$. ||
+      binary:split(scalar:s(Request), <<$&>>, [trim, global]),
+      lists:map(fun as_pair/1, _),
+      maps:from_list(_)
+   ]}.
 
-% as_pair(Pair) ->
-%    erlang:list_to_tuple(
-%       [uri:unescape(X) || X <- binary:split(Pair, <<$=>>)]
-%    ).
+as_pair(Pair) ->
+   erlang:list_to_tuple(
+      [uri:unescape(X) || X <- binary:split(Pair, <<$=>>)]
+   ).
+
+
+%%
+%% authenticate client request
+-spec auth_client(_, _) -> ok | {error, _}.
+
+auth_client(Env, Head) ->
+   [either ||
+      category:maybeT(unauthorized_client,
+         lens:get( lens:map(<<"client_id">>, undefined), Env )
+      ),
+      permit:lookup(_),
+      auth_client_type(_, Head),
+      fmap(Env)
+   ].
+
+
+auth_client_type(#{<<"oauth2client">> := <<"public">>}, _) ->
+   ok;
+auth_client_type(#{<<"oauth2client">> := <<"confidential">>}, Head) ->
+   [either ||
+      category:maybeT(unauthorized_client,
+         lens:get( lens:pair('Authorization', undefined), Head )
+      ),
+      check_client_digest(_)
+   ];
+
+auth_client_type(_, _) ->
+   {error, unauthorized_client}. 
+
+%%
+check_client_digest(<<"Basic ", Digest/binary>>) ->
+   [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
+   permit:auth(Access, Secret, 3600, #{<<"oauth2client">> => <<"confidential">>});
+
+check_client_digest(_) ->
+   {error, unauthorized_client}.
+
+
+
+
 
 
 %%
