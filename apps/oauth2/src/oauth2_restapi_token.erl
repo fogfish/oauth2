@@ -67,8 +67,8 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> :
 
 oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>, <<"client_id">> := Access}) ->
    [either ||
-      permit:lookup(Access),
-      is_confidential(_),
+      oauth2_client:lookup(Access),
+      oauth2_client:is_confidential(_),
       access_token(Access)
    ];
 
@@ -76,14 +76,6 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>, <<"cli
 
 oauth2_issue_access_token(_) ->
    {error, invalid_request}.
-
-%%
-%%
-is_confidential(#{<<"oauth2client">> := <<"confidential">>}) ->
-   ok;
-is_confidential(_) ->
-   {error, invalid_request}.
-
 
 %%
 %%
