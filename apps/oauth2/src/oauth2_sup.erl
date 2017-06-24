@@ -38,8 +38,7 @@ init([]) ->
       {
          {one_for_one, 4, 1800},
          [
-            ?CHILD(supervisor, oauth2_pubkey, pts, storage_pubkey())
-           ,?CHILD(supervisor, oauth2_client, pts, storage_client())
+            ?CHILD(supervisor, pts, storage_pubkey())
          ]
       }
    }.
@@ -47,7 +46,7 @@ init([]) ->
 %%
 %%
 storage_pubkey() ->
-   Storage = opts:val(storage_pubkey, "ephemeral://", oauth2),
+   Storage = opts:val(storage, "ephemeral://", oauth2),
    Backend = backend_pubkey(uri:schema(uri:new(Storage))),   
    [permit,
       [
@@ -62,21 +61,3 @@ backend_pubkey([ddb, _]) ->
 backend_pubkey(_) ->
    permit_pubkey_io.
 
-
-%%
-%%
-storage_client() ->
-   Storage = opts:val(storage_client, "ephemeral://", oauth2),
-   Backend = backend_client(uri:schema(uri:new(Storage))),   
-   [oauth2client,
-      [
-         'read-through',
-         {factory, temporary},
-         {entity,  {Backend, start_link, [Storage]}}
-      ]
-   ].
-
-backend_client([ddb, _]) ->
-   oauth2_kvs_client_ddb;
-backend_client(_) ->
-   oauth2_kvs_client.

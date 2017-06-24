@@ -42,19 +42,11 @@ stop(_State) ->
 %%
 %%
 config_root_access() ->
-   permit:create(?OAUTH2_UX, crypto:strong_rand_bytes(30),
+   oauth2_client:create(?OAUTH2_UX, crypto:strong_rand_bytes(30),
       #{
-         <<"oauth2client">> => <<"public">>,
-         <<"redirect_uri">> => ?OAUTH2_UX_CALLBACK
+         <<"type">>         => <<"oauth2:client">>,
+         <<"security">>     => <<"public">>,
+         <<"redirect_uri">> => uri:s(uri:path(?OAUTH2_UX_CALLBACK, uri:new(opts:val(issuer, permit))))
       }
    ).
 
-   % [either ||
-   %    permit:create(?OAUTH2_UX, crypto:strong_rand_bytes(30), [oauth2client, public]),
-   %    pts:put(oauth2client, ?OAUTH2_UX, 
-   %       #{
-   %          <<"type">>         => <<"public">>,
-   %          <<"redirect_uri">> => ?OAUTH2_UX_CALLBACK
-   %       }
-   %    )
-   % ].

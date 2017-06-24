@@ -21,16 +21,8 @@
 
 -export([
    decode/1,
-   authenticate/2
-
-   % decode/1,
-   % authenticate/2,
-   % check_access_code/1,
-   % issue_access_code/1,
-   % check_pubkey/1,
-   % issue_pubkey/1,
-   % client_profile/1,
-   % redirect_to/1
+   authenticate/2,
+   access_token/1
 ]).
 
 
@@ -59,7 +51,7 @@ as_pair(Pair) ->
 
 authenticate(#{<<"client_id">> := Access} = Env, Head) ->
    [either ||
-      permit:lookup(Access),
+      oauth2_client:lookup(Access),
       authenticate_client(_, Env, Head)
    ];
 
@@ -72,9 +64,9 @@ authenticate(Env, Head) ->
    ].
 
 %%
-authenticate_client(#{<<"oauth2client">> := <<"public">>}, Env, _) ->
+authenticate_client(#{<<"security">> := <<"public">>}, Env, _) ->
    {ok, Env};
-authenticate_client(#{<<"oauth2client">> := <<"confidential">>}, Env, Head) ->
+authenticate_client(#{<<"security">> := <<"confidential">>}, Env, Head) ->
    [either ||
       category:maybeT(unauthorized_client,
          lens:get( lens:pair('Authorization', undefined), Head )
@@ -82,125 +74,26 @@ authenticate_client(#{<<"oauth2client">> := <<"confidential">>}, Env, Head) ->
       authenticate_http_digest(_, Env)
    ].
 
-
 %%
 authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
    [either ||
-      permit:auth(Access, Secret, 3600, #{<<"oauth2client">> => <<"confidential">>}),
+      permit:auth(Access, Secret),
+      oauth2_client:lookup(_),
+      oauth2_client:is_confidential(_),      
       fmap(lens:put(lens:map(<<"client_id">>, undefined), Access, Env)) 
    ];
 authenticate_http_digest(_, _) ->
    {error, unauthorized_client}.
 
 
-
 %%
-%% 2.3. Client Authentication
 %%
-%% If the client type is confidential, the client and authorization
-%% server establish a client authentication method...
-%% 
-%% The authorization server MAY establish a client authentication method
-%% with public clients.
-% -spec authenticate(_, _) -> {ok, _} | {error, _}.
-
-% authenticate(Uri, Head) ->
-%    case lens:get(lens:pair(<<"client_id">>, undefined), uri:q(Uri)) of
-%       undefined ->
-%          authenticate_confidential( lens:get(lens:pair('Authorization', undefined), Head) );
-      
-%       Identity  ->
-%          authenticate_public(Identity)
-%    end.
-
-% %%
-% authenticate_confidential(<<"Basic ", Digest/binary>>) ->
-%    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
-%    [either ||
-%       permit:auth(Access, Secret, 3600, [oauth2client]),
-%       oauth2_kvs_client:lookup(Access),
-%       is_client_type(<<"confidential">>, _)
-%    ];
-% authenticate_confidential(_) ->
-%    {error, unauthorized}.
-
-% %%
-% authenticate_public(Access) ->
-%    [either ||
-%       oauth2_kvs_client:lookup(Access),
-%       is_client_type(<<"public">>, _)
-%    ].
-
-% %%
-% is_client_type(Type, #{<<"type">> := Type} = Profile) ->
-%    {ok, Profile};
-% is_client_type(_, _) ->
-%    {error, unauthorized}.
-
-
- 
-
-% %%
-% %%
-% -spec issue_pubkey(_) -> {ok, _} | {error, _}.
-
-% issue_pubkey(_) ->
-%    ok.
-
-% %%
-% %% authenticate access/secret key
-% -spec check_pubkey(_) -> {ok, _} | {error, _}.
-
-% check_pubkey(#{
-%    <<"response_type">> := <<"code">>, 
-%    <<"access">> := Access, <<"secret">> := Secret} = Request) ->
-%    [either ||
-%       permit:auth(Access, Secret, 600),
-%       fmap(Request#{<<"access_code">> => _})
-%    ];
-
-% check_pubkey(#{
-%    <<"response_type">> := <<"token">>, 
-%    <<"access">> := Access, <<"secret">> := Secret} = Request) ->
-%    [either ||
-%       permit:auth(Access, Secret, 3600),
-%       fmap(Request#{<<"access_token">> => _})
-%    ];
-
-% check_pubkey(_) ->
-%    {error, unsupported_response_type}.
-
-
-% %%
-% %%
-% -spec client_profile(_) -> {ok, _} | {error, _}.
-
-% client_profile(#{<<"client_id">> := Access} = Request) ->
-%    [either ||
-%       oauth2_kvs_client:lookup(Access),
-%       fmap(maps:merge(_, Request))
-%    ];
-% client_profile(_) ->
-%    {error, invalid_request}.
-
-
-
-% %%
-% %%
-% -spec redirect_to(_) -> {ok, _} | {error, _}. 
-
-% redirect_to(#{
-%    <<"type">> := <<"confidential">>, <<"response_type">> := <<"code">>,
-%    <<"redirect_uri">> := Uri, <<"access_code">> := Code, <<"state">> := State}) ->
-
-%    Query = [{<<"code">>, Code}, {<<"state">>, State}],
-%    {ok, uri:s(uri:q(Query, uri:new(Uri)))};
-
-% redirect_to(#{
-%    <<"response_type">> := <<"token">>,
-%    <<"redirect_uri">> := Uri, <<"access_token">> := Token, <<"state">> := State}) ->
-
-%    Query = [{<<"access_token">>, Token}, {<<"state">>, State}],
-%    {ok, uri:s(uri:q(Query, uri:new(Uri)))}.
+access_token(Head) ->
+   case lens:get(lens:pair('Authorization', undefined), Head) of
+      <<"Bearer ", Token/binary>> ->
+         Token;
+      _ ->
+         undefined
+   end.
 

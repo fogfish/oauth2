@@ -8,7 +8,7 @@
 <div class="dc-container dc-container-limited">
 
    <div class="dc-dialog">
-      <form class="form-group" action="/oauth2/signup" method="post">
+      <form class="form-group" action="/oauth2/authorize" method="post">
          <div class="dc-dialog__content">
          <div class="dc-dialog__body">
             <h3 class="dc-dialog__title">Sign Up</h3>
@@ -33,9 +33,10 @@
                </label>
                <input id="secret" name="secret" type="password" class="dc-input" required="required" />
 
-               <input id="response_type" name="response_type" type="hidden" value=""/>
-               <input id="client_id" name="client_id" type="hidden" value=""/>
-               <input id="state" name="state" type="hidden" value=""/>
+               <input class="response_type" name="response_type" type="hidden" value=""/>
+               <input class="client_id" name="client_id" type="hidden" value=""/>
+               <input class="state" name="state" type="hidden" value=""/>
+               <input name="oauth2" type="hidden" value="signup"/>
             </div>
          </div>
          </div>

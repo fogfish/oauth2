@@ -47,7 +47,7 @@ content_accepted(_Req) ->
 
 %%
 %%
-oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code} = Env) ->
+oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code}) ->
    [either ||
       permit:validate(Code),
       category:maybeT(server_error,
@@ -56,7 +56,7 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"cod
       access_token(_)
    ];
 
-oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret} = Env) ->
+oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret}) ->
    [either ||
       permit:auth(Access, Secret, 3600),
       category:maybeT(server_error,
@@ -65,12 +65,25 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> :
       access_token(_)
    ];   
 
-% oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>} = Env) ->
+oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>, <<"client_id">> := Access}) ->
+   [either ||
+      permit:lookup(Access),
+      is_confidential(_),
+      access_token(Access)
+   ];
 
 % oauth2_issue_access_token(#{<<"grant_type">> := <<"refresh_token">>} = Env) ->
 
 oauth2_issue_access_token(_) ->
    {error, invalid_request}.
+
+%%
+%%
+is_confidential(#{<<"oauth2client">> := <<"confidential">>}) ->
+   ok;
+is_confidential(_) ->
+   {error, invalid_request}.
+
 
 %%
 %%
@@ -81,3 +94,5 @@ access_token(Access) ->
       fmap(lens:put(lens:map(<<"token_type">>, undefined), <<"bearer">>, _)),
       fmap(lens:put(lens:map(<<"expires_in">>, undefined), 3600, _))
    ].
+
+

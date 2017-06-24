@@ -85,18 +85,23 @@ oauth2_grant_flow(Env) ->
 
 %%
 %%
+oauth2_code_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret, <<"oauth2">> := <<"signup">>} = Env) ->
+   [either ||
+      permit:create(Access, Secret),
+      permit:auth(Access, Secret, 600),
+      oauth2_code_grant_redirect(_, Env)
+   ];
+
 oauth2_code_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = Env) ->
    [either ||
       permit:auth(Access, Secret, 600),
-      oauth2_redirect_code_grant(_, Env)
+      oauth2_code_grant_redirect(_, Env)
    ].
 
-oauth2_redirect_code_grant(Token, #{<<"client_id">> := Access} = Env) ->
+oauth2_code_grant_redirect(Token, #{<<"client_id">> := Access} = Env) ->
    [either ||
-      permit:lookup(Access),
-      fmap(lens:get(lens:map(<<"redirect_uri">>), _)),
-      oauth2_redirect_to(
-         _,
+      oauth2_client:lookup(Access),
+      oauth2_client:redirect_uri(_,
          [
             {code, Token}, 
             {state, lens:get(lens:map(<<"state">>, undefined), Env)}
@@ -106,18 +111,23 @@ oauth2_redirect_code_grant(Token, #{<<"client_id">> := Access} = Env) ->
 
 %%
 %%
+oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret, <<"oauth2">> := <<"signup">>} = Env) ->
+   [either ||
+      permit:create(Access, Secret),
+      permit:auth(Access, Secret, 3600),
+      oauth2_implicit_grant_redirect(_, Env)      
+   ];
+
 oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = Env) ->
    [either ||
       permit:auth(Access, Secret, 3600),
-      oauth2_redirect_implicit_grant(_, Env)
+      oauth2_implicit_grant_redirect(_, Env)
    ].
 
-oauth2_redirect_implicit_grant(Token, #{<<"client_id">> := Access} = Env) ->
+oauth2_implicit_grant_redirect(Token, #{<<"client_id">> := Access} = Env) ->
    [either ||
-      permit:lookup(Access),
-      fmap(lens:get(lens:map(<<"redirect_uri">>), _)),
-      oauth2_redirect_to(
-         _,
+      oauth2_client:lookup(Access),
+      oauth2_client:redirect_uri(_,
          [
             {access_token, Token}, 
             {state, lens:get(lens:map(<<"state">>, undefined), Env)}
@@ -125,29 +135,15 @@ oauth2_redirect_implicit_grant(Token, #{<<"client_id">> := Access} = Env) ->
       )
    ].
 
-
 %%
 %%
 oauth2_redirect_with_error(Reason, #{<<"client_id">> := Access} = Env) ->
    [either ||
-      permit:lookup(Access),
-      category:maybeT(server_error,
-         lens:get( lens:map(<<"redirect_uri">>, undefined), Env )
-      ),
-      oauth2_redirect_to(
-         _,
+      oauth2_client:lookup(Access),
+      oauth2_client:redirect_uri(_, 
          [
             {error, Reason}, 
             {state, lens:get(lens:map(<<"state">>, undefined), Env)}
          ]
       )
    ].
-
-%%
-%%
-oauth2_redirect_to(Uri, Query) ->
-   {ok, [$. ||
-      uri:new(Uri),
-      uri:q(Query, _),
-      uri:s(_)
-   ]}.

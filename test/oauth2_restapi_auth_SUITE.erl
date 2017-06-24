@@ -95,7 +95,8 @@ oauth2_code_grant_flow(_Config) ->
       <<"secret">> := Secret
    }} = permit:pubkey(Token,
       #{
-         <<"oauth2client">> => <<"confidential">>,
+         <<"type">>         => <<"oauth2:client">>,
+         <<"security">>     => <<"public">>,
          <<"redirect_uri">> => <<"http://localhost:8080/path">>
       }
    ),

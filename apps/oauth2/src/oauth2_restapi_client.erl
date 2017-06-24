@@ -51,8 +51,8 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
 'GET'(_Type, _Req, {_Uri, _Head, Env}) ->
    [either ||
       category:maybeT(badarg, lens:get(lens:pair(<<"id">>), Env))
-     % ,oauth2_client:lookup(oauth2_restapi:access_token(Head), _)
-     ,oauth2_client:lookup(_)
+     ,permit:lookup(_)
+     ,permit_pubkey:claims(_)
      ,fmap(jsx:encode(_))
    ].
 
