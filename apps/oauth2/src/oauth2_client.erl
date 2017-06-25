@@ -22,22 +22,32 @@
 %%
 %% client management interface
 -export([
+   create/2,
    create/3,
    lookup/1,
    remove/1,
    claims/1,
    is_public/1,
    is_confidential/1,
+   is_master/2,
    redirect_uri/2
 ]).
 
 %%
 %% list of valid claims for client
--define(CLAIMS, [<<"type">>, <<"redirect_uri">>, <<"security">>]).
+-define(CLAIMS,   [<<"type">>, <<"redirect_uri">>, <<"security">>]).
+-define(PROPERTY, [<<"access">>, <<"master">>, <<"type">>, <<"redirect_uri">>, <<"security">>]).
 
 %%
 %% create new client profile
+-spec create(permit:access(), permit:claims()) -> {ok, _} | {error, _}.
 -spec create(permit:access(), permit:secret(), permit:claims()) -> {ok, _} | {error, _}.
+
+create(Master, Claims) ->
+   [either ||
+      claims(Claims),
+      permit:pubkey(Master, _)
+   ].
 
 create(Access, Secret, Claims) ->
    [either ||
@@ -52,7 +62,10 @@ create(Access, Secret, Claims) ->
 lookup(Access) ->
    [either ||
       permit:lookup(Access),
-      claims(_)
+      fmap(maps:with(?PROPERTY, _)),
+      claims_type(_),
+      claims_security(_),
+      claims_redirect_uri(_)
    ].
 
 %%
@@ -135,6 +148,15 @@ is_confidential(#{<<"type">> := <<"oauth2:client">>, <<"security">> := <<"confid
    {ok, Claims};
 is_confidential(_) ->
    {error, invalid_security_profile}.
+
+%%
+%%
+-spec is_master(permit:claims(), _) -> {ok, permit:claims()} | {error, _}.
+         
+is_master(#{<<"master">> := Master} = Claims, Master) ->
+   {ok, Claims};
+is_master(_, _) ->
+   {error, invalid_master}.
 
 %%
 %%
