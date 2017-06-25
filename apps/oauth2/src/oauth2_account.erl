@@ -81,8 +81,20 @@ claims_type(_) ->
 profile(Access) ->
    [either ||
       lookup(Access),
+      as_profile(_),
       lookup_pubkey(_)
    ].
+
+as_profile(Claims) ->
+   Property = [<<"access">>, <<"type">>],
+   Profile  = maps:with(Property, Claims),
+   List     = lists:map(
+      fun({Key, Val}) -> 
+         #{<<"id">> => Key, <<"value">> => Val} 
+      end,
+      maps:to_list( maps:without(Property, Claims) )
+   ),
+   {ok, Profile#{<<"claims">> => List}}.   
 
 lookup_pubkey(#{<<"access">> := Access} = Profile) ->
    [either ||

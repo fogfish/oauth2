@@ -85,7 +85,11 @@ encode_pair({Key, Val})
 
 encode_pair({Key, Val})
  when is_float(Val) ->
-   {Key, {n, Val}}.
+   {Key, {n, Val}};
+
+encode_pair({Key, Val})
+ when is_boolean(Val) ->
+   {Key, {bool, Val}}.
 
 %%
 %% decode list of ddb key-val pairs to maps

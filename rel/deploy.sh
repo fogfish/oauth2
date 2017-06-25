@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## application deployment script 
+## application deployment script(s) 
 ##
 ## @doc
 ##    node deployment script
