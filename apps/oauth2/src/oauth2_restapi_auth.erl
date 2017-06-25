@@ -87,7 +87,9 @@ oauth2_grant_flow(Env) ->
 %%
 oauth2_code_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret, <<"oauth2">> := <<"signup">>} = Env) ->
    [either ||
-      permit:create(Access, Secret),
+      oauth2_account:create(Access, Secret,
+         #{<<"type">> => <<"oauth2:account">>}
+      ),
       permit:auth(Access, Secret, 600),
       oauth2_code_grant_redirect(_, Env)
    ];
@@ -113,7 +115,9 @@ oauth2_code_grant_redirect(Token, #{<<"client_id">> := Access} = Env) ->
 %%
 oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret, <<"oauth2">> := <<"signup">>} = Env) ->
    [either ||
-      permit:create(Access, Secret),
+      oauth2_account:create(Access, Secret,
+         #{<<"type">> => <<"oauth2:account">>}
+      ),
       permit:auth(Access, Secret, 3600),
       oauth2_implicit_grant_redirect(_, Env)      
    ];

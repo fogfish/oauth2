@@ -44,20 +44,16 @@ content_accepted(_Req) ->
 %%   To prevent token scanning attacks, the endpoint MUST also require
 %%   some form of authorization to access this endpoint
 authorize(_Mthd, {_Uri, Head, _Env}) ->
-   case permit_oauth2:authenticate(Head) of
-      {error, undefined} ->
-         {error, unauthorized};
-      {ok, _Access} ->
-         ok;
-      {error, _} = Error ->
-         Error
-   end.
+   oauth2_restapi:authenticate(#{}, Head).
 
+%%
 %%
 'POST'(_Type, Req, {_Uri, _Head, _Env}) ->
    [either ||
-      fmap(permit_oauth2:decode(Req)),
-      fmap(lens:get(lens:pair(<<"token">>), _)),
+      oauth2_restapi:decode(Req),
+      category:maybeT(badarg,
+         lens:get(lens:pair(<<"token">>, undefined), _)
+      ),
       permit:validate(_),
       fmap(jsx:encode(_))
-   ].   
+   ].

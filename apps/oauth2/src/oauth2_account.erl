@@ -19,9 +19,60 @@
 -compile({parse_transform, category}).
 
 -export([
+   create/3,
+   lookup/1,
+   remove/1,
+   claims/1,
    profile/1
 ]).
 
+%%
+%% black list of properties (claims) to exclude
+-define(NOT_ALLOWED,   [<<"secret">>, <<"nonce">>]).
+
+%%
+%%
+-spec create(permit:access(), permit:secret(), permit:claims()) -> {ok, _} | {error, _}.
+
+create(Access, Secret, Claims) ->
+   [either ||
+      claims(Claims),
+      permit:create(Access, Secret, _)
+   ].
+
+%%
+%%
+-spec lookup(permit:access()) -> {ok, _} | {error, _}.
+
+lookup(Access) ->
+   [either ||
+      permit:lookup(Access),
+      fmap(maps:without(?NOT_ALLOWED, _)),
+      claims_type(_)
+   ].
+
+%%
+%%
+-spec remove(permit:access()) -> {ok, _} | {error, _}.
+
+remove(Access) ->
+   permit:revoke(Access).
+
+%%
+%%
+-spec claims(_) -> {ok, _} | {error, _}.
+
+claims(Claims) ->
+   [either ||
+      fmap(maps:without(?NOT_ALLOWED, Claims)),
+      claims_type(_)
+   ].
+
+%%
+claims_type(#{<<"type">> := <<"oauth2:account">>} = Claims) ->
+   {ok, Claims};
+claims_type(_) ->
+   {error, invalid_claims}.
 
 %%
 %%
@@ -29,19 +80,18 @@
 
 profile(Access) ->
    [either ||
-      permit:lookup(Access),
-      fmap(maps:with([<<"access">>, <<"roles">>], _)),
-      lookup_clients(_)
+      lookup(Access),
+      lookup_pubkey(_)
    ].
 
-lookup_clients(#{<<"access">> := Access} = Profile) ->
+lookup_pubkey(#{<<"access">> := Access} = Profile) ->
    [either ||
-      pts:call(permit, Access, {match, <<"master">>, [{<<"master">>, Access}]}),
-      lookup_clients_info(_),
+      pts:call(permit, Access, pubkey),
+      lookup_pubkey_clients(_),
       fmap(Profile#{<<"clients">> => _})
    ].
 
-lookup_clients_info(List) ->
+lookup_pubkey_clients(List) ->
    {ok, lists:map(
       fun(#{<<"access">> := Access} = Basic) ->
          {ok, Client} = oauth2_client:lookup(Access),

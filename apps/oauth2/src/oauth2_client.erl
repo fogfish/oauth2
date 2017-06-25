@@ -35,8 +35,9 @@
 
 %%
 %% list of valid claims for client
--define(CLAIMS,   [<<"type">>, <<"redirect_uri">>, <<"security">>]).
--define(PROPERTY, [<<"access">>, <<"master">>, <<"type">>, <<"redirect_uri">>, <<"security">>]).
+-define(CLAIMS,      [<<"type">>, <<"redirect_uri">>, <<"security">>]).
+-define(NOT_ALLOWED, [<<"secret">>, <<"nonce">>]).
+
 
 %%
 %% create new client profile
@@ -62,7 +63,7 @@ create(Access, Secret, Claims) ->
 lookup(Access) ->
    [either ||
       permit:lookup(Access),
-      fmap(maps:with(?PROPERTY, _)),
+      fmap(maps:without(?NOT_ALLOWED, _)),
       claims_type(_),
       claims_security(_),
       claims_redirect_uri(_)

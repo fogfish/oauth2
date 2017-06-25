@@ -90,7 +90,7 @@ none({remove, _Key}, Pipe, State) ->
    pipe:ack(Pipe, {error, not_found}),
    {stop, normal, State};
 
-none({match, _Index, _Query}, Pipe, State) ->
+none(_, Pipe, State) ->
    pipe:ack(Pipe, {error, not_found}),
    {stop, normal, State}.
 
@@ -119,9 +119,9 @@ some({remove, _Access}, Pipe, #state{val = Val} = State0) ->
          {stop, normal, State0}
    end;
 
-some({match, Index, Query}, Pipe, #state{ddb = Ddb} = State) ->
+some(pubkey, Pipe, #state{ddb = Ddb, key = Access} = State) ->
    case 
-      oauth2_ddb:match(Ddb, Index, Query)
+      oauth2_ddb:match(Ddb, <<"master">>, [{<<"master">>, Access}])
    of 
       {ok, List} ->
          pipe:ack(Pipe, {ok, List});
@@ -129,7 +129,6 @@ some({match, Index, Query}, Pipe, #state{ddb = Ddb} = State) ->
          pipe:ack(Pipe, Error)
    end,
    {next_state, some, State}.
-
 
 
 %%-----------------------------------------------------------------------------
