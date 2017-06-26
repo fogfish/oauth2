@@ -15,6 +15,5 @@
 %%
 %% release content definition
 {release, [
-   oauth2,
-   account
+   oauth2
 ]}.
