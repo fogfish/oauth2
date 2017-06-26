@@ -15,7 +15,6 @@
         ,knet
         ,restd
         ,erlcloud
-        ,swirl
       ]},
       {mod, {oauth2_app, []}},
       {env, []}
