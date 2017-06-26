@@ -24,13 +24,12 @@
    allowed_methods/1,
    content_provided/1, 
    content_accepted/1,
-   'GET'/3,
    'POST'/3
 ]).
 
 %%
 allowed_methods(_Req) ->
-   ['GET', 'POST'].
+   ['POST'].
 
 %%
 content_provided(_Req) ->
@@ -40,10 +39,6 @@ content_provided(_Req) ->
 content_accepted(_Req) ->
    [{application, 'x-www-form-urlencoded'}].
 
-%%
-%%
-'GET'(_Type, _Req, {_Uri, _Head, _Env}) ->
-   {ok, <<>>}.
 
 %%
 %%
@@ -119,7 +114,10 @@ oauth2_code_grant_redirect(Token, #{<<"client_id">> := Access} = Env) ->
 oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret, <<"oauth2">> := <<"signup">>} = Env) ->
    [either ||
       oauth2_account:create(Access, Secret,
-         #{<<"type">> => <<"oauth2:account">>}
+         #{
+            <<"type">> => <<"oauth2:account">>,
+            <<"uid">>  => true
+         }
       ),
       permit:auth(Access, Secret, 3600),
       oauth2_implicit_grant_redirect(_, Env)      

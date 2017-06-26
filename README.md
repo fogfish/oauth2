@@ -8,10 +8,14 @@ The microservice based implementation of OAuth 2.0 Authorization Framework, [RFC
 
 Work In Progress
 
+**OAuth 2.0 grants flow**: It supports out of the box grants defined by RFC 6749: Authorization code grant, Implicit grant, Client credentials grant, Resource owner password credentials grant and Refresh Token grant.
+
+**Required client identity**: [RFC 6749](https://tools.ietf.org/html/rfc6749#section-3.2.1) discusses about client authentication. This implementation requires HTTP basic digest schema to identity confidential clients and demands `client_id` parameter to identify public clients when sending requests to service endpoints. 
+
 
 ## Inspiration
 
-The appliance architecture and design reflect the principles of incremental scalability, decentralization and fault tolerance. The appliance targets no configuration experience  for cloud operation and deployment. 
+The appliance architecture and design reflect the principles of incremental scalability, decentralization and fault tolerance. The appliance targets no configuration experience for cloud operation and deployment. 
 
 
 

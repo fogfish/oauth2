@@ -79,7 +79,7 @@ authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
    [either ||
       permit:auth(Access, Secret),
-      oauth2_client:lookup(_),
+      oauth2_client:lookup(Access),
       oauth2_client:is_confidential(_),      
       fmap(lens:put(lens:map(<<"client_id">>, undefined), Access, Env)) 
    ];

@@ -59,10 +59,7 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"cod
 oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret}) ->
    [either ||
       permit:auth(Access, Secret, 3600),
-      category:maybeT(server_error,
-         lens:get(lens:map(<<"sub">>), _)
-      ),
-      access_token(_)
+      access_token(Access)
    ];   
 
 oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>, <<"client_id">> := Access}) ->

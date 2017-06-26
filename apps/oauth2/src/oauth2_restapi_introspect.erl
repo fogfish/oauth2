@@ -42,7 +42,9 @@ content_accepted(_Req) ->
 %%
 %% 2.1. Introspection Request
 %%   To prevent token scanning attacks, the endpoint MUST also require
-%%   some form of authorization to access this endpoint
+%%   some form of authorization to access this endpoint.
+%%
+%% The end-point is only available for confidential clients 
 authorize(_Mthd, {_Uri, Head, _Env}) ->
    oauth2_restapi:authenticate(#{}, Head).
 
