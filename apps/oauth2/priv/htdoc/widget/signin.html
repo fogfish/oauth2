@@ -13,13 +13,9 @@
          <div class="dc-dialog__body">
             <h3 class="dc-dialog__title">Sign In</h3>
             <h4 class="dc-dialog__subtitle">with</h4>
-            {if error}
                <div class="dc-toast dc-toast--top">
-                  <div class="dc-toast__content dc-toast__content--error">{error}</div>
+                  <div class="dc-toast__content dc-toast__content--error"></div>
                </div>
-            {else}
-               <p>&nbsp;</p>
-            {/if}
 
             <div class="form">
                <label class="dc-label" for="requiredInput">
@@ -55,6 +51,7 @@
 <script type="text/javascript" src="/js/oauth2.js"></script>
 <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript">
+var err = oauth2.q('error')
 var req = {
    response_type: oauth2.q('response_type', 'code'),
    client_id: oauth2.q('client_id', 'oauth2ux'),
@@ -67,5 +64,12 @@ $('.state').val(req.state)
 
 var signup = '/widget/signup.html?' + $.param(req) 
 $('.dc-dialog__actions--secondary a').attr('href', signup)
+
+if (err)
+{
+   $('.dc-toast__content--error').text( oauth2.error(err) )
+   $('.dc-toast__content--error').show()
+}
+
 </script>
 </body>

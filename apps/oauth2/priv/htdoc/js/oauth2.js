@@ -15,3 +15,14 @@ oauth2.q = function(key, def, url)
    if (!value[2]) return '';
    return decodeURIComponent(value[2].replace(/\+/g, " "));
 }
+
+//
+//
+oauth2.error = function(id)
+{
+   switch (id)
+   {
+   default:
+      return 'System error: ' + id
+   }
+}

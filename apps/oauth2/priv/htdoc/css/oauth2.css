@@ -35,6 +35,11 @@
    margin-bottom: 2.4rem;
 }
 
+.dc-toast__content--error
+{
+   display: none;
+}
+
 input 
 {
    width: 100%;

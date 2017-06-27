@@ -13,13 +13,9 @@
          <div class="dc-dialog__body">
             <h3 class="dc-dialog__title">Sign Up</h3>
             <h4 class="dc-dialog__subtitle">with</h4>
-            {if error}
-               <div class="dc-toast dc-toast--top">
-                  <div class="dc-toast__content dc-toast__content--error">{error}</div>
-               </div>
-            {else}
-               <p>&nbsp;</p>
-            {/if}
+            <div class="dc-toast dc-toast--top">
+               <div class="dc-toast__content dc-toast__content--error">{error}</div>
+            </div>
 
             <div class="form">
                <label class="dc-label" for="requiredInput">

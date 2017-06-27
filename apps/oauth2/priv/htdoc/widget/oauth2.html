@@ -22,16 +22,21 @@ function url_query(name, url)
    return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-var access_token = url_query('access_token')
-if (access_token)
+var error = url_query('error')
+var token = url_query('access_token')
+var acode = url_query('code')
+
+if (error)
 {
+   window.location.replace('/authorize?response_type=code&client_id=oauth2ux&error=' + error)
+} else if (token) {
    window.localStorage.setItem('access_token', 'Bearer ' + access_token)
-   window.location.replace(redirect_url)
+   window.location.replace('/widget/account.html')
 } else {
    var xhr = new XMLHttpRequest();
    xhr.open('POST', '/oauth2/token');
    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-   xhr.send('grant_type=authorization_code&client_id=' + client_id + '&code=' + url_query('code'));
+   xhr.send('grant_type=authorization_code&client_id=oauth2ux&code=' + acode);
    xhr.onreadystatechange = function() 
    {
       var DONE = 4
@@ -42,8 +47,9 @@ if (access_token)
          {
             var json = JSON.parse(xhr.responseText)
             window.localStorage.setItem('access_token', 'Bearer ' + json.access_token)
-            window.location.replace(redirect_url)
+            window.location.replace('/widget/account.html')
          } else {
+            window.location.replace('/authorize?response_type=code&client_id=oauth2ux')
          }
       }
    }
