@@ -1,0 +1,13 @@
+{application, signin,
+   [
+      {description, "oauth2 sign-in client"},
+      {vsn,         "0.0.0"},
+      {modules,     []},
+      {registered,  []},
+      {applications,[
+         kernel
+        ,stdlib
+      ]},
+      {env, []}
+   ]
+}.
