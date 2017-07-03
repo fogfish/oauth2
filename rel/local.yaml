@@ -12,6 +12,7 @@ services:
   ##
   oauth2:
     image: fogfish/oauth2
+    mem_limit: 50000000
     ports:
       - "8080:8080"
 

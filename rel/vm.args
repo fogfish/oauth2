@@ -12,7 +12,8 @@
 ## Enable kernel poll and a few async threads
 +K true
 +A 160
-+P 10000000
+## 
+## +P 100000
 
 ## limit number of port, firewall requires empd 4369 port
 -kernel inet_dist_listen_min 32100

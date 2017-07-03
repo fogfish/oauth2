@@ -11,6 +11,7 @@
         ,datum
         ,pipe
         ,pts
+        ,permit
         ,ek
         ,knet
         ,restd
