@@ -19,7 +19,7 @@ content_provided(_Req) ->
 %%
 %% 
 'GET'(_Type, _Req, {Uri, _Head, _Env}) ->
-   signin:exchange(lens:get(lens:pair(<<"code">>), uri:q(Uri))),
+   signin ! {code, lens:get(lens:pair(<<"code">>), uri:q(Uri))},
    {ok, <<"
       <!DOCTYPE HTML>
       <html lang=\"en-US\">
