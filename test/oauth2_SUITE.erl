@@ -77,7 +77,7 @@ groups() ->
 %%%----------------------------------------------------------------------------   
 init_per_suite(Config) ->
    oauth2:start(),
-   {ok, _} = oauth2_client:create("client.p", "nosecret", 
+   {ok, _} = oauth2_client:create("client.p", "nosecret",
       #{
          <<"type">> => <<"oauth2:client">>,
          <<"security">> => <<"public">>,
@@ -135,8 +135,7 @@ signup_code_flow_with_public_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"signup.cf.pc.uA">>,
-      <<"type">>:= <<"oauth2:account">>,
-      <<"uid">> := true
+      <<"exch">>:= true
    }} = permit:validate(Code).
 
 %%
@@ -154,8 +153,7 @@ signin_code_flow_with_public_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"type">>:= <<"oauth2:account">>,
-      <<"uid">> := true
+      <<"exch">>:= true
    }} = permit:validate(Code).
 
 %%
@@ -174,7 +172,6 @@ signup_implicit_flow_with_public_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"signup.if.pc.uA">>,
-      <<"type">>:= <<"oauth2:account">>,
       <<"uid">> := true
    }} = permit:validate(Token).
 
@@ -193,7 +190,6 @@ signin_implicit_flow_with_public_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"type">>:= <<"oauth2:account">>,
       <<"uid">> := true
    }} = permit:validate(Token).
 
@@ -214,8 +210,7 @@ signup_code_flow_with_confidential_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"signup.cf.cc.uA">>,
-      <<"type">>:= <<"oauth2:account">>,
-      <<"uid">> := true
+      <<"exch">>:= true
    }} = permit:validate(Code).
 
 %%
@@ -233,8 +228,7 @@ signin_code_flow_with_confidential_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"type">>:= <<"oauth2:account">>,
-      <<"uid">> := true
+      <<"exch">>:= true
    }} = permit:validate(Code).
 
 
@@ -254,7 +248,6 @@ signup_implicit_flow_with_confidential_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"signup.if.cc.uA">>,
-      <<"type">>:= <<"oauth2:account">>,
       <<"uid">> := true
    }} = permit:validate(Token).
 
@@ -273,7 +266,6 @@ signin_implicit_flow_with_confidential_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"type">>:= <<"oauth2:account">>,
       <<"uid">> := true
    }} = permit:validate(Token).
 
@@ -293,7 +285,6 @@ signin_password_grant_with_public_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"type">> := <<"oauth2:account">>,
       <<"uid">> := true
    }} = permit:validate(Token).
 
@@ -312,7 +303,6 @@ signin_password_grant_with_confidential_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"type">> := <<"oauth2:account">>,
       <<"uid">> := true
    }} = permit:validate(Token).
 
@@ -328,9 +318,7 @@ signin_client_grant_with_confidential_client(_Config) ->
    } = oauth2_token(Payload),
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
-      <<"sub">> := <<"client.c">>,
-      <<"type">> := <<"oauth2:client">>,
-      <<"security">> := <<"confidential">>
+      <<"sub">> := <<"client.c">>
    }} = permit:validate(Token).
 
 

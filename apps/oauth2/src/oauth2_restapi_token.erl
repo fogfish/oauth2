@@ -16,6 +16,8 @@
 -module(oauth2_restapi_token).
 -compile({parse_transform, category}).
 
+-include("oauth2.hrl").
+
 -export([
    allowed_methods/1,
    content_provided/1, 
@@ -47,41 +49,57 @@ content_accepted(_Req) ->
 
 %%
 %%
-oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code}) ->
+oauth2_issue_access_token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Token}) ->
    [either ||
-      permit:validate(Code),
-      category:maybeT(server_error,
-         lens:get(lens:map(<<"sub">>), _)
-      ),
-      access_token(_)
+      permit:include(Token, ?OAUTH2_EXCH),
+      access_token(Token)
    ];
 
 oauth2_issue_access_token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret}) ->
    [either ||
-      permit:auth(Access, Secret, 3600),
-      access_token(Access)
+      permit:stateless(Access, Secret, ?OAUTH2_TTL_CODE, permit:default_claims()),
+      access_token(_)
    ];   
 
-oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>, <<"client_id">> := Access}) ->
+oauth2_issue_access_token(#{<<"grant_type">> := <<"client_credentials">>, <<"client_id">> := Access, <<"client_secret">> := Secret}) ->
    [either ||
       oauth2_client:lookup(Access),
       oauth2_client:is_confidential(_),
-      access_token(Access)
+      permit:stateless(Access, Secret, ?OAUTH2_TTL_CODE, permit:default_claims()),
+      access_token(_)
    ];
 
-% oauth2_issue_access_token(#{<<"grant_type">> := <<"refresh_token">>} = Env) ->
+oauth2_issue_access_token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_token">> := Token}) ->
+   [either ||
+      permit:include(Token, ?OAUTH2_EXCH),
+      access_token(Token)
+   ];
 
 oauth2_issue_access_token(_) ->
    {error, invalid_request}.
 
 %%
 %%
-access_token(Access) ->
+access_token(Token) ->
    [either ||
-      permit:issue(Access, 3600),
-      fmap(lens:put(lens:map(<<"access_token">>, undefined), _, #{})),
-      fmap(lens:put(lens:map(<<"token_type">>, undefined), <<"bearer">>, _)),
-      fmap(lens:put(lens:map(<<"expires_in">>, undefined), 3600, _))
+      create_empty_token(),
+      create_access_token(Token, _),
+      create_refresh_token(Token, _)
    ].
 
+create_empty_token() ->
+   {ok, 
+      #{<<"token_type">> => <<"bearer">>, <<"expires_in">> => ?OAUTH2_TTL_ACCESS}
+   }.
 
+create_access_token(Token, X) ->
+   [either ||
+      permit:stateless(Token, ?OAUTH2_TTL_ACCESS, permit:default_claims()),
+      fmap(X#{<<"access_token">> => _})
+   ].
+
+create_refresh_token(Token, X) ->
+   [either ||
+      permit:revocable(Token, ?OAUTH2_TTL_REFRESH, ?OAUTH2_EXCH),
+      fmap(X#{<<"refresh_token">> => _})
+   ].

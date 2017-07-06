@@ -7,7 +7,8 @@ RUN set -e \
    && yum -y install \
       iproute \
       tar  \
-      unzip
+      unzip \
+      openssl
 
 ##
 ## 

@@ -20,3 +20,5 @@ services:
       - "AWS_ACCESS_KEY_ID=access"
       - "AWS_SECRET_ACCESS_KEY=secret"
       - "OAUTH2_STORAGE=ddb+http://aws-ddb:8000/oauth2pubkey?hashkey=access"
+      - "OAUTH2_PUBLIC=openssl+public:///usr/local/oauth2/releases"
+      - "OAUTH2_SECRET=openssl+secret:///usr/local/oauth2/releases"

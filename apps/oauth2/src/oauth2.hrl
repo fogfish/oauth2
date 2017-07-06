@@ -15,6 +15,16 @@
 %%
 
 %%
+%% the build-in exchange claim, it is used only to obtain a new access token  
+-define(OAUTH2_EXCH, #{<<"exch">> => true}).
+
+%%
+%% default ttl 
+-define(OAUTH2_TTL_CODE,       300).
+-define(OAUTH2_TTL_ACCESS,    1200).
+-define(OAUTH2_TTL_REFRESH,  86400).
+
+%%
 %% build-in oauth2 client identity 
 -define(OAUTH2_UX,  <<"oauth2ux">>).
 

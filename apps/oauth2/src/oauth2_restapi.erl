@@ -78,10 +78,10 @@ authenticate_client(#{<<"security">> := <<"confidential">>}, Env, Head) ->
 authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
    [either ||
-      permit:auth(Access, Secret),
+      permit:stateless(Access, Secret, 1, #{}),
       oauth2_client:lookup(Access),
-      oauth2_client:is_confidential(_),      
-      fmap(lens:put(lens:map(<<"client_id">>, undefined), Access, Env)) 
+      oauth2_client:is_confidential(_),
+      fmap(Env#{<<"client_id">> => Access, <<"client_secret">> => Secret})
    ];
 authenticate_http_digest(_, _) ->
    {error, unauthorized_client}.

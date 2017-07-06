@@ -88,13 +88,13 @@ oauth2_code_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret, <<"oaut
             <<"uid">>  => true
          }
       ),
-      permit:auth(Access, Secret, 600),
+      permit:stateless(Access, Secret, ?OAUTH2_TTL_CODE, ?OAUTH2_EXCH),
       oauth2_code_grant_redirect(_, Env)
    ];
 
 oauth2_code_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = Env) ->
    [either ||
-      permit:auth(Access, Secret, 600),
+      permit:stateless(Access, Secret, ?OAUTH2_TTL_CODE, ?OAUTH2_EXCH),
       oauth2_code_grant_redirect(_, Env)
    ].
 
@@ -119,13 +119,13 @@ oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret, <<"
             <<"uid">>  => true
          }
       ),
-      permit:auth(Access, Secret, 3600),
+      permit:stateless(Access, Secret, ?OAUTH2_TTL_ACCESS, permit:default_claims()),
       oauth2_implicit_grant_redirect(_, Env)      
    ];
 
 oauth2_implicit_grant_flow(#{<<"access">> := Access, <<"secret">> := Secret} = Env) ->
    [either ||
-      permit:auth(Access, Secret, 3600),
+      permit:stateless(Access, Secret, ?OAUTH2_TTL_ACCESS, permit:default_claims()),
       oauth2_implicit_grant_redirect(_, Env)
    ].
 
