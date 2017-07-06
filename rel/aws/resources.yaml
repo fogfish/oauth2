@@ -1,0 +1,60 @@
+##
+## @doc
+##   Cloud Formation Template to build resource required for oauth2 service
+##    * DynamoDB
+AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+  Spawn AWS resource for OAuth2 service.
+Parameters:
+
+  Env:
+    Type: String
+    Default: dev
+    Description: |
+      service environment 
+
+##
+##
+Resources:
+
+  DynamoDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Join:
+          - "-"
+          -
+            - !Ref Env
+            - "oauth2pubkey"
+
+      AttributeDefinitions:
+        -
+          AttributeName: access
+          AttributeType: S
+        -
+          AttributeName: master
+          AttributeType: S
+
+      KeySchema:
+        -
+          AttributeName: access
+          KeyType: HASH
+
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+      GlobalSecondaryIndexes:
+        -
+          IndexName: master
+          KeySchema:
+            -
+              AttributeName: master
+              KeyType: HASH
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - access
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
