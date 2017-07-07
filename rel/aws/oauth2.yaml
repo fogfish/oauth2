@@ -7,13 +7,11 @@ services:
   ##
   oauth2:
     image: fogfish/oauth2
-    mem_limit: 50000000
+    mem_limit: 128000000
     ports:
       - "8081:8080"
 
     environment:
-      - "AWS_ACCESS_KEY_ID=access"
-      - "AWS_SECRET_ACCESS_KEY=secret"
-      - "OAUTH2_STORAGE=ddb+https://dynamodb.eu-west-1.amazonaws.com/live-oauth2pubkey?hashkey=access"
+      - "OAUTH2_STORAGE=ddb+https://dynamodb.eu-west-1.amazonaws.com:443/live-oauth2pubkey?hashkey=access"
       - "OAUTH2_PUBLIC=openssl+public:///usr/local/oauth2/releases"
       - "OAUTH2_SECRET=openssl+secret:///usr/local/oauth2/releases"

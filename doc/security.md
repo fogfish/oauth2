@@ -143,4 +143,9 @@ TBD
 
 > Authenticating resource owners to clients is out of scope for this specification.  Any specification that uses the authorization process as a form of delegated end-user authentication to the client (e.g., third-party sign-in service) MUST NOT use the implicit flow without additional security mechanisms that would enable the client to determine if the access token was issued for its use (e.g., audience-restricting the access token).
    
-   
+
+## JWT is broken
+
+http://cryto.net/~joepie91/blog/2016/06/13/stop-using-jwt-for-sessions/
+https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid
+
