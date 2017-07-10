@@ -26,6 +26,7 @@ The following command create: DynamoDB table
 aws cloudformation create-stack \
    --stack-name ${ENV}-oauth2-resources \
    --template-body file://./rel/aws/resources.yaml \
+   --capabilities CAPABILITY_NAMED_IAM \
    --parameters ParameterKey=Env,ParameterValue=${ENV}
 ```
 
@@ -33,6 +34,9 @@ aws cloudformation create-stack \
 
 Use ECS command line utilities to deploy oauth2 service 
 ```
-ecs-cli compose --project-name oauth2 --file rel/aws/oauth2.yaml service up
+ecs-cli compose --project-name oauth2 \
+   --cluster test \
+   --task-role-arn live-ddb-io \
+   --file rel/aws/oauth2.yaml service up
 ```
 

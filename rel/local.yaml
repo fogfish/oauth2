@@ -12,13 +12,19 @@ services:
   ##
   oauth2:
     image: fogfish/oauth2
-    mem_limit: 50000000
+    mem_limit: 32m
     ports:
       - "8080:8080"
 
     environment:
+      ## required to reduce Erlang VM memory footprint 
+      - "CODE_LOADING_MODE=interactive"
+
+      ## fake keys to use mock deployment of ddb
       - "AWS_ACCESS_KEY_ID=access"
       - "AWS_SECRET_ACCESS_KEY=secret"
+
+      ## OAuth2 appliance config 
       - "OAUTH2_STORAGE=ddb+http://aws-ddb:8000/oauth2pubkey?hashkey=access"
       - "OAUTH2_PUBLIC=openssl+public:///usr/local/oauth2/releases"
       - "OAUTH2_SECRET=openssl+secret:///usr/local/oauth2/releases"
