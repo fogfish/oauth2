@@ -1,6 +1,6 @@
 ##
 ## spawn backing services required for oauth2 development
-version: '2'
+version: '3'
 services:
   aws-ddb:
     build: ./ddb/

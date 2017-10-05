@@ -1,6 +1,9 @@
-#!/bin/bash
 ##
-## application deployment script(s) 
+## Copyright (C) 2012 Dmitry Kolesnikov
+##
+## This bootstrap script may be modified and distributed under the terms
+## of the MIT license.  See the LICENSE file for details.
+## https://github.com/fogfish/makefile
 ##
 ## @doc
 ##    node deployment script
@@ -8,6 +11,8 @@
 ##       ${REL}    - absolute path to release
 ##       ${APP}    - application name
 ##       ${VSN}    - application version
+##
+## @version 1.0.0
 set -u
 set -e
 
@@ -47,6 +52,7 @@ ${PREFIX}/${APP}/bin/${APP} \$1
 EOF
    
 chmod ugo+x /etc/init.d/${APP}
+ln -s /etc/init.d/${APP} /etc/init.d/application
 
 fi
 
