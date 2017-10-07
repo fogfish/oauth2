@@ -57,7 +57,7 @@ authenticate(#{<<"client_id">> := Access} = Env, Head) ->
 
 authenticate(Env, Head) ->
    [either ||
-      category:maybeT(unauthorized_client,
+      category:optionT(unauthorized_client,
          lens:get( lens:pair('Authorization', undefined), Head )
       ),
       authenticate_http_digest(_, Env)
@@ -68,7 +68,7 @@ authenticate_client(#{<<"security">> := <<"public">>}, Env, _) ->
    {ok, Env};
 authenticate_client(#{<<"security">> := <<"confidential">>}, Env, Head) ->
    [either ||
-      category:maybeT(unauthorized_client,
+      category:optionT(unauthorized_client,
          lens:get( lens:pair('Authorization', undefined), Head )
       ),
       authenticate_http_digest(_, Env)

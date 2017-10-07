@@ -53,7 +53,7 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
 'POST'(_Type, Req, {_Uri, _Head, _Env}) ->
    [either ||
       oauth2_restapi:decode(Req),
-      category:maybeT(badarg,
+      category:optionT(badarg,
          lens:get(lens:pair(<<"token">>, undefined), _)
       ),
       permit:validate(_),

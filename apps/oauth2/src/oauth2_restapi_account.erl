@@ -33,7 +33,7 @@ content_provided(_Req) ->
 %%
 'GET'(_Type, _Req, {_Uri, Head, _Env}) ->
    [either ||
-      category:maybeT(unauthorized,
+      category:optionT(unauthorized,
          oauth2_restapi:access_token(Head)
       )
      ,permit:validate(_)

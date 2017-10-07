@@ -42,14 +42,14 @@ content_accepted(_Req) ->
 %% 
 'GET'(_Type, _Req, {_Uri, Head, Env}) ->
    [either ||
-      category:maybeT(unauthorized, oauth2_restapi:access_token(Head)),
+      category:optionT(unauthorized, oauth2_restapi:access_token(Head)),
       permit:validate(_),
       lookup(_, Env)
    ].
 
 lookup(#{<<"sub">> := Master}, Env) ->
    [either ||
-      category:maybeT(badarg, 
+      category:optionT(badarg, 
          lens:get(lens:pair(<<"id">>), Env)
       ),
       oauth2_client:lookup(_),
@@ -61,7 +61,7 @@ lookup(#{<<"sub">> := Master}, Env) ->
 %%
 'POST'(_Type, Req, {_Uri, Head, _Env}) ->
    [either ||
-      category:maybeT(unauthorized, oauth2_restapi:access_token(Head)),
+      category:optionT(unauthorized, oauth2_restapi:access_token(Head)),
       permit:validate(_),
       create(_, Req)
    ].
@@ -77,20 +77,20 @@ create(#{<<"sub">> := Master}, Req) ->
 %%
 'DELETE'(_Type, _Req, {_Uri, Head, Env}) ->
    [either ||
-      category:maybeT(unauthorized, oauth2_restapi:access_token(Head)),
+      category:optionT(unauthorized, oauth2_restapi:access_token(Head)),
       permit:validate(_),
       remove(_, Env)
    ].
 
 remove(#{<<"sub">> := Master}, Env) ->
    [either ||
-      category:maybeT(badarg, 
+      category:optionT(badarg, 
          lens:get(lens:pair(<<"id">>), Env)
       ),
       oauth2_client:lookup(_),
       oauth2_client:is_master(_, Master),
 
-      category:maybeT(badarg, 
+      category:optionT(badarg, 
          lens:get(lens:pair(<<"id">>), Env)
       ),
       oauth2_client:remove(_),
