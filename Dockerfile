@@ -17,7 +17,8 @@ RUN set -e \
    && yum -y update  \
    && yum -y install \
       tar  \
-      unzip
+      unzip \
+      openssl 
 
 ENV   ARCH  x86_64
 ENV   PLAT  Linux
