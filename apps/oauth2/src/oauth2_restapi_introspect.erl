@@ -46,8 +46,7 @@ content_accepted(_Req) ->
 %%
 %% The end-point is only available for confidential clients 
 authorize(_Mthd, {_Uri, Head, _Env}) ->
-   % oauth2_restapi:authenticate(#{}, Head).
-   ok.
+   oauth2_restapi:authenticate(#{}, Head).
 
 %%
 %%
