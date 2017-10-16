@@ -1,7 +1,6 @@
 ##
 ## @doc
-##   Cloud Formation Template to build resource required for oauth2 service
-##    * DynamoDB
+##   backing services required by oauth2
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Spawn AWS resource for OAuth2 service.

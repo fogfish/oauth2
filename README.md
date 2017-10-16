@@ -30,13 +30,21 @@ Build the latest version of authorization server from the `master` branch. The b
 
 The easiest way to run the appliance is with the Docker container. The option is viable only if you have configured Docker development environment on your platform. Use the latest [release version](https://github.com/fogfish/oauth2/releases):
 
+User either
+
 ```
-docker-compose -f rel/local.yaml up
+make dist-up
+```
+
+or 
+
+```
+docker-compose up
 ```
 
 This starts a local instances of required backing services (e.g. DynamoDB, Redis, etc), authorization service itself and exposed OAuth 2.0 services using REST API on port 8080. By default, it is bound to `localhost` on Mac OS and Linux. If you're using a different platform, please check your Docker configuration.
 
-Open `http://localhost:8080/oauth2/authorize` in your web browser to manage accounts and integrate OAuth 2.0 clients. 
+Open `http://localhost:8080/oauth2/developer` in your web browser to manage accounts and integrate OAuth 2.0 clients. 
 
 
 ## Next Steps

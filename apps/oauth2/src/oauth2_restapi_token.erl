@@ -75,7 +75,8 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_
       access_token(Token)
    ];
 
-oauth2_issue_access_token(_) ->
+oauth2_issue_access_token(X) ->
+   io:format("==> ~p~n", [X]),
    {error, invalid_request}.
 
 %%

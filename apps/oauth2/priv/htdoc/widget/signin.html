@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<link href="/css/dress-code.min.css" rel="stylesheet">
-<link href="/css/oauth2.css" rel="stylesheet">
+<link href="/oauth2/css/dress-code.min.css" rel="stylesheet">
+<link href="/oauth2/css/oauth2.css" rel="stylesheet">
 
 <body class="dc-body">
 <div class="dc-page">
@@ -48,8 +48,8 @@
 </div>
 </div>
 
-<script type="text/javascript" src="/js/oauth2.js"></script>
-<script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="/oauth2/js/oauth2.js"></script>
+<script type="text/javascript" src="/oauth2/js/jquery-3.2.1.min.js"></script>
 <script type="text/javascript">
 var err = oauth2.q('error')
 var req = {
@@ -62,7 +62,7 @@ $('.response_type').val(req.response_type)
 $('.client_id').val(req.client_id)
 $('.state').val(req.state)
 
-var signup = '/widget/signup.html?' + $.param(req) 
+var signup = '/oauth2/widget/signup.html?' + $.param(req) 
 $('.dc-dialog__actions--secondary a').attr('href', signup)
 
 if (err)

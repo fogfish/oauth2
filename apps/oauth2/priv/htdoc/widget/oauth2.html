@@ -4,7 +4,7 @@
 //
 // identity of built-in ouath2 client
 var client_id = 'oauth2ux'
-var redirect_url = '/widget/account.html'
+var redirect_url = '/oauth2/widget/account.html'
 
 //
 //
@@ -28,10 +28,10 @@ var acode = url_query('code')
 
 if (error)
 {
-   window.location.replace('/authorize?response_type=code&client_id=oauth2ux&error=' + error)
+   window.location.replace('/oauth2/developer?response_type=code&client_id=oauth2ux&error=' + error)
 } else if (token) {
    window.localStorage.setItem('access_token', 'Bearer ' + access_token)
-   window.location.replace('/widget/account.html')
+   window.location.replace('/oauth2/widget/account.html')
 } else {
    var xhr = new XMLHttpRequest();
    xhr.open('POST', '/oauth2/token');
@@ -47,9 +47,9 @@ if (error)
          {
             var json = JSON.parse(xhr.responseText)
             window.localStorage.setItem('access_token', 'Bearer ' + json.access_token)
-            window.location.replace('/widget/account.html')
+            window.location.replace('/oauth2/widget/account.html')
          } else {
-            window.location.replace('/authorize?response_type=code&client_id=oauth2ux')
+            window.location.replace('/oauth2/developer?response_type=code&client_id=oauth2ux')
          }
       }
    }

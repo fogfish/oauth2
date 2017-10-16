@@ -46,7 +46,8 @@ content_accepted(_Req) ->
 %%
 %% The end-point is only available for confidential clients 
 authorize(_Mthd, {_Uri, Head, _Env}) ->
-   oauth2_restapi:authenticate(#{}, Head).
+   % oauth2_restapi:authenticate(#{}, Head).
+   ok.
 
 %%
 %%
@@ -54,7 +55,7 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
    [either ||
       oauth2_restapi:decode(Req),
       category:optionT(badarg,
-         lens:get(lens:pair(<<"token">>, undefined), _)
+         lens:get(lens:at(<<"token">>, undefined), _)
       ),
       permit:validate(_),
       fmap(jsx:encode(_))

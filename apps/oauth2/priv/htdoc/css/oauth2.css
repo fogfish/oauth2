@@ -55,3 +55,9 @@ input
    background-color: #f7f7f7;
    color: #4a4a4a;
 }
+
+.oauth2__secret,
+.oauth2__access
+{
+   word-wrap: break-word;
+}
