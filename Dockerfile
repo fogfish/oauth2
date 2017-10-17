@@ -13,11 +13,14 @@ FROM centos
 
 ##
 ## install dependencies
+##   * iproute - discover ip address for non-cloud cployments
+##   * openssl - generate public / private keys
 RUN set -e \
    && yum -y update  \
    && yum -y install \
       tar  \
       unzip \
+      iproute \
       openssl 
 
 ENV   ARCH  x86_64

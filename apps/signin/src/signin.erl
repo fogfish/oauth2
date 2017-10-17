@@ -43,7 +43,7 @@ start(OAuth2, Client) ->
    lager:set_loglevel(lager_console_backend, critical),
    {ok, _} = application:ensure_all_started(restd),
    {ok, _} = restd_service_sup:start_link(signin, restd()),
-   os:cmd(lists:flatten(io_lib:format("open '~s/authorize?response_type=code&client_id=~s'", [OAuth2, Client]))),
+   os:cmd(lists:flatten(io_lib:format("open '~s/oauth2/developer?response_type=code&client_id=~s'", [OAuth2, Client]))),
    erlang:register(signin, self()),
    receive
       {code, Code} ->
