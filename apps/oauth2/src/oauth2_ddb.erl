@@ -45,10 +45,11 @@
 new(Uri) ->
    [either ||
       erlcloud_aws:auto_config(),
-      fmap(config_ddb_endpoint(Uri, _)),
-      fmap(config_ddb_fd(Uri, _))
+      cats:unit(config_ddb_endpoint(Uri, _)),
+      cats:unit(config_ddb_fd(Uri, _))
    ].
 
+%% Note: erlcloud_aws:auto_config() might retrun {ok, undefined}
 config_ddb_endpoint(Uri, Config) ->
    Schema = case uri:schema(Uri) of [_, X] -> X; X -> X end,
    Config#aws_config{
@@ -113,7 +114,7 @@ put(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Value) ->
    [either ||
       oauth2_ddb:encode(Value),
       erlcloud_ddb2:put_item(Bucket, _, [], Config),
-      fmap(lens:get(lens:map(HKey), Value))
+      cats:unit(lens:get(lens:map(HKey), Value))
    ].
 
 %%
@@ -133,7 +134,7 @@ get(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Key) ->
 remove(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Key) ->
    [either ||
       erlcloud_ddb2:delete_item(Bucket, [{HKey, Key}], [], Config),
-      fmap(Key)
+      cats:unit(Key)
    ].
 
 %%
@@ -143,5 +144,5 @@ remove(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Key) ->
 match(#ddb{config = Config, bucket = Bucket}, Index, Query) ->
    [either ||
       erlcloud_ddb2:q(Bucket, Query, [{index_name, scalar:s(Index)}], Config),
-      fmap(lists:map(fun(X) -> erlang:element(2, oauth2_ddb:decode(X)) end, _))
+      cats:unit(lists:map(fun(X) -> erlang:element(2, oauth2_ddb:decode(X)) end, _))
    ].

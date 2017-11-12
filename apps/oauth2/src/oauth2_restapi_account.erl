@@ -37,7 +37,7 @@ content_provided(_Req) ->
          oauth2_restapi:access_token(Head)
       )
      ,permit:validate(_)
-     ,fmap(lens:get(lens:map(<<"sub">>), _))
+     ,unit(lens:get(lens:map(<<"sub">>), _))
      ,oauth2_account:profile(_)
-     ,fmap(jsx:encode(_))
+     ,unit(jsx:encode(_))
    ].

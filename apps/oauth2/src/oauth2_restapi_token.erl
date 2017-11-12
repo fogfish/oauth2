@@ -44,7 +44,7 @@ content_accepted(_Req) ->
       oauth2_restapi:decode(Req),
       oauth2_restapi:authenticate(_, Head),
       oauth2_issue_access_token(_),
-      fmap(jsx:encode(_))
+      unit(jsx:encode(_))
    ].
 
 %%
@@ -75,8 +75,7 @@ oauth2_issue_access_token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_
       access_token(Token)
    ];
 
-oauth2_issue_access_token(X) ->
-   io:format("==> ~p~n", [X]),
+oauth2_issue_access_token(_) ->
    {error, invalid_request}.
 
 %%
@@ -96,11 +95,11 @@ create_empty_token() ->
 create_access_token(Token, X) ->
    [either ||
       permit:stateless(Token, ?OAUTH2_TTL_ACCESS, permit:default_claims()),
-      fmap(X#{<<"access_token">> => _})
+      unit(X#{<<"access_token">> => _})
    ].
 
 create_refresh_token(Token, X) ->
    [either ||
       permit:revocable(Token, ?OAUTH2_TTL_REFRESH, ?OAUTH2_EXCH),
-      fmap(X#{<<"refresh_token">> => _})
+      unit(X#{<<"refresh_token">> => _})
    ].

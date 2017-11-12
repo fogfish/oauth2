@@ -47,7 +47,7 @@ create(Access, Secret, Claims) ->
 lookup(Access) ->
    [either ||
       permit:lookup(Access),
-      fmap(maps:without(?NOT_ALLOWED, _)),
+      cats:unit(maps:without(?NOT_ALLOWED, _)),
       claims_type(_)
    ].
 
@@ -64,7 +64,7 @@ remove(Access) ->
 
 claims(Claims) ->
    [either ||
-      fmap(maps:without(?NOT_ALLOWED, Claims)),
+      cats:unit(maps:without(?NOT_ALLOWED, Claims)),
       claims_type(_)
    ].
 
@@ -100,7 +100,7 @@ lookup_pubkey(#{<<"access">> := Access} = Profile) ->
    [either ||
       pts:call(permit, Access, pubkey),
       lookup_pubkey_clients(_),
-      fmap(Profile#{<<"clients">> => _})
+      cats:unit(Profile#{<<"clients">> => _})
    ].
 
 lookup_pubkey_clients(List) ->

@@ -3,7 +3,6 @@
 -module(oauth2_SUITE).
 -include_lib("common_test/include/ct.hrl").
 -compile({parse_transform, category}).
--compile({parse_transform, monad}).
 
 %% common test
 -export([
@@ -16,22 +15,31 @@
 ]).
 
 -export([
-   signup_code_flow_with_public_client/1,
-   signin_code_flow_with_public_client/1,
+   signin_code_grant_with_public_client/1,
+   signup_code_grant_with_public_client/1,
 
-   signup_implicit_flow_with_public_client/1,
-   signin_implicit_flow_with_public_client/1,
+   signin_implicit_grant_with_public_client/1,
+   signup_implicit_grant_with_public_client/1,
 
-   signup_code_flow_with_confidential_client/1,
-   signin_code_flow_with_confidential_client/1,
+   signin_code_grant_with_confidential_client/1,
+   signup_code_grant_with_confidential_client/1,
 
-   signup_implicit_flow_with_confidential_client/1,
-   signin_implicit_flow_with_confidential_client/1,
+   signin_implicit_grant_with_confidential_client/1,
+   signup_implicit_grant_with_confidential_client/1,
 
-   signin_password_grant_with_public_client/1,
-   signin_password_grant_with_confidential_client/1,
 
-   signin_client_grant_with_confidential_client/1
+   % signup_code_flow_with_confidential_client/1,
+   % signin_code_flow_with_confidential_client/1,
+
+   % signup_implicit_flow_with_confidential_client/1,
+   % signin_implicit_flow_with_confidential_client/1,
+
+   % signin_password_grant_with_public_client/1,
+   % signin_password_grant_with_confidential_client/1,
+
+   % signin_client_grant_with_confidential_client/1,
+
+   restapi_jwks/1
 ]).
 
 %%%----------------------------------------------------------------------------   
@@ -51,22 +59,37 @@ groups() ->
       %% 
       {restapi, [parallel], 
          [
-            signup_code_flow_with_public_client,
-            signin_code_flow_with_public_client,
+            signin_code_grant_with_public_client,
+            signup_code_grant_with_public_client,
 
-            signup_implicit_flow_with_public_client,
-            signin_implicit_flow_with_public_client,
+            signin_implicit_grant_with_public_client,
+            signup_implicit_grant_with_public_client,
 
-            signup_code_flow_with_confidential_client,
-            signin_code_flow_with_confidential_client,
+            signin_code_grant_with_confidential_client,
+            signup_code_grant_with_confidential_client,
 
-            signup_implicit_flow_with_confidential_client,
-            signin_implicit_flow_with_confidential_client,
+            signin_implicit_grant_with_confidential_client,
+            signup_implicit_grant_with_confidential_client,
 
-            signin_password_grant_with_public_client,
-            signin_password_grant_with_confidential_client,
 
-            signin_client_grant_with_confidential_client
+            % signup_code_flow_with_public_client,
+            % signin_code_flow_with_public_client,
+
+            % signup_implicit_flow_with_public_client,
+            % signin_implicit_flow_with_public_client,
+
+            % signup_code_flow_with_confidential_client,
+            % signin_code_flow_with_confidential_client,
+
+            % signup_implicit_flow_with_confidential_client,
+            % signin_implicit_flow_with_confidential_client,
+
+            % signin_password_grant_with_public_client,
+            % signin_password_grant_with_confidential_client,
+
+            % signin_client_grant_with_confidential_client
+
+            restapi_jwks
          ]}
    ].
 
@@ -77,26 +100,9 @@ groups() ->
 %%%----------------------------------------------------------------------------   
 init_per_suite(Config) ->
    oauth2:start(),
-   {ok, _} = oauth2_client:create("client.p", "nosecret",
-      #{
-         <<"type">> => <<"oauth2:client">>,
-         <<"security">> => <<"public">>,
-         <<"redirect_uri">> => <<"http://example.com/path">>
-      }
-   ),
-   {ok, _} = oauth2_client:create("client.c", "nosecret", 
-      #{
-         <<"type">> => <<"oauth2:client">>,
-         <<"security">> => <<"confidential">>,
-         <<"redirect_uri">> => <<"http://example.com/path">>
-      }
-   ),
-   {ok, _} = oauth2_account:create("account.a", "nosecret",
-      #{
-         <<"type">> => <<"oauth2:account">>,
-         <<"uid">> => true
-      }
-   ),
+   {ok, _} = define_client_public(),
+   {ok, _} = define_client_confidential(),
+   {ok, _} = define_account(),
    Config.
 
 end_per_suite(_Config) ->
@@ -111,96 +117,55 @@ init_per_group(_, Config) ->
 end_per_group(_, _Config) ->
    ok.
 
-%%%----------------------------------------------------------------------------   
+%%
+define_client_public() ->
+   oauth2_client:create("client.p", "nosecret",
+      #{
+         <<"type">> => <<"oauth2:client">>,
+         <<"security">> => <<"public">>,
+         <<"redirect_uri">> => <<"http://example.com/path">>
+      }
+   ).
+
+%%
+define_client_confidential() ->
+   oauth2_client:create("client.c", "nosecret", 
+      #{
+         <<"type">> => <<"oauth2:client">>,
+         <<"security">> => <<"confidential">>,
+         <<"redirect_uri">> => <<"http://example.com/path">>
+      }
+   ).   
+
+%%
+define_account() ->
+   oauth2_account:create("account.a", "nosecret",
+      #{
+         <<"type">> => <<"oauth2:account">>,
+         <<"uid">> => true
+      }
+   ).   
+
+%%%----------------------------------------------------------------------------
 %%%
 %%% unit tests
 %%%
-%%%----------------------------------------------------------------------------   
+%%%----------------------------------------------------------------------------
+-define(ENDPOINT_SIGNIN, "http://localhost:8080/oauth2/authorize").
+-define(ENDPOINT_SIGNUP, "http://localhost:8080/oauth2/signup").
+
 -define(AUTHORIZE, "http://localhost:8080/oauth2/authorize").
 -define(TOKEN,     "http://localhost:8080/oauth2/token").
+-define(ENDPOINT_JWKS, "http://localhost:8080/oauth2/jwks").
+
 
 %%
-signup_code_flow_with_public_client(_Config) ->
-   Payload = oauth2_request_public(?AUTHORIZE, #{
-      access         => <<"signup.cf.pc.uA">>,
-      secret         => <<"nosecret">>,
-      response_type  => <<"code">>,
-      client_id      => <<"client.p">>,
-      state          => <<"opaque">>,
-      oauth2         => <<"signup">>
-   }),
-   Grant = oauth2_grant(Payload),
-   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
-   Code  = lens:get(lens:pair(<<"code">>), Grant),
-   {ok, #{
-      <<"iss">> := <<"http://localhost:8080">>,
-      <<"sub">> := <<"signup.cf.pc.uA">>,
-      <<"exch">>:= true
-   }} = permit:validate(Code).
-
-%%
-signin_code_flow_with_public_client(_Config) ->
-   Payload = oauth2_request_public(?AUTHORIZE, #{
+signin_code_grant_with_public_client(_) ->
+   Payload = oauth2_request_public(?ENDPOINT_SIGNIN, #{
       access         => <<"account.a">>,
       secret         => <<"nosecret">>,
       response_type  => <<"code">>,
       client_id      => <<"client.p">>,
-      state          => <<"opaque">>
-   }),
-   Grant = oauth2_grant(Payload),
-   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
-   Code  = lens:get(lens:pair(<<"code">>), Grant),
-   {ok, #{
-      <<"iss">> := <<"http://localhost:8080">>,
-      <<"sub">> := <<"account.a">>,
-      <<"exch">>:= true
-   }} = permit:validate(Code).
-
-%%
-signup_implicit_flow_with_public_client(_Config) ->
-   Payload = oauth2_request_public(?AUTHORIZE, #{
-      access         => <<"signup.if.pc.uA">>,
-      secret         => <<"nosecret">>,
-      response_type  => <<"token">>,
-      client_id      => <<"client.p">>,
-      state          => <<"opaque">>,
-      oauth2         => <<"signup">>
-   }),
-   Grant = oauth2_grant(Payload),
-   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
-   Token = lens:get(lens:pair(<<"access_token">>), Grant),
-   {ok, #{
-      <<"iss">> := <<"http://localhost:8080">>,
-      <<"sub">> := <<"signup.if.pc.uA">>,
-      <<"uid">> := true
-   }} = permit:validate(Token).
-
-%%
-signin_implicit_flow_with_public_client(_Config) ->
-   Payload = oauth2_request_public(?AUTHORIZE, #{
-      access         => <<"account.a">>,
-      secret         => <<"nosecret">>,
-      response_type  => <<"token">>,
-      client_id      => <<"client.p">>,
-      state          => <<"opaque">>
-   }),
-   Grant = oauth2_grant(Payload),
-   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
-   Token = lens:get(lens:pair(<<"access_token">>), Grant),
-   {ok, #{
-      <<"iss">> := <<"http://localhost:8080">>,
-      <<"sub">> := <<"account.a">>,
-      <<"uid">> := true
-   }} = permit:validate(Token).
-
-
-%%
-signup_code_flow_with_confidential_client(_Config) ->
-   Payload = oauth2_request_confidential(?AUTHORIZE, #{
-      access         => <<"signup.cf.cc.uA">>,
-      secret         => <<"nosecret">>,
-      response_type  => <<"code">>,
-      client_id      => <<"client.c">>,
       state          => <<"opaque">>,
       oauth2         => <<"signup">>
    }),
@@ -209,13 +174,82 @@ signup_code_flow_with_confidential_client(_Config) ->
    Code = lens:get(lens:pair(<<"code">>), Grant),
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
-      <<"sub">> := <<"signup.cf.cc.uA">>,
-      <<"exch">>:= true
+      <<"sub">> := <<"account.a">>,
+      <<"aud">> := <<"any">>,
+      <<"exch">>:= true,
+      <<"exp">> := _,
+      <<"tji">> := _
    }} = permit:validate(Code).
 
 %%
-signin_code_flow_with_confidential_client(_Config) ->
-   Payload = oauth2_request_confidential(?AUTHORIZE, #{
+signup_code_grant_with_public_client(_) ->
+   Payload = oauth2_request_public(?ENDPOINT_SIGNUP, #{
+      access         => <<"signup.cg.pc.uA">>,
+      secret         => <<"nosecret">>,
+      response_type  => <<"code">>,
+      client_id      => <<"client.p">>,
+      state          => <<"opaque">>
+   }),
+   Grant = oauth2_grant(Payload),
+   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
+   Code  = lens:get(lens:pair(<<"code">>), Grant),
+   {ok, #{
+      <<"iss">> := <<"http://localhost:8080">>,
+      <<"sub">> := <<"signup.cg.pc.uA">>,
+      <<"exch">>:= true,
+      <<"aud">> := <<"any">>,
+      <<"exch">>:= true,
+      <<"exp">> := _,
+      <<"tji">> := _
+   }} = permit:validate(Code).
+
+
+%%
+signin_implicit_grant_with_public_client(_Config) ->
+   Payload = oauth2_request_public(?ENDPOINT_SIGNIN, #{
+      access         => <<"account.a">>,
+      secret         => <<"nosecret">>,
+      response_type  => <<"token">>,
+      client_id      => <<"client.p">>,
+      state          => <<"opaque">>
+   }),
+   Grant = oauth2_grant(Payload),
+   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
+   Token = lens:get(lens:pair(<<"access_token">>), Grant),
+   {ok, #{
+      <<"iss">> := <<"http://localhost:8080">>,
+      <<"sub">> := <<"account.a">>,
+      <<"uid">> := true,
+      <<"aud">> := <<"any">>,
+      <<"exp">> := _,
+      <<"tji">> := _
+   }} = permit:validate(Token).
+
+%%
+signup_implicit_grant_with_public_client(_Config) ->
+   Payload = oauth2_request_public(?ENDPOINT_SIGNUP, #{
+      access         => <<"signup.ig.pc.uA">>,
+      secret         => <<"nosecret">>,
+      response_type  => <<"token">>,
+      client_id      => <<"client.p">>,
+      state          => <<"opaque">>
+   }),
+   Grant = oauth2_grant(Payload),
+   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
+   Token = lens:get(lens:pair(<<"access_token">>), Grant),
+   {ok, #{
+      <<"iss">> := <<"http://localhost:8080">>,
+      <<"sub">> := <<"signup.ig.pc.uA">>,
+      <<"uid">> := true,
+      <<"aud">> := <<"any">>,
+      <<"exp">> := _,
+      <<"tji">> := _
+   }} = permit:validate(Token).
+
+
+%%
+signin_code_grant_with_confidential_client(_Config) ->
+   Payload = oauth2_request_confidential(?ENDPOINT_SIGNIN, #{
       access         => <<"account.a">>,
       secret         => <<"nosecret">>,
       response_type  => <<"code">>,
@@ -228,32 +262,38 @@ signin_code_flow_with_confidential_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"exch">>:= true
+      <<"exch">>:= true,
+      <<"aud">> := <<"any">>,
+      <<"exp">> := _,
+      <<"tji">> := _
    }} = permit:validate(Code).
 
 
 %%
-signup_implicit_flow_with_confidential_client(_Config) ->
-   Payload = oauth2_request_confidential(?AUTHORIZE, #{
-      access         => <<"signup.if.cc.uA">>,
+signup_code_grant_with_confidential_client(_Config) ->
+   Payload = oauth2_request_confidential(?ENDPOINT_SIGNUP, #{
+      access         => <<"signup.cg.cc.uA">>,
       secret         => <<"nosecret">>,
-      response_type  => <<"token">>,
+      response_type  => <<"code">>,
       client_id      => <<"client.c">>,
-      state          => <<"opaque">>,
-      oauth2         => <<"signup">>
+      state          => <<"opaque">>
    }),
    Grant = oauth2_grant(Payload),
    <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
-   Token = lens:get(lens:pair(<<"access_token">>), Grant),
+   Code = lens:get(lens:pair(<<"code">>), Grant),
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
-      <<"sub">> := <<"signup.if.cc.uA">>,
-      <<"uid">> := true
-   }} = permit:validate(Token).
+      <<"sub">> := <<"signup.cg.cc.uA">>,
+      <<"exch">>:= true,
+      <<"aud">> := <<"any">>,
+      <<"exp">> := _,
+      <<"tji">> := _
+   }} = permit:validate(Code).
+
 
 %%
-signin_implicit_flow_with_confidential_client(_Config) ->
-   Payload = oauth2_request_confidential(?AUTHORIZE, #{
+signin_implicit_grant_with_confidential_client(_Config) ->
+   Payload = oauth2_request_confidential(?ENDPOINT_SIGNIN, #{
       access         => <<"account.a">>,
       secret         => <<"nosecret">>,
       response_type  => <<"token">>,
@@ -266,7 +306,33 @@ signin_implicit_flow_with_confidential_client(_Config) ->
    {ok, #{
       <<"iss">> := <<"http://localhost:8080">>,
       <<"sub">> := <<"account.a">>,
-      <<"uid">> := true
+      <<"uid">> := true,
+      <<"aud">> := <<"any">>,
+      <<"exp">> := _,
+      <<"tji">> := _
+   }} = permit:validate(Token).
+
+
+%%
+signup_implicit_grant_with_confidential_client(_Config) ->
+   Payload = oauth2_request_confidential(?ENDPOINT_SIGNUP, #{
+      access         => <<"signup.ig.cc.uA">>,
+      secret         => <<"nosecret">>,
+      response_type  => <<"token">>,
+      client_id      => <<"client.c">>,
+      state          => <<"opaque">>,
+      oauth2         => <<"signup">>
+   }),
+   Grant = oauth2_grant(Payload),
+   <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
+   Token = lens:get(lens:pair(<<"access_token">>), Grant),
+   {ok, #{
+      <<"iss">> := <<"http://localhost:8080">>,
+      <<"sub">> := <<"signup.ig.cc.uA">>,
+      <<"uid">> := true,
+      <<"aud">> := <<"any">>,
+      <<"exp">> := _,
+      <<"tji">> := _
    }} = permit:validate(Token).
 
 
@@ -321,6 +387,20 @@ signin_client_grant_with_confidential_client(_Config) ->
       <<"sub">> := <<"client.c">>
    }} = permit:validate(Token).
 
+%%
+restapi_jwks(_) ->
+   Jwks = oauth2_public_get(?ENDPOINT_JWKS),
+   200  = lens:get(code(), Jwks),
+   #{<<"keys">> := Keys} = lens:get(json(), Jwks),
+   #{
+      <<"kid">> := <<"jwt">>,
+      <<"alg">> := <<"RS256">>,
+      <<"kty">> := <<"RSA">>,
+      <<"n">>   := _,
+      <<"e">>   := _
+   } = hd(Keys).
+
+
 
 %%%----------------------------------------------------------------------------   
 %%%
@@ -329,34 +409,46 @@ signin_client_grant_with_confidential_client(_Config) ->
 %%%----------------------------------------------------------------------------   
 
 %%
+%%
+oauth2_public_get(Url) ->
+   request(
+      [m_http ||
+         cats:new(Url),
+         cats:x('GET'),
+         cats:h("Accept: */*"),         
+         cats:h("Connection: close"),
+         cats:r()
+      ]
+   ).
+
+
+%%
 %% request oauth2 authorize end-point
 oauth2_request_public(Url, Request) ->
    request(
-      do([m_http ||
-         _ /= new(Url),
-         _ /= x('POST'),
-         _ /= h("Accept: */*"),
-         _ /= h("Content-Type: application/x-www-form-urlencoded"),
-         _ /= h("Connection: close"),
-         _ /= d(x_www_form_urlencoded(Request)),
-         _ /= r(),
-         return(_)
-      ])
+      [m_http ||
+         cats:new(Url),
+         cats:x('POST'),
+         cats:h("Accept: */*"),
+         cats:h("Content-Type: application/x-www-form-urlencoded"),
+         cats:h("Connection: close"),
+         cats:d(x_www_form_urlencoded(Request)),
+         cats:r()
+      ]
    ).
 
 oauth2_request_confidential(Url, Request) ->
    request(
-      do([m_http ||
-         _ /= new(Url),
-         _ /= x('POST'),
-         _ /= h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
-         _ /= h("Accept: */*"),
-         _ /= h("Content-Type: application/x-www-form-urlencoded"),
-         _ /= h("Connection: close"),
-         _ /= d(x_www_form_urlencoded(Request)),
-         _ /= r(),
-         return(_)
-      ])
+      [m_http ||
+         cats:new(Url),
+         cats:x('POST'),
+         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
+         cats:h("Accept: */*"),
+         cats:h("Content-Type: application/x-www-form-urlencoded"),
+         cats:h("Connection: close"),
+         cats:d(x_www_form_urlencoded(Request)),
+         cats:r()
+      ]
    ).
 
 x_www_form_urlencoded(Request) ->
@@ -393,22 +485,22 @@ request(Request) ->
 %% http response
 %%   [ [{302, _, Head, _} | Payload] | _] 
 code() ->
-   lens:c([lens:hd(), lens:hd(), lens:t1()]).
+   lens:c(lens:hd(), lens:hd(), lens:t1()).
 
 json() ->
-   lens:c([lens:hd(), lens:tl(), lens_jsx()]).   
+   lens:c(lens:hd(), lens:tl(), lens_jsx()).   
 
 redirect_schema() ->
-   lens:c([lens:hd(), lens:hd(), lens:t3(), lens:pair('Location'), lens_uri(fun uri:schema/1)]).
+   lens:c(lens:hd(), lens:hd(), lens:t3(), lens:pair(<<"Location">>), lens_uri(fun uri:schema/1)).
 
 redirect_host() ->
-   lens:c([lens:hd(), lens:hd(), lens:t3(), lens:pair('Location'), lens_uri(fun uri:host/1)]).
+   lens:c(lens:hd(), lens:hd(), lens:t3(), lens:pair(<<"Location">>), lens_uri(fun uri:host/1)).
 
 redirect_path() ->
-   lens:c([lens:hd(), lens:hd(), lens:t3(), lens:pair('Location'), lens_uri(fun uri:path/1)]).
+   lens:c(lens:hd(), lens:hd(), lens:t3(), lens:pair(<<"Location">>), lens_uri(fun uri:path/1)).
 
 oauth2_response() ->
-   lens:c([lens:hd(), lens:hd(), lens:t3(), lens:pair('Location'), lens_uri(fun uri:q/1)]).
+   lens:c(lens:hd(), lens:hd(), lens:t3(), lens:pair(<<"Location">>), lens_uri(fun uri:q/1)).
 
 lens_uri(Accessor) ->
    fun(Fun, Uri) ->

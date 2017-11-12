@@ -63,7 +63,7 @@ create(Access, Secret, Claims) ->
 lookup(Access) ->
    [either ||
       permit:lookup(Access),
-      fmap(maps:without(?NOT_ALLOWED, _)),
+      cats:unit(maps:without(?NOT_ALLOWED, _)),
       claims_type(_),
       claims_security(_),
       claims_redirect_uri(_)
@@ -82,7 +82,7 @@ remove(Access) ->
 
 claims(Claims) ->
    [either ||
-      fmap(maps:with(?CLAIMS, Claims)),
+      cats:unit(maps:with(?CLAIMS, Claims)),
       claims_type(_),
       claims_security(_),
       claims_redirect_uri(_)
@@ -105,13 +105,13 @@ claims_security(_) ->
 %%
 claims_redirect_uri(#{<<"redirect_uri">> := Uri} = Profile) ->
    [either ||
-      fmap( uri:new(Uri) ),
+      cats:unit( uri:new(Uri) ),
       is_some(fun uri:schema/1, _),
       is_some(fun uri:authority/1, _),
       is_some(fun uri:path/1, _),
       is_none(fun uri:q/1, _),
       is_none(fun uri:anchor/1, _),
-      fmap(Profile)
+      cats:unit(Profile)
    ].
 
 is_some(Fun, Uri) ->

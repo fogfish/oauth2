@@ -14,69 +14,71 @@
 %%   limitations under the License.
 %%
 %% @doc
-%%   
+%%   RFC 6749: 
+%%    To request an access token, the client obtains authorization from the
+%%    resource owner.  The authorization is expressed in the form of an
+%%    authorization grant, which the client uses to request the access
+%%    token.
+%%
+%%   Endpoint implements Authorization request as defined by
+%%   https://tools.ietf.org/html/rfc6749
+%%    Section 4.1.1.  Authorization Request 
+%%    Section 4.2.1.  Authorization Request
+%%
 -module(oauth2_restapi_auth).
 -compile({parse_transform, category}).
 -include("oauth2.hrl").
 
 
--export([
-   allowed_methods/1,
-   content_provided/1, 
-   content_accepted/1,
-   'POST'/3
-]).
-
-%%
-allowed_methods(_Req) ->
-   ['POST'].
-
-%%
-content_provided(_Req) ->
-   [{application, json}].
-
-%%
-content_accepted(_Req) ->
-   [{application, 'x-www-form-urlencoded'}].
-
-
 %%
 %%
-'POST'(_Type, Req, {_Uri, Head, _Env}) ->
+oauth2_grant_flow(#{<<"response_type">> := <<"code">>, <<"client_id">> := Access} = Request) ->
    case
       [either ||
-         oauth2_restapi:decode(Req),
-         oauth2_restapi:authenticate(_, Head),
-         oauth2_grant_flow(_)
+         oauth2_client:lookup(Access),
+         oauth2_code_grant_flow(Request)
       ]
    of
-      {ok,  Uri} ->
-         {302, [{'Location', Uri}], <<>>};
-
-      {error, _} = Error ->
-         Error
-   end.
-
-%%
-%%
-oauth2_grant_flow(#{<<"response_type">> := <<"code">>} = Env) ->
-   case oauth2_code_grant_flow(Env) of
       {error,  Reason} ->
-         oauth2_redirect_with_error(Reason, Env);
+         oauth2_redirect_with_error(Reason, Request);
       {ok, _} = Result ->
          Result
    end;
 
-oauth2_grant_flow(#{<<"response_type">> := <<"token">>} = Env) ->
-   case oauth2_implicit_grant_flow(Env) of
+oauth2_grant_flow(#{<<"response_type">> := <<"token">>, <<"client_id">> := Access} = Request) ->
+   case
+      [either ||
+         oauth2_client:lookup(Access),
+         oauth2_implicit_grant_flow(Request)
+      ]
+   of
       {error,  Reason} ->
-         oauth2_redirect_with_error(Reason, Env);
+         oauth2_redirect_with_error(Reason, Request);
       {ok, _} = Result ->
          Result
    end;
 
-oauth2_grant_flow(Env) ->
-   oauth2_redirect_with_error(unsupported_response_type, Env).
+oauth2_grant_flow(Request) ->
+   oauth2_redirect_with_error(unsupported_response_type, Request).
+
+
+% %%
+% %%
+% 'POST'(_Type, Req, {_Uri, Head, _Env}) ->
+%    case
+%       [either ||
+%          oauth2_restapi:decode(Req),
+%          oauth2_restapi:authenticate(_, Head),
+%          oauth2_grant_flow(_)
+%       ]
+%    of
+%       {ok,  Uri} ->
+%          {302, [{'Location', Uri}], <<>>};
+
+%       {error, _} = Error ->
+%          Error
+%    end.
+
 
 %%
 %%

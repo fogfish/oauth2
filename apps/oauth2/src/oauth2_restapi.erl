@@ -17,14 +17,260 @@
 %%   common restapi utility
 -module(oauth2_restapi).
 -compile({parse_transform, category}).
+
 -include("oauth2.hrl").
 
--export([
-   decode/1,
-   authenticate/2,
-   access_token/1
-]).
+-export([endpoints/0]).
 
+%%
+%%
+endpoints() ->
+   [
+      %% https://tools.ietf.org/html/rfc6749
+      confidential_client_signin(),
+      confidential_client_signup(),
+      public_client_signin(),
+      public_client_signup(),
+      token(),
+
+      %% 
+      introspect(),
+      jwks(),
+
+      client_create(),
+      client_remove(),
+      client_lookup(),
+
+      account(),
+
+      restd_static:reader("/oauth2/developer/*", "/oauth2/developer", oauth2)
+   ].
+
+%%
+%% The authorization code grant type is used to obtain both access
+%% tokens and refresh tokens and is optimized for confidential clients.
+%%
+%% https://tools.ietf.org/html/rfc6749
+%%   Section 4.1.1.  Authorization Request
+%%
+confidential_client_signin() ->
+   [reader ||
+      _ /= restd:path("/oauth2/authorize"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Digest  /= restd:header(<<"Authorization">>),
+      Client  <- authenticate_http_digest(Digest),
+      Request /= restd:as_form(),
+
+      oauth2:signin(Request, Client),
+      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+   ].
+
+confidential_client_signup() ->
+   [reader ||
+      _ /= restd:path("/oauth2/signup"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Digest  /= restd:header(<<"Authorization">>),
+      Client  <- authenticate_http_digest(Digest),
+      Request /= restd:as_form(),
+
+      oauth2:signup(Request, Client),
+      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+   ].
+
+
+%%
+%% The implicit grant type is used to obtain access tokens (it does not
+%% support the issuance of refresh tokens) and is optimized for public
+%% clients known to operate a particular redirection URI.  These clients
+%% are typically implemented in a browser using a scripting language
+%% such as JavaScript.
+%%
+%% https://tools.ietf.org/html/rfc6749
+%%   Section 4.2.1.  Authorization Request
+%%
+public_client_signin() ->
+   [reader ||
+      _ /= restd:path("/oauth2/authorize"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Request /= restd:as_form(),
+      Client  <- authenticate_public_client(Request),
+
+      oauth2:signin(Request, Client),
+      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+   ].
+
+
+public_client_signup() ->
+   [reader ||
+      _ /= restd:path("/oauth2/signup"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Request /= restd:as_form(),
+      Client  <- authenticate_public_client(Request),
+
+      oauth2:signup(Request, Client),
+      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+   ].
+
+
+%%
+%% https://tools.ietf.org/html/rfc6749
+%%   Section 4.1.3. Access Token Request (Authorization Code Grant)
+%%   Section 4.3.2. Access Token Request (Resource Owner Password Credentials Grant)
+%%   Section 4.4.2. Access Token Request (Client Credentials Grant)
+%%   Section 6. Refreshing an Access Token
+%%
+token() ->
+   [reader ||
+      _ /= restd:path("/oauth2/token"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Digest  /= restd:header(<<"Authorization">>),
+      Client  <- authenticate_http_digest(Digest),
+      Request /= restd:as_form(),
+
+      oauth2:access_token(Client, Request),
+      _ /= restd:accesslog(restd:to_json(_))
+   ].
+
+
+%%
+%% https://tools.ietf.org/html/rfc7662
+%%   Section 2.1. Introspection Request
+%%   To prevent token scanning attacks, the endpoint MUST also require
+%%   some form of authorization to access this endpoint.
+%%   (The end-point is only available for confidential clients)
+%%
+introspect() ->
+   [reader ||
+      _ /= restd:path("/oauth2/introspect"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Digest  /= restd:header(<<"Authorization">>),
+      Client  <- authenticate_http_digest(Digest),
+      Request /= restd:as_form(),
+
+      oauth2:introspect(Client, Request),
+      _ /= restd:accesslog(restd:to_json(_))
+   ].
+
+%%
+%%
+jwks() ->
+   [reader ||
+      _ /= restd:path("/oauth2/jwks"),
+      _ /= restd:method('GET'),
+      _ /= restd:provided_content({application, json}),
+
+      permit_config:public(),
+      jwk:encode(<<"jwt">>, _),
+      _ /= restd:accesslog({200, [{<<"Content-Type">>, <<"application/json">>}], _})
+   ].
+
+%%
+%%
+client_create() ->
+   [reader ||
+      _ /= restd:path("/oauth2/client"),
+      _ /= restd:method('POST'),
+      _ /= restd:provided_content({application, json}),
+
+      Token /= restd:header(<<"Authorization">>),
+      Jwt   <- authenticate_access_token(Token),
+
+      _ /= restd:accesslog(restd:to_text(<<"ok">>))
+   ].
+
+client_remove() ->
+   [reader ||
+      _ /= restd:path("/oauth2/client/_"),
+      _ /= restd:method('DELETE'),
+      _ /= restd:provided_content({application, json}),
+
+      Token /= restd:header(<<"Authorization">>),
+      Jwt   <- authenticate_access_token(Token),
+
+      _ /= restd:accesslog(restd:to_text(<<"ok">>))
+   ].
+
+client_lookup() ->
+   [reader ||
+      _ /= restd:path("/oauth2/client/_"),
+      _ /= restd:method('GET'),
+      _ /= restd:provided_content({application, json}),
+
+      Token /= restd:header(<<"Authorization">>),
+      Jwt   <- authenticate_access_token(Token),
+
+      _ /= restd:accesslog(restd:to_text(<<"ok">>))
+   ].
+
+%%
+%%
+account() ->
+   [reader ||
+      _ /= restd:path("/oauth2/account"),
+      _ /= restd:method('GET'),
+      _ /= restd:provided_content({application, json}),
+
+      Token /= restd:header(<<"Authorization">>),
+      Jwt   <- authenticate_access_token(Token),
+
+      _ /= restd:accesslog(restd:to_text(<<"ok">>))   
+   ].
+
+
+%%-----------------------------------------------------------------------------
+%%
+%% private
+%%
+%%-----------------------------------------------------------------------------
+
+%%
+authenticate_http_digest(<<"Basic ", Digest/binary>>) ->
+   [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
+   [either ||
+      permit:stateless(Access, Secret, 1, #{}),
+      oauth2_client:lookup(Access),
+      oauth2_client:is_confidential(_)
+   ];
+authenticate_http_digest(_) ->
+   {error, unauthorized_client}.
+
+%%
+authenticate_public_client(#{<<"client_id">> := Access}) ->
+   [either ||
+      oauth2_client:lookup(Access),
+      oauth2_client:is_public(_)
+   ];
+authenticate_public_client(_) ->
+   {error, badarg}.   
+
+%%
+authenticate_access_token(_) ->
+   {ok, undefined}.
+
+
+% -export([
+%    decode/1,        %% @deprecated use restd:as_form
+%    authenticate/2,
+%    access_token/1
+% ]).
 
 
 %%
@@ -81,7 +327,7 @@ authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
       permit:stateless(Access, Secret, 1, #{}),
       oauth2_client:lookup(Access),
       oauth2_client:is_confidential(_),
-      fmap(Env#{<<"client_id">> => Access, <<"client_secret">> => Secret})
+      unit(Env#{<<"client_id">> => Access, <<"client_secret">> => Secret})
    ];
 authenticate_http_digest(_, _) ->
    {error, unauthorized_client}.

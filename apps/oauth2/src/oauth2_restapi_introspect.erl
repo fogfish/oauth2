@@ -57,5 +57,5 @@ authorize(_Mthd, {_Uri, Head, _Env}) ->
          lens:get(lens:at(<<"token">>, undefined), _)
       ),
       permit:validate(_),
-      fmap(jsx:encode(_))
+      unit(jsx:encode(_))
    ].

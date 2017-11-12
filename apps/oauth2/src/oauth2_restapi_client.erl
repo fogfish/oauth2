@@ -54,7 +54,7 @@ lookup(#{<<"sub">> := Master}, Env) ->
       ),
       oauth2_client:lookup(_),
       oauth2_client:is_master(_, Master),
-      fmap(jsx:encode(_))
+      unit(jsx:encode(_))
    ].
 
 %%
@@ -70,7 +70,7 @@ create(#{<<"sub">> := Master}, Req) ->
    [either ||
       oauth2_restapi:decode(Req),
       oauth2_client:create(Master, _),
-      fmap(jsx:encode(_))
+      unit(jsx:encode(_))
    ].
 
 %%
@@ -94,6 +94,6 @@ remove(#{<<"sub">> := Master}, Env) ->
          lens:get(lens:pair(<<"id">>), Env)
       ),
       oauth2_client:remove(_),
-      fmap(jsx:encode(_))
+      unit(jsx:encode(_))
    ].
 
