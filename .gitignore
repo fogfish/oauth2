@@ -16,3 +16,6 @@ rebar3
 ## it shall be ignored otherwise release is dirty
 relx.config
 
+##
+## used by ux
+node_modules/
