@@ -16,12 +16,14 @@
 -module(oauth2).
 -compile({parse_transform, category}).
 -include("oauth2.hrl").
+-include_lib("common_test/include/ct.hrl").
 
 
 -export([start/0]).
 -export([
    signin/2,
-   signup/2
+   signup/2,
+   token/2
 ]).
 
 %%
@@ -31,36 +33,9 @@ start() ->
 
 %%
 %%
-access_token(Access, Secret) ->
-   permit:revocable(
-      Access, 
-      Secret, 
-      opts:val(ttl_access_token, 1200, oauth2),
-      permit:default_claims()
-   ).
-
-access_token(#{<<"access">> := Access, <<"secret">> := Secret}) ->
-   access_token(Access, Secret).
-
-%%
-%%
-exchange_code(Access, Secret) ->
-   permit:stateless(
-      Access,
-      Secret,
-      opts:val(ttl_exchange_code, 60, oauth2),
-      #{<<"exch">> => true}
-   ).
-
-exchange_code(#{<<"access">> := Access, <<"secret">> := Secret}) ->
-   exchange_code(Access, Secret).
-
-
-%%
-%%
-signin(#{<<"response_type">> := <<"code">>} = Request, Client) ->
+signin(#{<<"response_type">> := <<"code">>, <<"access">> := Access, <<"secret">> := Secret} = Request, Client) ->
    case 
-      exchange_code(Request) 
+      oauth2_token:exchange_code(Access, Secret) 
    of
       {ok, Code} ->
          redirect_uri({code, Code}, Request, Client);
@@ -68,9 +43,9 @@ signin(#{<<"response_type">> := <<"code">>} = Request, Client) ->
          redirect_uri(Error, Request, Client)
    end;
 
-signin(#{<<"response_type">> := <<"token">>} = Request, Client) ->
+signin(#{<<"response_type">> := <<"token">>, <<"access">> := Access, <<"secret">> := Secret} = Request, Client) ->
    case 
-      access_token(Request) 
+      oauth2_token:access(Access, Secret) 
    of
       {ok, Token} ->
          redirect_uri({access_token, Token}, Request, Client);
@@ -84,11 +59,11 @@ signin(Request, Client) ->
 
 %%
 %%
-signup(#{<<"response_type">> := <<"code">>} = Request, Client) ->
+signup(#{<<"response_type">> := <<"code">>, <<"access">> := Access, <<"secret">> := Secret} = Request, Client) ->
    case 
       [either ||
          create_account(Request),
-         exchange_code(Request) 
+         oauth2_token:exchange_code(Access, Secret)
       ]
    of
       {ok, Code} ->
@@ -97,11 +72,11 @@ signup(#{<<"response_type">> := <<"code">>} = Request, Client) ->
          redirect_uri(Error, Request, Client)
    end;
 
-signup(#{<<"response_type">> := <<"token">>} = Request, Client) ->
+signup(#{<<"response_type">> := <<"token">>, <<"access">> := Access, <<"secret">> := Secret} = Request, Client) ->
    case 
       [either ||
          create_account(Request),
-         access_token(Request)
+         oauth2_token:access(Access, Secret)
       ]
    of
       {ok, Token} ->
@@ -112,6 +87,37 @@ signup(#{<<"response_type">> := <<"token">>} = Request, Client) ->
 
 signup(Request, Client) ->
    redirect_uri({error, unsupported_response_type}, Request, Client).
+
+
+%%
+%%
+token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code} = Request, _Client) ->
+   [either ||
+      oauth2_token:is_exchangable(Code),
+      oauth2_token:bearer(Code)
+   ];
+
+token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret} = Request, _Client) ->
+   [either ||
+      oauth2_token:access(Access, Secret),
+      oauth2_token:bearer(_)
+   ];
+
+token(#{<<"grant_type">> := <<"client_credentials">>}, #{<<"identity">> := Token} = Client) ->
+   [either ||
+      oauth2_client:is_confidential(Client),
+      oauth2_token:bearer(Token)
+   ];
+
+token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_token">> := Token} = Request, Client) ->
+   [either ||
+      oauth2_token:is_exchangable(Token),
+      oauth2_client:is_confidential(Client),
+      oauth2_token:bearer(Token)
+   ];
+
+token(_, _) ->
+   {error, invalid_request}.
 
 
 %%-----------------------------------------------------------------------------
@@ -129,9 +135,9 @@ create_account(#{<<"access">> := Access, <<"secret">> := Secret}) ->
       }
    ).
 
+
 %%
 redirect_uri(Status, Request, Client) ->
    State = lens:get(lens:at(<<"state">>, undefined), Request),
    oauth2_client:redirect_uri(Client, [Status, {state, State}]).
-
 

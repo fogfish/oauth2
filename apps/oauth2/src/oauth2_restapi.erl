@@ -29,9 +29,11 @@ endpoints() ->
       %% https://tools.ietf.org/html/rfc6749
       confidential_client_signin(),
       confidential_client_signup(),
+      confidential_client_access_token(),
+
       public_client_signin(),
       public_client_signup(),
-      token(),
+      public_client_access_token(),
 
       %% 
       introspect(),
@@ -84,6 +86,7 @@ confidential_client_signup() ->
    ].
 
 
+
 %%
 %% The implicit grant type is used to obtain access tokens (it does not
 %% support the issuance of refresh tokens) and is optimized for public
@@ -131,7 +134,7 @@ public_client_signup() ->
 %%   Section 4.4.2. Access Token Request (Client Credentials Grant)
 %%   Section 6. Refreshing an Access Token
 %%
-token() ->
+confidential_client_access_token() ->
    [reader ||
       _ /= restd:path("/oauth2/token"),
       _ /= restd:method('POST'),
@@ -142,7 +145,25 @@ token() ->
       Client  <- authenticate_http_digest(Digest),
       Request /= restd:as_form(),
 
-      oauth2:access_token(Client, Request),
+      oauth2:token(Request, Client),
+      _ /= restd:accesslog(restd:to_json(_))
+   ].
+
+%%
+%% https://tools.ietf.org/html/rfc6749
+%%   Section 4.1.3. Access Token Request (Authorization Code Grant)
+%%
+public_client_access_token() ->
+   [reader ||
+      _ /= restd:path("/oauth2/token"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Request /= restd:as_form(),
+      Client  <- authenticate_public_client(Request),
+
+      oauth2:token(Request, Client),
       _ /= restd:accesslog(restd:to_json(_))
    ].
 
@@ -165,7 +186,8 @@ introspect() ->
       Client  <- authenticate_http_digest(Digest),
       Request /= restd:as_form(),
 
-      oauth2:introspect(Client, Request),
+      cats:optionT(badarg, lens:get(lens:at(<<"token">>, undefined), Request)),
+      permit:validate(_),
       _ /= restd:accesslog(restd:to_json(_))
    ].
 
@@ -246,8 +268,11 @@ authenticate_http_digest(<<"Basic ", Digest/binary>>) ->
    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
    [either ||
       permit:stateless(Access, Secret, 1, #{}),
-      oauth2_client:lookup(Access),
-      oauth2_client:is_confidential(_)
+      Client <- oauth2_client:lookup(Access),
+      oauth2_client:is_confidential(Client),
+      Token  <- oauth2_token:exchange_code(Access, Secret),
+      %% how to pass client access / secret so that bearer token is allocatable
+      unit(Client#{<<"identity">> => Token})
    ];
 authenticate_http_digest(_) ->
    {error, unauthorized_client}.
@@ -273,73 +298,73 @@ authenticate_access_token(_) ->
 % ]).
 
 
-%%
-%% decodes oauth2 request
-%% parse application/x-www-form-urlencoded to map
--spec decode(_) -> {ok, _} | {error, _}.  
+% %%
+% %% decodes oauth2 request
+% %% parse application/x-www-form-urlencoded to map
+% -spec decode(_) -> {ok, _} | {error, _}.  
 
-decode(Request) ->
-   {ok, [$. ||
-      binary:split(scalar:s(Request), <<$&>>, [trim, global]),
-      lists:map(fun as_pair/1, _),
-      maps:from_list(_)
-   ]}.
+% decode(Request) ->
+%    {ok, [$. ||
+%       binary:split(scalar:s(Request), <<$&>>, [trim, global]),
+%       lists:map(fun as_pair/1, _),
+%       maps:from_list(_)
+%    ]}.
 
-as_pair(Pair) ->
-   erlang:list_to_tuple(
-      [uri:unescape(X) || X <- binary:split(Pair, <<$=>>)]
-   ).
-
-
-%%
-%% authenticate client and injects its identity into environment
--spec authenticate(_, _) -> ok | {error, _}.
-
-authenticate(#{<<"client_id">> := Access} = Env, Head) ->
-   [either ||
-      oauth2_client:lookup(Access),
-      authenticate_client(_, Env, Head)
-   ];
-
-authenticate(Env, Head) ->
-   [either ||
-      category:optionT(unauthorized_client,
-         lens:get( lens:pair('Authorization', undefined), Head )
-      ),
-      authenticate_http_digest(_, Env)
-   ].
-
-%%
-authenticate_client(#{<<"security">> := <<"public">>}, Env, _) ->
-   {ok, Env};
-authenticate_client(#{<<"security">> := <<"confidential">>}, Env, Head) ->
-   [either ||
-      category:optionT(unauthorized_client,
-         lens:get( lens:pair('Authorization', undefined), Head )
-      ),
-      authenticate_http_digest(_, Env)
-   ].
-
-%%
-authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
-   [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
-   [either ||
-      permit:stateless(Access, Secret, 1, #{}),
-      oauth2_client:lookup(Access),
-      oauth2_client:is_confidential(_),
-      unit(Env#{<<"client_id">> => Access, <<"client_secret">> => Secret})
-   ];
-authenticate_http_digest(_, _) ->
-   {error, unauthorized_client}.
+% as_pair(Pair) ->
+%    erlang:list_to_tuple(
+%       [uri:unescape(X) || X <- binary:split(Pair, <<$=>>)]
+%    ).
 
 
-%%
-%%
-access_token(Head) ->
-   case lens:get(lens:pair('Authorization', undefined), Head) of
-      <<"Bearer ", Token/binary>> ->
-         Token;
-      _ ->
-         undefined
-   end.
+% %%
+% %% authenticate client and injects its identity into environment
+% -spec authenticate(_, _) -> ok | {error, _}.
+
+% authenticate(#{<<"client_id">> := Access} = Env, Head) ->
+%    [either ||
+%       oauth2_client:lookup(Access),
+%       authenticate_client(_, Env, Head)
+%    ];
+
+% authenticate(Env, Head) ->
+%    [either ||
+%       category:optionT(unauthorized_client,
+%          lens:get( lens:pair('Authorization', undefined), Head )
+%       ),
+%       authenticate_http_digest(_, Env)
+%    ].
+
+% %%
+% authenticate_client(#{<<"security">> := <<"public">>}, Env, _) ->
+%    {ok, Env};
+% authenticate_client(#{<<"security">> := <<"confidential">>}, Env, Head) ->
+%    [either ||
+%       category:optionT(unauthorized_client,
+%          lens:get( lens:pair('Authorization', undefined), Head )
+%       ),
+%       authenticate_http_digest(_, Env)
+%    ].
+
+% %%
+% authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
+%    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
+%    [either ||
+%       permit:stateless(Access, Secret, 1, #{}),
+%       oauth2_client:lookup(Access),
+%       oauth2_client:is_confidential(_),
+%       unit(Env#{<<"client_id">> => Access, <<"client_secret">> => Secret})
+%    ];
+% authenticate_http_digest(_, _) ->
+%    {error, unauthorized_client}.
+
+
+% %%
+% %%
+% access_token(Head) ->
+%    case lens:get(lens:pair('Authorization', undefined), Head) of
+%       <<"Bearer ", Token/binary>> ->
+%          Token;
+%       _ ->
+%          undefined
+%    end.
 

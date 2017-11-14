@@ -27,19 +27,13 @@
    signin_implicit_grant_with_confidential_client/1,
    signup_implicit_grant_with_confidential_client/1,
 
+   signin_password_grant_with_public_client/1,
+   signin_password_grant_with_confidential_client/1,
 
-   % signup_code_flow_with_confidential_client/1,
-   % signin_code_flow_with_confidential_client/1,
+   signin_client_grant_with_confidential_client/1,
 
-   % signup_implicit_flow_with_confidential_client/1,
-   % signin_implicit_flow_with_confidential_client/1,
-
-   % signin_password_grant_with_public_client/1,
-   % signin_password_grant_with_confidential_client/1,
-
-   % signin_client_grant_with_confidential_client/1,
-
-   restapi_jwks/1
+   restapi_jwks/1,
+   restapi_introspect/1
 ]).
 
 %%%----------------------------------------------------------------------------   
@@ -71,25 +65,13 @@ groups() ->
             signin_implicit_grant_with_confidential_client,
             signup_implicit_grant_with_confidential_client,
 
+            signin_password_grant_with_public_client,
+            signin_password_grant_with_confidential_client,
 
-            % signup_code_flow_with_public_client,
-            % signin_code_flow_with_public_client,
+            signin_client_grant_with_confidential_client,
 
-            % signup_implicit_flow_with_public_client,
-            % signin_implicit_flow_with_public_client,
-
-            % signup_code_flow_with_confidential_client,
-            % signin_code_flow_with_confidential_client,
-
-            % signup_implicit_flow_with_confidential_client,
-            % signin_implicit_flow_with_confidential_client,
-
-            % signin_password_grant_with_public_client,
-            % signin_password_grant_with_confidential_client,
-
-            % signin_client_grant_with_confidential_client
-
-            restapi_jwks
+            restapi_jwks,
+            restapi_introspect
          ]}
    ].
 
@@ -151,12 +133,11 @@ define_account() ->
 %%% unit tests
 %%%
 %%%----------------------------------------------------------------------------
--define(ENDPOINT_SIGNIN, "http://localhost:8080/oauth2/authorize").
--define(ENDPOINT_SIGNUP, "http://localhost:8080/oauth2/signup").
-
--define(AUTHORIZE, "http://localhost:8080/oauth2/authorize").
--define(TOKEN,     "http://localhost:8080/oauth2/token").
--define(ENDPOINT_JWKS, "http://localhost:8080/oauth2/jwks").
+-define(ENDPOINT_SIGNIN,     "http://localhost:8080/oauth2/authorize").
+-define(ENDPOINT_SIGNUP,     "http://localhost:8080/oauth2/signup").
+-define(ENDPOINT_TOKEN,      "http://localhost:8080/oauth2/token").
+-define(ENDPOINT_JWKS,       "http://localhost:8080/oauth2/jwks").
+-define(ENDPOINT_INTROSPECT, "http://localhost:8080/oauth2/introspect").
 
 
 %%
@@ -336,9 +317,10 @@ signup_implicit_grant_with_confidential_client(_Config) ->
    }} = permit:validate(Token).
 
 
+
 %%
 signin_password_grant_with_public_client(_Config) ->
-   Payload = oauth2_request_public(?TOKEN, #{
+   Payload = oauth2_request_public(?ENDPOINT_TOKEN, #{
       grant_type     => <<"password">>,
       username       => <<"account.a">>,
       password       => <<"nosecret">>,
@@ -356,7 +338,7 @@ signin_password_grant_with_public_client(_Config) ->
 
 %%
 signin_password_grant_with_confidential_client(_Config) ->
-   Payload = oauth2_request_confidential(?TOKEN, #{
+   Payload = oauth2_request_confidential(?ENDPOINT_TOKEN, #{
       grant_type     => <<"password">>,
       username       => <<"account.a">>,
       password       => <<"nosecret">>,
@@ -375,7 +357,7 @@ signin_password_grant_with_confidential_client(_Config) ->
 
 %%
 signin_client_grant_with_confidential_client(_Config) ->
-   Payload = oauth2_request_confidential(?TOKEN, #{
+   Payload = oauth2_request_confidential(?ENDPOINT_TOKEN, #{
       grant_type     => <<"client_credentials">>
    }),
    #{
@@ -399,6 +381,20 @@ restapi_jwks(_) ->
       <<"n">>   := _,
       <<"e">>   := _
    } = hd(Keys).
+
+%%
+restapi_introspect(_) ->
+   {ok, Token} = oauth2_token:access(<<"account.a">>, <<"nosecret">>),
+   Payload = oauth2_request_confidential(?ENDPOINT_INTROSPECT, #{token => Token}),
+   200 = lens:get(code(), Payload),
+   #{
+      <<"iss">> := <<"http://localhost:8080">>,
+      <<"sub">> := <<"account.a">>,
+      <<"uid">> := true,
+      <<"aud">> := <<"any">>,
+      <<"exp">> := _,
+      <<"tji">> := _
+   } = lens:get(json(), Payload).
 
 
 
