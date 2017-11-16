@@ -45,8 +45,11 @@ endpoints() ->
 
       account(),
 
-      restd_static:reader("/oauth2/developer/*", "/oauth2/developer", oauth2)
+      restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
+      restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
    ].
+
+
 
 %%
 %% The authorization code grant type is used to obtain both access
@@ -57,10 +60,9 @@ endpoints() ->
 %%
 confidential_client_signin() ->
    [reader ||
-      _ /= restd:path("/oauth2/authorize"),
+      _ /= restd:path("/oauth2/signin"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
-      _ /= restd:provided_content({application, json}),
 
       Digest  /= restd:header(<<"Authorization">>),
       Client  <- authenticate_http_digest(Digest),
@@ -75,7 +77,6 @@ confidential_client_signup() ->
       _ /= restd:path("/oauth2/signup"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
-      _ /= restd:provided_content({application, json}),
 
       Digest  /= restd:header(<<"Authorization">>),
       Client  <- authenticate_http_digest(Digest),
@@ -99,10 +100,9 @@ confidential_client_signup() ->
 %%
 public_client_signin() ->
    [reader ||
-      _ /= restd:path("/oauth2/authorize"),
+      _ /= restd:path("/oauth2/signin"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
-      _ /= restd:provided_content({application, json}),
 
       Request /= restd:as_form(),
       Client  <- authenticate_public_client(Request),
@@ -117,7 +117,6 @@ public_client_signup() ->
       _ /= restd:path("/oauth2/signup"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
-      _ /= restd:provided_content({application, json}),
 
       Request /= restd:as_form(),
       Client  <- authenticate_public_client(Request),
@@ -287,8 +286,10 @@ authenticate_public_client(_) ->
    {error, badarg}.   
 
 %%
+authenticate_access_token(<<"Bearer ", Token/binary>>) ->
+   permit:validate(Token);
 authenticate_access_token(_) ->
-   {ok, undefined}.
+   {ok, unauthorized}.
 
 
 % -export([

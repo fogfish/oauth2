@@ -133,7 +133,7 @@ define_account() ->
 %%% unit tests
 %%%
 %%%----------------------------------------------------------------------------
--define(ENDPOINT_SIGNIN,     "http://localhost:8080/oauth2/authorize").
+-define(ENDPOINT_SIGNIN,     "http://localhost:8080/oauth2/signin").
 -define(ENDPOINT_SIGNUP,     "http://localhost:8080/oauth2/signup").
 -define(ENDPOINT_TOKEN,      "http://localhost:8080/oauth2/token").
 -define(ENDPOINT_JWKS,       "http://localhost:8080/oauth2/jwks").

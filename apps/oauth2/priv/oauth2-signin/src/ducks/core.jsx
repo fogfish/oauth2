@@ -1,10 +1,22 @@
+import queryString from 'query-string'
+
+const defaults = (json) => (
+   {
+      response_type: json.response_type ? json.response_type : "code",
+      client_id: json.client_id ? json.client_id : "oauth2-account",
+      state: json.state ? json.state : ""
+   }
+)
 
 //
 // default state
 const empty = {
    isSignIn: true,
-   isSignUp: false
+   isSignUp: false,
+
+   authRequest: defaults(queryString.parse(location.search))
 }
+
 
 //
 //

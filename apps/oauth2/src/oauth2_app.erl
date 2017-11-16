@@ -42,11 +42,11 @@ stop(_State) ->
 %%
 %%
 config_root_access() ->
-   oauth2_client:create(?OAUTH2_UX, crypto:strong_rand_bytes(30),
+   oauth2_client:create("oauth2-account", crypto:strong_rand_bytes(30),
       #{
          <<"type">>         => <<"oauth2:client">>,
          <<"security">>     => <<"public">>,
-         <<"redirect_uri">> => uri:s(uri:path(?OAUTH2_UX_CALLBACK, uri:new(opts:val(issuer, permit))))
+         <<"redirect_uri">> => uri:s(uri:path("/oauth2/account/redirect.html", uri:new(opts:val(issuer, permit))))
       }
    ).
 

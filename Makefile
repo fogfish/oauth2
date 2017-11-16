@@ -10,4 +10,7 @@ APP = oauth2
 ORG = fogfish
 URI = 
 
+##
+##  PUBLIC_URL=/oauth2/authorize npm run build
+
 include erlang.mk

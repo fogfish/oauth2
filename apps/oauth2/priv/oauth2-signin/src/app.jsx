@@ -9,8 +9,8 @@ import {signin, signup} from './ducks/core'
 
 const OAuth2 = ({core, actions}) => (
   <Container>
-    {core.isSignIn && <SignIn onSignUp={actions.signup}/>}
-    {core.isSignUp && <SignUp onSignIn={actions.signin}/>}
+    {core.isSignIn && <SignIn onSignUp={actions.signup} authRequest={core.authRequest}/>}
+    {core.isSignUp && <SignUp onSignIn={actions.signin} authRequest={core.authRequest}/>}
   </Container>
 )
 

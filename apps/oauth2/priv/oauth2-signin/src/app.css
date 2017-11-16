@@ -23,6 +23,12 @@
    margin: 0;
 }
 
+.dc-dialog__subtitle
+{
+   margin-left: 0.5em;
+   margin-right: 0.5em;
+}
+
 .dc-dialog__actions--secondary
 {
    padding: 0 2rem 0 2rem;

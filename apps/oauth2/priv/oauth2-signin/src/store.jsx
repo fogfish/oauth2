@@ -2,8 +2,6 @@
 //
 import { createStore, applyMiddleware, combineReducers } from 'redux'
 import { createLogger } from 'redux-logger'
-// import thunk from 'redux-thunk'
-// import initSubscriber from 'redux-subscriber'
 
 //
 //
@@ -16,4 +14,3 @@ const root = combineReducers({
 const logger = createLogger()
 
 export const store  = createStore(root, applyMiddleware(logger))
-// export const subscribe = initSubscriber(store)
