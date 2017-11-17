@@ -1,34 +1,46 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
+@import "../node_modules/dress-code/dist/css/dress-code.min.css";
+
+.dc-page 
+{
+   height: calc(100% - 81px);
+   overflow: auto;
 }
 
-.App {
-  text-align: center;
+.dc-dialog 
+{
+   max-width: 420px;
+   margin: 40px auto;
+   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+   padding: inherit;
+   z-index: inherit;
+   transition: inherit;
+   transform: inherit;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+.dc-dialog__content 
+{
+   margin: 0;
 }
 
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
+
+input 
+{
+   width: 100%;
 }
 
-.App-title {
-  font-size: 1.5em;
+
+.dc-tab__element--header
+{
+  font-weight: bold;
+  color: #333;
 }
 
-.App-intro {
-  font-size: large;
+.dc-h2
+{
+   display: flex;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.dc-h2 a
+{
+  margin-left: auto;
 }
