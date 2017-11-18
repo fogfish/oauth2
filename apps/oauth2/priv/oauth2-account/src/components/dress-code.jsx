@@ -10,16 +10,25 @@ export const Container = ({children}) => (
    </div>
 )
 
-export const Layout = ({children}) => (
-   <div className="dc-row">
-      {children}
+export const Layout = ({signout, children}) => (
+   <div>
+      <ul className="dc-tab dc-tab--header">
+         <li className="dc-tab__element dc-tab__element--disabled dc-tab__element--header">Account</li>
+         <li className="dc-tab__element dc-tab__element--right">
+            <button className="dc-btn dc-btn--small dc-btn--link" onClick={signout}>Sign Out</button>
+         </li>
+      </ul>
+
+      <div className="dc-row">   
+         {children}
+      </div>
    </div>
 )
 
 export const Tabs = ({title, children}) => (
    <div className="dc-column dc-column--large-2 dc-column--medium-2">
       <div className="dc-column__contents">
-         <ul class="dc-tab dc-tab--vertical">
+         <ul className="dc-tab dc-tab--vertical">
             <li className="dc-tab__element dc-tab__element--disabled dc-tab__element--header">{title}</li>
             {children}
          </ul>
@@ -39,11 +48,10 @@ export const View = ({children}) => (
 //
 export const Window = ({children}) => (
    <div className="dc-dialog">
-      <form className="form-group">
-         {children}
-      </form>
+      {children}
    </div>  
 )
+
 
 export const Dialog = ({title, subtitle, children}) => (
    <div className="dc-dialog__content">
@@ -56,25 +64,25 @@ export const Dialog = ({title, subtitle, children}) => (
 )
 
 
-export const DialogWithOk = ({title, subtitle, children}) => (
+export const DialogWithOk = ({title, subtitle, accept, children}) => (
    <Window>
       <Dialog title={title} subtitle={subtitle}>
          {children}
       </Dialog>
       <div className="dc-dialog__actions">
-         <button className="dc-btn dc-btn--primary">OK</button>
+         <button className="dc-btn dc-btn--primary" onClick={accept}>OK</button>
       </div>
    </Window>
 )
 
-export const DialogWithAccept = ({title, subtitle, accept, children}) => (
+export const DialogWithAccept = ({title, subtitle, accept, cancel, children}) => (
    <Window>
       <Dialog title={title} subtitle={subtitle}>
          {children}
       </Dialog>
       <div className="dc-dialog__actions">
-         <button className="dc-btn dc-btn--link">Cancel</button>
-         <button className="dc-btn dc-btn--primary">{accept}</button>
+         <button className="dc-btn dc-btn--link" onClick={cancel}>Cancel</button>
+         <button className="dc-btn dc-btn--primary" onClick={accept}>{title}</button>
       </div>
    </Window>
 )

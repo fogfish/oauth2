@@ -1,35 +1,48 @@
 import React from 'react';
+import {bindActionCreators} from 'redux';
+import {connect} from 'react-redux';
+
 import {Layout, Tabs, Tab, View} from './dress-code';
-import {OAuthAppList, OAuthApp} from './oauth-app'
+import {OAuthAppList} from './oauth-app';
+
+import {register} from '../ducks/core';
+import {signout} from '../ducks/access-token';
 
 
-const OAuthApps = ({children}) => (
+const OAuthApps = ({actions, children}) => (
    <div className="dc-card">
       <h2 className="dc-h2">
          OAuth Apps
-         <a href="#" className="dc-btn dc-btn--link dc-btn--small">New OAuth App</a>
+         <button className="dc-btn dc-btn--link dc-btn--small" onClick={actions.register}>New OAuth App</button>
       </h2>
 
       {children
       ?  <OAuthAppList>{children}</OAuthAppList>
       :  <div>
-            <h4 className="dc-h4">No OAuth applications</h4>
+            <h4 className="dc-h4">No OAuth applications...</h4>
             <p className="dc-p">OAuth applications are used to access REST API.</p>
-            <a className="dc-btn dc-btn--primary">Register a new Application</a>
+            <a className="dc-btn dc-btn--primary" onClick={actions.register}>Register a new Application</a>
          </div>
       }
    </div>
 )
 
-export const Account = () => (
-   <Layout>
+const Account = ({actions}) => (
+   <Layout signout={actions.signout}>
       <Tabs title="Developer Settings">
          <Tab title="OAuth Apps" />
       </Tabs>
       <View>
-         <OAuthApps>
-            <OAuthApp />
+         <OAuthApps actions={actions}>
          </OAuthApps>
       </View>
    </Layout>
 )
+
+
+//
+// Visual Map 
+const vm = (state) => (state)
+const dm = (dispatch) => ({actions: bindActionCreators({register, signout}, dispatch)})
+
+export default connect(vm, dm)(Account)

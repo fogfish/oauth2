@@ -6,6 +6,18 @@
    overflow: auto;
 }
 
+.dc-tab--header
+{
+   margin-bottom: 24px;
+   display: flex;
+}
+
+.dc-tab__element--right
+{
+  margin-left: auto;
+  margin-right: 18px;
+}
+
 .dc-dialog 
 {
    max-width: 420px;
@@ -40,7 +52,7 @@ input
    display: flex;
 }
 
-.dc-h2 a
+.dc-h2 button
 {
   margin-left: auto;
 }
