@@ -1,12 +1,12 @@
 
+import {createOAuthApp} from './oauth-app'
+
 //
 // default empty status
 const empty = {
    isOAuthApps: true,
    isOAuthAppRegister: false,
-   isOAuthAppCredentials: false,
-
-   access_token: window.localStorage.getItem('access_token')
+   isOAuthAppCredentials: false
 }
 
 //
@@ -38,6 +38,10 @@ export default (state = empty, action) => {
 
 export const appsview = () => ({type: APPSVIEW})
 
-export const register = () => ({type: REGISTER})
+export const showRegisterNewApp = () => 
+   (dispatch) => {
+      dispatch(createOAuthApp())
+      dispatch({type: REGISTER})
+   }
 
-export const credentials = () => ({type: CREDENTIALS})
+export const showSecretKeys = () => ({type: CREDENTIALS})

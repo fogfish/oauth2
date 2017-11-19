@@ -9,23 +9,23 @@ import {appsview} from '../ducks/core'
 const AppKey = ({title, value}) => (
    <div>
       <label className="dc-label">{title}</label>
-      <p>{value}</p>
+      <p className="oauth-key">{value}</p>
    </div>
 )
 
 //
 //
-const OAuthAppSecret = ({actions}) => (
+const OAuthAppSecret = ({access, secret, actions}) => (
    <DialogWithOk title="Credentials" subtitle="for OAuth App" accept={actions.appsview}>
       <p>&nbsp;</p>
-      <AppKey title="Access Key" value="xxx" />
-      <AppKey title="Secret Key" value="xxx" />
+      <AppKey title="Access Key" value={access} />
+      <AppKey title="Secret Key" value={secret} />
    </DialogWithOk>
 )
 
 //
 // Visual Map 
-const vm = (state) => (state)
+const vm = (state) => (state.app.keys)
 const dm = (dispatch) => ({actions: bindActionCreators({appsview}, dispatch)})
 
 export default connect(vm, dm)(OAuthAppSecret)

@@ -32,7 +32,6 @@ export default (state = empty, action) => {
          window.location = AUTHORIZE;
          return state;
       };
-
    case SIGNOUT:
       window.localStorage.removeItem('access_token');
       window.location = AUTHORIZE;

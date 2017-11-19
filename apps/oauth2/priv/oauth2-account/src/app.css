@@ -56,3 +56,8 @@ input
 {
   margin-left: auto;
 }
+
+.oauth-key
+{
+  word-wrap: break-word;
+}

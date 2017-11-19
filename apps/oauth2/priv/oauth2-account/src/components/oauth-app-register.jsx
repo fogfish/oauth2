@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 
 import {DialogWithAccept} from './dress-code';
 import {appsview, credentials} from '../ducks/core'
-import {onAppName, onAppType, onAppRedirectUri, register} from '../ducks/oauth-app'
+import {onAppName, onAppSecurity, onAppRedirectUri, registerOAuthApp} from '../ducks/oauth-app'
 
 
 const AppName = ({onChange}) => (
@@ -43,12 +43,12 @@ export const OAuthAppRegister = ({actions}) => (
    <DialogWithAccept
       title="Register"
       subtitle="New OAuth App"
-      accept={actions.register}
+      accept={actions.registerOAuthApp}
       cancel={actions.appsview}
    >
       <AppName onChange={actions.onAppName}/>
       <AppRedirectUri onChange={actions.onAppRedirectUri}/>
-      <AppType onChange={actions.onAppType}/>
+      <AppType onChange={actions.onAppSecurity}/>
    </DialogWithAccept>
 )
 
@@ -57,6 +57,6 @@ export const OAuthAppRegister = ({actions}) => (
 //
 // Visual Map 
 const vm = (state) => (state)
-const dm = (dispatch) => ({actions: bindActionCreators({appsview, register, onAppName, onAppType, onAppRedirectUri}, dispatch)})
+const dm = (dispatch) => ({actions: bindActionCreators({appsview, registerOAuthApp, onAppName, onAppSecurity, onAppRedirectUri}, dispatch)})
 
 export default connect(vm, dm)(OAuthAppRegister)
