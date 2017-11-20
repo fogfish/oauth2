@@ -91,13 +91,13 @@ signup(Request, Client) ->
 
 %%
 %%
-token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code} = Request, _Client) ->
+token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code}, _Client) ->
    [either ||
       oauth2_token:is_exchangable(Code),
       oauth2_token:bearer(Code)
    ];
 
-token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret} = Request, _Client) ->
+token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret}, _Client) ->
    [either ||
       oauth2_token:access(Access, Secret),
       oauth2_token:bearer(_)
@@ -109,7 +109,7 @@ token(#{<<"grant_type">> := <<"client_credentials">>}, #{<<"identity">> := Token
       oauth2_token:bearer(Token)
    ];
 
-token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_token">> := Token} = Request, Client) ->
+token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_token">> := Token}, Client) ->
    [either ||
       oauth2_token:is_exchangable(Token),
       oauth2_client:is_confidential(Client),

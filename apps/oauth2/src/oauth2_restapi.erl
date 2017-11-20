@@ -43,8 +43,6 @@ endpoints() ->
       client_remove(),
       client_lookup(),
 
-      account(),
-
       restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
       restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
    ].
@@ -269,20 +267,6 @@ client_identity([_, _, Id]) ->
    {ok, Id};
 client_identity(_) ->
    {error, badarg}.
-
-%%
-%%
-account() ->
-   [reader ||
-      _ /= restd:path("/oauth2/account"),
-      _ /= restd:method('GET'),
-      _ /= restd:provided_content({application, json}),
-
-      Token /= restd:header(<<"Authorization">>),
-      Jwt   <- authenticate_access_token(Token),
-
-      _ /= restd:accesslog(restd:to_text(<<"ok">>))   
-   ].
 
 
 %%-----------------------------------------------------------------------------

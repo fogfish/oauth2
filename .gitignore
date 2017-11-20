@@ -1,7 +1,6 @@
 _build/
 log/
 rebar3
-*.lock
 *.sublime-*
 *.dump
 *.beam
