@@ -25,7 +25,9 @@
    create/2,
    create/3,
    lookup/1,
+   lookup/2,
    remove/1,
+   remove/2,
    claims/1,
    is_public/1,
    is_confidential/1,
@@ -35,25 +37,26 @@
 
 %%
 %% list of valid claims for client
--define(CLAIMS,      [<<"type">>, <<"redirect_uri">>, <<"security">>]).
+-define(CLAIMS,      [<<"name">>, <<"type">>, <<"redirect_uri">>, <<"security">>]).
 -define(NOT_ALLOWED, [<<"secret">>, <<"nonce">>]).
 
+-define(TYPE,        [<<"oauth2:app">>]).
 
 %%
 %% create new client profile
--spec create(permit:access(), permit:claims()) -> {ok, _} | {error, _}.
+-spec create(_, permit:claims()) -> {ok, _} | {error, _}.
 -spec create(permit:access(), permit:secret(), permit:claims()) -> {ok, _} | {error, _}.
-
-create(Master, Claims) ->
-   [either ||
-      claims(Claims),
-      permit:pubkey(Master, _)
-   ].
 
 create(Access, Secret, Claims) ->
    [either ||
       claims(Claims),
       permit:create(Access, Secret, _)
+   ].
+
+create(#{<<"sub">> := Master}, Claims) ->
+   [either ||
+      claims(Claims#{<<"type">> => <<"oauth2:client">>}),
+      permit:pubkey(Master, _)
    ].
 
 %%
@@ -69,12 +72,35 @@ lookup(Access) ->
       claims_redirect_uri(_)
    ].
 
+lookup(#{<<"sub">> := Master}, Access) ->
+   [either ||
+      oauth2_client:lookup(Access),
+      oauth2_client:is_master(_, Master),
+      cats:unit(maps:without(?NOT_ALLOWED, _)),
+      claims_type(_),
+      claims_security(_),
+      claims_redirect_uri(_)
+   ].
+
 %%
 %%
+-spec remove(_, permit:access()) -> {ok, _} | {error, _}.
 -spec remove(permit:access()) -> {ok, _} | {error, _}.
 
 remove(Access) ->
    permit:revoke(Access).
+
+
+remove(#{<<"sub">> := Master}, Access) ->
+   [either ||
+      oauth2_client:lookup(Access),
+      oauth2_client:is_master(_, Master),
+      oauth2_client:remove(Access),
+      cats:unit(maps:without(?NOT_ALLOWED, _)),
+      claims_type(_),
+      claims_security(_),
+      claims_redirect_uri(_)
+   ].
 
 %%
 %%

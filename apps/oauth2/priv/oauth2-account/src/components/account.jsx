@@ -7,6 +7,7 @@ import {OAuthAppList, OAuthApp} from './oauth-app';
 
 import {showRegisterNewApp} from '../ducks/core';
 import {signout} from '../ducks/access-token';
+import {revokeOAuthApp} from '../ducks/oauth-app';
 
 
 const OAuthApps = ({actions, apps}) => (
@@ -18,7 +19,7 @@ const OAuthApps = ({actions, apps}) => (
 
       {apps.length > 0 &&
          <OAuthAppList>
-            {apps.map(x => <OAuthApp app={x}/>)}
+            {apps.map(x => <OAuthApp app={x} onRevoke={actions.revokeOAuthApp}/>)}
          </OAuthAppList>
       }
       {apps.length == 0 &&
@@ -46,6 +47,6 @@ const Account = ({oauthApps, actions}) => (
 //
 // Visual Map 
 const vm = (state) => (state.account)
-const dm = (dispatch) => ({actions: bindActionCreators({showRegisterNewApp, signout}, dispatch)})
+const dm = (dispatch) => ({actions: bindActionCreators({revokeOAuthApp, showRegisterNewApp, signout}, dispatch)})
 
 export default connect(vm, dm)(Account)

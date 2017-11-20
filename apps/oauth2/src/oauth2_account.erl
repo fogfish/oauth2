@@ -23,7 +23,7 @@
    lookup/1,
    remove/1,
    claims/1,
-   profile/1
+   apps/1
 ]).
 
 %%
@@ -74,40 +74,24 @@ claims_type(#{<<"type">> := <<"oauth2:account">>} = Claims) ->
 claims_type(_) ->
    {error, invalid_claims}.
 
+
 %%
-%%
--spec profile(permit:access()) -> {ok, map()} | {error, _}.
+%% return list of apps owner by the account
+-spec apps(_) -> datum:either([_]).
 
-profile(Access) ->
-   [either ||
-      lookup(Access),
-      as_profile(_),
-      lookup_pubkey(_)
-   ].
+apps(#{<<"sub">> := Access}) ->
+   apps(Access);
 
-as_profile(Claims) ->
-   Property = [<<"access">>, <<"type">>],
-   Profile  = maps:with(Property, Claims),
-   List     = lists:map(
-      fun({Key, Val}) -> 
-         #{<<"id">> => Key, <<"value">> => Val} 
-      end,
-      maps:to_list( maps:without(Property, Claims) )
-   ),
-   {ok, Profile#{<<"claims">> => List}}.   
-
-lookup_pubkey(#{<<"access">> := Access} = Profile) ->
+apps(Access) ->
    [either ||
       pts:call(permit, Access, pubkey),
-      lookup_pubkey_clients(_),
-      cats:unit(Profile#{<<"clients">> => _})
+      cats:sequence(apps_lookup(_))
    ].
 
-lookup_pubkey_clients(List) ->
-   {ok, lists:map(
-      fun(#{<<"access">> := Access} = Basic) ->
-         {ok, Client} = oauth2_client:lookup(Access),
-         maps:merge(Basic, Client)
+apps_lookup(List) ->
+   lists:map(
+      fun(#{<<"access">> := Access}) ->
+         oauth2_client:lookup(Access)
       end,
       List
-   )}.
+   ).

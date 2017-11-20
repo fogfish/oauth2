@@ -50,7 +50,6 @@ endpoints() ->
    ].
 
 
-
 %%
 %% The authorization code grant type is used to obtain both access
 %% tokens and refresh tokens and is optimized for confidential clients.
@@ -69,7 +68,9 @@ confidential_client_signin() ->
       Request /= restd:as_form(),
 
       oauth2:signin(Request, Client),
-      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
+      _ /= restd:accesslog(Http)
    ].
 
 confidential_client_signup() ->
@@ -83,7 +84,9 @@ confidential_client_signup() ->
       Request /= restd:as_form(),
 
       oauth2:signup(Request, Client),
-      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
+      _ /= restd:accesslog(Http)
    ].
 
 
@@ -108,7 +111,9 @@ public_client_signin() ->
       Client  <- authenticate_public_client(Request),
 
       oauth2:signin(Request, Client),
-      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
+      _ /= restd:accesslog(Http)
    ].
 
 
@@ -122,7 +127,9 @@ public_client_signup() ->
       Client  <- authenticate_public_client(Request),
 
       oauth2:signup(Request, Client),
-      _ /= restd:accesslog(restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>))
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
+      _ /= restd:accesslog(Http)
    ].
 
 
@@ -144,8 +151,10 @@ confidential_client_access_token() ->
       Client  <- authenticate_http_digest(Digest),
       Request /= restd:as_form(),
 
-      oauth2:token(Request, Client),
-      _ /= restd:accesslog(restd:to_json(_))
+      cats:unit(oauth2:token(Request, Client)),
+
+      Http /= restd:to_json(_),
+      _ /= restd:accesslog(Http)
    ].
 
 %%
@@ -162,8 +171,10 @@ public_client_access_token() ->
       Request /= restd:as_form(),
       Client  <- authenticate_public_client(Request),
 
-      oauth2:token(Request, Client),
-      _ /= restd:accesslog(restd:to_json(_))
+      cats:unit(oauth2:token(Request, Client)),
+
+      Http /= restd:to_json(_), 
+      _ /= restd:accesslog(Http)
    ].
 
 
@@ -182,12 +193,14 @@ introspect() ->
       _ /= restd:provided_content({application, json}),
 
       Digest  /= restd:header(<<"Authorization">>),
-      Client  <- authenticate_http_digest(Digest),
+           _  <- authenticate_http_digest(Digest),
       Request /= restd:as_form(),
 
       cats:optionT(badarg, lens:get(lens:at(<<"token">>, undefined), Request)),
-      permit:validate(_),
-      _ /= restd:accesslog(restd:to_json(_))
+      cats:unit(permit:validate(_)),
+
+      Http /= restd:to_json(_),
+      _ /= restd:accesslog(Http)
    ].
 
 %%
@@ -200,7 +213,9 @@ jwks() ->
 
       permit_config:public(),
       jwk:encode(<<"jwt">>, _),
-      _ /= restd:accesslog({200, [{<<"Content-Type">>, <<"application/json">>}], _})
+
+      Http <- cats:unit({200, [{<<"Content-Type">>, <<"application/json">>}], _}), 
+      _ /= restd:accesslog(Http)
    ].
 
 %%
@@ -213,33 +228,47 @@ client_create() ->
 
       Token /= restd:header(<<"Authorization">>),
       Jwt   <- authenticate_access_token(Token),
+      Json  /= restd:as_json(),
+      cats:unit(oauth2_client:create(Jwt, Json)),
 
-      _ /= restd:accesslog(restd:to_text(<<"ok">>))
+      Http /= restd:to_json(_),
+      _ /= restd:accesslog(Http)
    ].
+
 
 client_remove() ->
    [reader ||
-      _ /= restd:path("/oauth2/client/_"),
+      Path /= restd:path("/oauth2/client/_"),
       _ /= restd:method('DELETE'),
       _ /= restd:provided_content({application, json}),
 
       Token /= restd:header(<<"Authorization">>),
       Jwt   <- authenticate_access_token(Token),
+      Id    <- client_identity(Path),
+      cats:unit(oauth2_client:remove(Jwt, Id)),
 
-      _ /= restd:accesslog(restd:to_text(<<"ok">>))
+      Http /= restd:to_json(_),
+      _ /= restd:accesslog(Http)
    ].
 
 client_lookup() ->
    [reader ||
-      _ /= restd:path("/oauth2/client/_"),
+      _ /= restd:path("/oauth2/client"),
       _ /= restd:method('GET'),
       _ /= restd:provided_content({application, json}),
 
       Token /= restd:header(<<"Authorization">>),
       Jwt   <- authenticate_access_token(Token),
+      cats:unit(oauth2_account:apps(Jwt)),
 
-      _ /= restd:accesslog(restd:to_text(<<"ok">>))
+      Http /= restd:to_json(_),
+      _ /= restd:accesslog(Http)
    ].
+
+client_identity([_, _, Id]) ->
+   {ok, Id};
+client_identity(_) ->
+   {error, badarg}.
 
 %%
 %%

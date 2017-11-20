@@ -88,6 +88,46 @@ export const DialogWithAccept = ({title, subtitle, accept, cancel, children}) =>
 )
 
 
+export const MessageSuccess = ({children}) => (
+   <div className="dc-msg dc-msg--success">
+      <div className="dc-msg__inner">
+
+         <div className="dc-msg__icon-frame">
+            <i className="dc-icon dc-msg__icon dc-icon--success"></i>
+         </div>
+
+         <div className="dc-msg__bd">
+            <h1 className="dc-msg__title">Success</h1>
+            <p className="dc-msg__text">{children}</p>
+         </div>
+      </div>
+   </div>
+)
+
+export const MessageFailure = ({children}) => (
+   <div className="dc-msg dc-msg--error">
+      <div className="dc-msg__inner">
+
+         <div className="dc-msg__icon-frame">
+            <i className="dc-icon dc-msg__icon dc-icon--error"></i>
+         </div>
+
+         <div className="dc-msg__bd">
+            <h1 className="dc-msg__title">Error</h1>
+            <p className="dc-msg__text">{children}</p>
+         </div>
+      </div>
+   </div>
+)
+
+
+export const LoadingBar = () => (
+   <div class="dc-loading-bar">
+      <div class="dc-loading-bar__bar"></div>
+      <div class="dc-loading-bar__fill"></div>
+   </div>
+)
+
 //
 //
 export const Tab = ({title}) => (

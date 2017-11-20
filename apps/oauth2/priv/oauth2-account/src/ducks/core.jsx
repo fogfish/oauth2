@@ -6,7 +6,10 @@ import {createOAuthApp} from './oauth-app'
 const empty = {
    isOAuthApps: true,
    isOAuthAppRegister: false,
-   isOAuthAppCredentials: false
+   isOAuthAppCredentials: false,
+
+   isLoading: false,
+   failure: ""
 }
 
 //
@@ -14,7 +17,9 @@ const empty = {
 const APPSVIEW = "@@core/appsview";
 const REGISTER = "@@core/register";
 const CREDENTIALS = "@@core/credentials";
-
+const SHOW_LOADING = "@@core/show-loading";
+const HIDE_LOADING = "@@core/hide-loading";
+const SHOW_FAILURE = "@@core/show-failure";
 
 //
 //
@@ -29,6 +34,15 @@ export default (state = empty, action) => {
 
    case CREDENTIALS:
       return {...state, isOAuthApps: false, isOAuthAppRegister: false, isOAuthAppCredentials: true};
+
+   case SHOW_LOADING:
+      return {...state, isLoading: true};
+
+   case HIDE_LOADING:
+      return {...state, isLoading: false};
+
+   case SHOW_FAILURE:
+      return {...state, failure: action.error}
 
    default:
       return state
@@ -45,3 +59,17 @@ export const showRegisterNewApp = () =>
    }
 
 export const showSecretKeys = () => ({type: CREDENTIALS})
+
+
+export const showLoading = () => ({type: SHOW_LOADING})
+export const hideLoading = () => ({type: HIDE_LOADING})
+
+export const showFailure = (text) => 
+   (dispatch) => {
+      dispatch({type: SHOW_FAILURE, error: text})
+      setTimeout((x) => dispatch({type: SHOW_FAILURE, error: ''}), 3000)
+   }
+
+
+
+

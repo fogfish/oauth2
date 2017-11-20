@@ -17,14 +17,14 @@ export const OAuthAppList = ({children}) => (
    </table>   
 )
 
-export const OAuthApp = ({app}) => (
+export const OAuthApp = ({app, onRevoke}) => (
    <tr className="dc-table__tr dc-table__tr--interactive">
       <td className="dc-table__td">{app.name}</td>
       <td className="dc-table__td">{app.access}</td>
       <td className="dc-table__td">{app.security}</td>
       <td className="dc-table__td">{app.redirect_uri}</td>
       <td className="dc-table__td">
-         <a className="dc-btn dc-btn--link dc-btn--small dc-btn--remove">revoke</a>
+         <button className="dc-btn dc-btn--link dc-btn--small dc-btn--remove" onClick={() => onRevoke(app)}>revoke</button>
       </td>
    </tr>
 )

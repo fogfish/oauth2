@@ -1,7 +1,7 @@
 
 import {signout} from './access-token'
-import {showSecretKeys} from './core'
-import {appendOAuthApp} from './account'
+import {showSecretKeys, showLoading, hideLoading, showFailure} from './core'
+import {appendOAuthApp, removeOAuthApp} from './account'
 
 //
 //
@@ -58,42 +58,122 @@ export const createOAuthApp = () => ({type: APP_INIT})
 //
 //
 export const registerOAuthApp = () =>
-   (dispatch, getState) => (
-      fetch('http://localhost:8080/oauth2/client', {
+   (dispatch, getState) => {
+      dispatch(showLoading())
+      fetch('/oauth2/client', {
          method: 'POST',
          headers: {
             "Authorization": getState().access_token.bearer
          },
          body: JSON.stringify(getState().app)
-      }
-      ).then(
-         (http) => {
-            if (http.ok) {
-               return http.json()
-            } else {
-               return http.json().then((error) => Promise.reject(error))
-            }
-         }
+      }).then(
+         ioHttp
       ).then(
          (keys) => {
             const name = getState().app.name;
             const security = getState().app.security;
             const redirect_uri = getState().app.redirect_uri;
             const access = keys.access
+            dispatch(hideLoading())
             dispatch(appendOAuthApp({access, name, security, redirect_uri}))
             dispatch(onAppKeys(keys))
             dispatch(showSecretKeys())
          }
       ).catch(
          (error) => {
-            if (error.details === "expired")
-            {
-               dispatch(signout())   
-            } else {
-               console.log("= [ er ]=>", error)
-            }
+            dispatch(hideLoading())
+            ioError(dispatch, error)
          }
       )
-   )
+   }
+
+//
+//
+export const revokeOAuthApp = (app) =>
+   (dispatch, getState) => {
+      dispatch(showLoading())
+      fetch('/oauth2/client/' + app.access, {
+         method: 'DELETE',
+         headers: {
+            "Authorization": getState().access_token.bearer
+         }
+      }).then(
+         ioHttp
+      ).then(
+         (_json) => {
+            dispatch(hideLoading())
+            dispatch(removeOAuthApp(app))
+         }
+      ).catch(
+         (error) => {
+            dispatch(hideLoading())
+            ioError(dispatch, error)
+         }
+      )
+   }
+
+//
+//
+export const lookupOAuthApp = () =>
+   (dispatch, getState) => {
+      dispatch(showLoading())
+      fetch('/oauth2/client', {
+         method: 'GET',
+         headers: {
+            "Authorization": getState().access_token.bearer
+         }
+      }).then(
+         ioHttp
+      ).then(
+         (list) => {
+            dispatch(hideLoading())
+            list.map((x) => dispatch(appendOAuthApp(x)))
+         }
+      ).catch(
+         (error) => {
+            dispatch(hideLoading())
+            ioError(dispatch, error)
+         }
+      )
+   }
+
+//
+//
+const ioHttp = (http) => {
+   if (http.ok) {
+      return http.json()
+   } else {
+      return http.json().then(error => Promise.reject(error))
+   }
+}
+
+
+//
+//
+const ioError = (dispatch, json) => {
+   switch (json.type) {
+
+   case "https://httpstatuses.com/401": // Unauthorized
+      dispatch(signout())
+      return;
+
+   case "https://httpstatuses.com/500":
+      switch (json.details) {
+      case "invalid_uri":
+         dispatch(showFailure("Invalid redirect URI. It must define schema, authority and path (http://www.example.com/redirect.html). "))
+         return;
+      default:
+         dispatch(showFailure("Unable to execute operation. Try again later."))
+         return;
+      }
+
+   default: 
+      dispatch(showFailure("Unable to execute operation. Try again later."))
+      return;
+   }
+}
+
+
+
 
 

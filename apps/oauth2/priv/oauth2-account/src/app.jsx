@@ -4,13 +4,17 @@ import {connect} from 'react-redux';
 
 import './app.css';
 
-import {Container} from './components/dress-code'
+import {Container, MessageFailure, LoadingBar} from './components/dress-code'
 import Account from './components/account'
 import OAuthAppRegister from './components/oauth-app-register'
 import OAuthAppSecret from './components/oauth-app-secret'
 
+
 const App = ({core}) => (
    <Container>
+      {core.isLoading && <LoadingBar />}
+      {core.failure.length > 0 && <MessageFailure>{core.failure}</MessageFailure>}
+
       {core.isOAuthApps && <Account />}
       {core.isOAuthAppRegister && <OAuthAppRegister />}
       {core.isOAuthAppCredentials && <OAuthAppSecret />}

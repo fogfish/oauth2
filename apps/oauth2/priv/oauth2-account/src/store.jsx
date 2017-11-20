@@ -23,3 +23,4 @@ const logger = createLogger()
 export const store  = createStore(root, applyMiddleware(thunk, logger))
 
 store.dispatch(access_token.signin())
+store.dispatch(app.lookupOAuthApp())
