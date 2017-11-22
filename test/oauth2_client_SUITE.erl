@@ -15,7 +15,7 @@
 %%
 %% @doc
 %%
--module(oauth2_kvs_client_SUITE).
+-module(oauth2_client_SUITE).
 -include_lib("common_test/include/ct.hrl").
 
 %% common test
@@ -28,7 +28,7 @@
    end_per_group/2
 ]).
 
--export([create/1, lookup/1, remove/1, check_type/1, check_redirect_uri/1]).
+-export([create/1, lookup/1, remove/1, check_security/1, check_redirect_uri/1]).
 
 %%%----------------------------------------------------------------------------   
 %%%
@@ -46,7 +46,7 @@ groups() ->
       %%
       %% 
       {kvs, [parallel], 
-         [create, lookup, remove, check_type, check_redirect_uri]}
+         [create, lookup, remove, check_security, check_redirect_uri]}
    ].
 
 %%%----------------------------------------------------------------------------   
@@ -55,18 +55,21 @@ groups() ->
 %%%
 %%%----------------------------------------------------------------------------   
 init_per_suite(Config) ->
-   ok = pts:start(),
-   {ok, Pid} = pts:start_link(oauth2client, [
-      'read-through',
-      {factory, temporary},
-      {entity,  {oauth2_kvs_client, start_link, [undefined]}}
-   ]),
-   erlang:unlink(Pid),
+   permit:start(),
+   permit:ephemeral(),
+   % pts:start(),
+   % {ok, Pid} = pts:start_link(permit, [
+   %    'read-through',
+   %    {factory, temporary},
+   %    {entity,  {oauth2_kvs_client, start_link, [undefined]}}
+   % ]),
+   % erlang:unlink(Pid),
    Config.
 
 end_per_suite(_Config) ->
-   erlang:exit(whereis(oauth2client), shutdown),
-   application:stop(pts),
+   % erlang:exit(whereis(permit), shutdown),
+   % application:stop(pts),
+   application:stop(permit),
    ok.
 
 %% 
@@ -85,79 +88,87 @@ end_per_group(_, _Config) ->
 
 %%
 create(_Config) ->
-   {ok, #{
-      <<"access">> := <<"create">>
-     ,<<"type">> := <<"public">>
-     ,<<"redirect_uri">> := <<"http://localhost:8080/path">>
-   }} = oauth2_kvs_client:create(<<"create">>, #{
-      <<"type">> => <<"public">>
+   {ok, _} = oauth2_client:create(<<"create">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path">>
    }).
 
 %%
 lookup(_Config) ->
-   {ok, _} = oauth2_kvs_client:create(<<"lookup">>, #{
-      <<"type">> => <<"public">>
+   {ok, _} = oauth2_client:create(<<"lookup">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path">>
    }),
    {ok, #{
       <<"access">> := <<"lookup">>
-     ,<<"type">> := <<"public">>
+     ,<<"security">> := <<"public">>
      ,<<"redirect_uri">> := <<"http://localhost:8080/path">>
-   }} = oauth2_kvs_client:lookup(<<"lookup">>).
+   }} = oauth2_client:lookup(<<"lookup">>).
 
 %%
 remove(_Config) ->
-   {ok, _} = oauth2_kvs_client:create(<<"remove">>, #{
-      <<"type">> => <<"public">>
+   {ok, _} = oauth2_client:create(<<"remove">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path">>
    }),
    {ok, #{
       <<"access">> := <<"remove">>
-     ,<<"type">> := <<"public">>
+     ,<<"security">> := <<"public">>
      ,<<"redirect_uri">> := <<"http://localhost:8080/path">>
-   }} = oauth2_kvs_client:remove(<<"remove">>),
-   {error, not_found} = oauth2_kvs_client:lookup(<<"remove">>).
+   }} = oauth2_client:remove(<<"remove">>),
+   {error, not_found} = oauth2_client:lookup(<<"remove">>).
    
 %%
-check_type(_Config) ->
-   {ok, _} = oauth2_kvs_client:create(<<"type_1">>, #{
-      <<"type">> => <<"public">>
+check_security(_Config) ->
+   {ok, _} = oauth2_client:create(<<"type_1">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path">>
    }),
-   {ok, _} = oauth2_kvs_client:create(<<"type_2">>, #{
-      <<"type">> => <<"confidential">>
+   {ok, _} = oauth2_client:create(<<"type_2">>, <<"nosecret">>,#{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"confidential">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path">>
    }),
-   {error, invalid_type} = oauth2_kvs_client:create(<<"type_3">>, #{
-      <<"type">> => <<"some">>
+   {error, invalid_security_profile} = oauth2_client:create(<<"type_3">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"some">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path">>
    }).
 
 %%
 check_redirect_uri(_Config) ->
-   {ok, _} = oauth2_kvs_client:create(<<"redirect_uri_1">>, #{
-      <<"type">> => <<"public">>
+   {ok, _} = oauth2_client:create(<<"redirect_uri_1">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path">>
    }),
-   {error, invalid_uri} = oauth2_kvs_client:create(<<"redirect_uri_2">>, #{
-      <<"type">> => <<"public">>
+   {error, invalid_uri} = oauth2_client:create(<<"redirect_uri_2">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"/path">>
    }),
-   {error, invalid_uri} = oauth2_kvs_client:create(<<"redirect_uri_3">>, #{
-      <<"type">> => <<"public">>
+   {error, invalid_uri} = oauth2_client:create(<<"redirect_uri_3">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"file:///path">>
    }),
-   {error, invalid_uri} = oauth2_kvs_client:create(<<"redirect_uri_4">>, #{
-      <<"type">> => <<"public">>
+   {error, invalid_uri} = oauth2_client:create(<<"redirect_uri_4">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080">>
    }),
-   {error, invalid_uri} = oauth2_kvs_client:create(<<"redirect_uri_5">>, #{
-      <<"type">> => <<"public">>
+   {error, invalid_uri} = oauth2_client:create(<<"redirect_uri_5">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path?a=2">>
    }),
-   {error, invalid_uri} = oauth2_kvs_client:create(<<"redirect_uri_6">>, #{
-      <<"type">> => <<"public">>
+   {error, invalid_uri} = oauth2_client:create(<<"redirect_uri_6">>, <<"nosecret">>, #{
+      <<"type">> => <<"oauth2:client">>
+     ,<<"security">> => <<"public">>
      ,<<"redirect_uri">> => <<"http://localhost:8080/path#name">>
    }).
 

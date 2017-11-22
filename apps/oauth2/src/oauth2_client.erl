@@ -40,8 +40,6 @@
 -define(CLAIMS,      [<<"name">>, <<"type">>, <<"redirect_uri">>, <<"security">>]).
 -define(NOT_ALLOWED, [<<"secret">>, <<"nonce">>]).
 
--define(TYPE,        [<<"oauth2:app">>]).
-
 %%
 %% create new client profile
 -spec create(_, permit:claims()) -> {ok, _} | {error, _}.

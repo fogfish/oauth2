@@ -158,6 +158,9 @@ confidential_client_access_token() ->
 %%
 %% https://tools.ietf.org/html/rfc6749
 %%   Section 4.1.3. Access Token Request (Authorization Code Grant)
+%%   Section 4.3.2. Access Token Request (Resource Owner Password Credentials Grant)
+%%   Section 4.4.2. Access Token Request (Client Credentials Grant)
+%%   Section 6. Refreshing an Access Token
 %%
 public_client_access_token() ->
    [reader ||

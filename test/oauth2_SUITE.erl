@@ -89,6 +89,7 @@ init_per_suite(Config) ->
 
 end_per_suite(_Config) ->
    application:stop(oauth2),
+   application:stop(permit),
    ok.
 
 %% 
@@ -147,8 +148,7 @@ signin_code_grant_with_public_client(_) ->
       secret         => <<"nosecret">>,
       response_type  => <<"code">>,
       client_id      => <<"client.p">>,
-      state          => <<"opaque">>,
-      oauth2         => <<"signup">>
+      state          => <<"opaque">>
    }),
    Grant = oauth2_grant(Payload),
    <<"opaque">> = lens:get(lens:pair(<<"state">>), Grant),
