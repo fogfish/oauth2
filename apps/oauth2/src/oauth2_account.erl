@@ -85,7 +85,7 @@ apps(#{<<"sub">> := Access}) ->
 apps(Access) ->
    [either ||
       pts:call(permit, Access, pubkey),
-      cats:sequence(apps_lookup(_))
+      cats:sequence(apps_lookup(_)) 
    ].
 
 apps_lookup(List) ->

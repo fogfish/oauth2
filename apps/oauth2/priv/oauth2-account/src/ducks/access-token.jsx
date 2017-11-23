@@ -10,7 +10,7 @@ const encodeRequest = (json) =>
 
 const PROVIDER  = "/oauth2/authorize";
 const client_id = "oauth2-account";
-const response_type = "token";
+const response_type = "code";
 const state     = "none";
 const AUTHORIZE = PROVIDER + '?' + encodeRequest({client_id, response_type, state});
 
@@ -25,15 +25,11 @@ export default (state = empty, action) => {
    switch(action.type)
    {
    case ACCESS_TOKEN:
-      if (action.access_token)
-      {
-         return {...state, bearer: action.access_token}
-      } else {
-         window.location = AUTHORIZE;
-         return state;
-      };
+      return {...state, bearer: action.access_token, ttl: action.ttl};
+
    case SIGNOUT:
       window.localStorage.removeItem('access_token');
+      window.localStorage.removeItem('access_token_ttl');
       window.location = AUTHORIZE;
       return state;
 
@@ -44,10 +40,15 @@ export default (state = empty, action) => {
 
 //
 //
-export const signin = () => ({
-   type: ACCESS_TOKEN, 
-   access_token: window.localStorage.getItem('access_token')
-})
+export const signin = () => {
+   const now = +new Date()
+   const access_token = window.localStorage.getItem('access_token')
+   const ttl = +window.localStorage.getItem('access_token_ttl')
+   if (access_token != null && now < ttl)
+      return {type: ACCESS_TOKEN, access_token, ttl}
+   else
+      return {type: SIGNOUT}
+}
 
 //
 //

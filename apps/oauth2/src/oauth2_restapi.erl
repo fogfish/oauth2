@@ -303,85 +303,13 @@ authenticate_public_client(_) ->
 
 %%
 authenticate_access_token(<<"Bearer ", Token/binary>>) ->
-   permit:validate(Token);
+   case permit:validate(Token) of
+      {ok, _} = Result ->
+         Result;
+      {error, _} ->
+         %% permit:validate fails with multiple reasons that lead to unauthorized
+         {error, unauthorized}
+   end;
 authenticate_access_token(_) ->
-   {ok, unauthorized}.
-
-
-% -export([
-%    decode/1,        %% @deprecated use restd:as_form
-%    authenticate/2,
-%    access_token/1
-% ]).
-
-
-% %%
-% %% decodes oauth2 request
-% %% parse application/x-www-form-urlencoded to map
-% -spec decode(_) -> {ok, _} | {error, _}.  
-
-% decode(Request) ->
-%    {ok, [$. ||
-%       binary:split(scalar:s(Request), <<$&>>, [trim, global]),
-%       lists:map(fun as_pair/1, _),
-%       maps:from_list(_)
-%    ]}.
-
-% as_pair(Pair) ->
-%    erlang:list_to_tuple(
-%       [uri:unescape(X) || X <- binary:split(Pair, <<$=>>)]
-%    ).
-
-
-% %%
-% %% authenticate client and injects its identity into environment
-% -spec authenticate(_, _) -> ok | {error, _}.
-
-% authenticate(#{<<"client_id">> := Access} = Env, Head) ->
-%    [either ||
-%       oauth2_client:lookup(Access),
-%       authenticate_client(_, Env, Head)
-%    ];
-
-% authenticate(Env, Head) ->
-%    [either ||
-%       category:optionT(unauthorized_client,
-%          lens:get( lens:pair('Authorization', undefined), Head )
-%       ),
-%       authenticate_http_digest(_, Env)
-%    ].
-
-% %%
-% authenticate_client(#{<<"security">> := <<"public">>}, Env, _) ->
-%    {ok, Env};
-% authenticate_client(#{<<"security">> := <<"confidential">>}, Env, Head) ->
-%    [either ||
-%       category:optionT(unauthorized_client,
-%          lens:get( lens:pair('Authorization', undefined), Head )
-%       ),
-%       authenticate_http_digest(_, Env)
-%    ].
-
-% %%
-% authenticate_http_digest(<<"Basic ", Digest/binary>>, Env) ->
-%    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
-%    [either ||
-%       permit:stateless(Access, Secret, 1, #{}),
-%       oauth2_client:lookup(Access),
-%       oauth2_client:is_confidential(_),
-%       unit(Env#{<<"client_id">> => Access, <<"client_secret">> => Secret})
-%    ];
-% authenticate_http_digest(_, _) ->
-%    {error, unauthorized_client}.
-
-
-% %%
-% %%
-% access_token(Head) ->
-%    case lens:get(lens:pair('Authorization', undefined), Head) of
-%       <<"Bearer ", Token/binary>> ->
-%          Token;
-%       _ ->
-%          undefined
-%    end.
+   {error, unauthorized}.
 

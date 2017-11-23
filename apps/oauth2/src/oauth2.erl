@@ -38,23 +38,23 @@ signin(#{<<"response_type">> := <<"code">>, <<"access">> := Access, <<"secret">>
       oauth2_token:exchange_code(Access, Secret) 
    of
       {ok, Code} ->
-         redirect_uri({code, Code}, Request, Client);
+         redirect_uri([{code, Code}], Request, Client);
       {error, _} = Error ->
          redirect_uri(Error, Request, Client)
    end;
 
 signin(#{<<"response_type">> := <<"token">>, <<"access">> := Access, <<"secret">> := Secret} = Request, Client) ->
    case 
-      oauth2_token:access(Access, Secret) 
+      oauth2_token:bearer(Access, Secret) 
    of
-      {ok, Token} ->
-         redirect_uri({access_token, Token}, Request, Client);
+      {ok, #{<<"access_token">> := Token, <<"expires_in">> := TTL}} ->
+         redirect_uri([{access_token, Token}, {expires_in, TTL}], Request, Client);
       {error, _} = Error ->
-         redirect_uri(Error, Request, Client)
+         redirect_uri([Error], Request, Client)
    end;
 
 signin(Request, Client) ->
-   redirect_uri({error, unsupported_response_type}, Request, Client).
+   redirect_uri([{error, unsupported_response_type}], Request, Client).
 
 
 %%
@@ -67,26 +67,26 @@ signup(#{<<"response_type">> := <<"code">>, <<"access">> := Access, <<"secret">>
       ]
    of
       {ok, Code} ->
-         redirect_uri({code, Code}, Request, Client);
+         redirect_uri([{code, Code}], Request, Client);
       {error, _} = Error ->
-         redirect_uri(Error, Request, Client)
+         redirect_uri([Error], Request, Client)
    end;
 
 signup(#{<<"response_type">> := <<"token">>, <<"access">> := Access, <<"secret">> := Secret} = Request, Client) ->
    case 
       [either ||
          create_account(Request),
-         oauth2_token:access(Access, Secret)
+         oauth2_token:bearer(Access, Secret)
       ]
    of
-      {ok, Token} ->
-         redirect_uri({access_token, Token}, Request, Client);
+      {ok, #{<<"access_token">> := Token, <<"expires_in">> := TTL}} ->
+         redirect_uri([{access_token, Token}, {expires_in, TTL}], Request, Client);
       {error, _} = Error ->
-         redirect_uri(Error, Request, Client)
+         redirect_uri([Error], Request, Client)
    end;
 
 signup(Request, Client) ->
-   redirect_uri({error, unsupported_response_type}, Request, Client).
+   redirect_uri([{error, unsupported_response_type}], Request, Client).
 
 
 %%
@@ -139,5 +139,5 @@ create_account(#{<<"access">> := Access, <<"secret">> := Secret}) ->
 %%
 redirect_uri(Status, Request, Client) ->
    State = lens:get(lens:at(<<"state">>, undefined), Request),
-   oauth2_client:redirect_uri(Client, [Status, {state, State}]).
+   oauth2_client:redirect_uri(Client, [{state, State} | Status]).
 
