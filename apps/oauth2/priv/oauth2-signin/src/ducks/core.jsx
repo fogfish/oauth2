@@ -14,7 +14,7 @@ const empty = {
    isSignIn: true,
    isSignUp: false,
 
-   authRequest: defaults(queryString.parse(location.search))
+   authRequest: defaults(queryString.parse(window.location.search))
 }
 
 
