@@ -40,6 +40,17 @@ paths:
           * https://tools.ietf.org/html/rfc6749#section-4.1
           * https://tools.ietf.org/html/rfc6749#section-4.2
 
+        The endpoint renders a user-expereince that verifies the identity of 
+        the resource owner. It uses a traditional username/password pair to
+        authenticate the resources owners.
+
+        After completing its interaction with the resource owner, the authorization 
+        server directs the resource owner's user-agent back to the client. 
+        The authorization server redirects the user-agent to the client's 
+        redirection endpoint previously established with the authorization 
+        server during the client registration process.
+
+
       parameters:
         - $ref: '#/components/parameters/client_id'
         - $ref: '#/components/parameters/response_type'
@@ -48,15 +59,7 @@ paths:
       responses:
         '200':
           description: |
-            The endpoint renders a user-expereince that verifies the identity of 
-            the resource owner. It uses a traditional username/password pair to
-            authenticate the resources owners.
-
-            After completing its interaction with the resource owner, the authorization 
-            server directs the resource owner's user-agent back to the client. 
-            The authorization server redirects the user-agent to the client's 
-            redirection endpoint previously established with the authorization 
-            server during the client registration process.
+            Renders OAuth 2.0 user expereince.
 
           content:
             text/html:

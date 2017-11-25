@@ -15,6 +15,10 @@
 ]).
 
 -export([
+   authorize/1,
+
+   xxx/1,
+
    signin_code_grant_with_public_client/1,
    signup_code_grant_with_public_client/1,
 
@@ -53,6 +57,10 @@ groups() ->
       %% 
       {restapi, [parallel], 
          [
+            authorize,
+
+            xxx,
+
             signin_code_grant_with_public_client,
             signup_code_grant_with_public_client,
 
@@ -131,14 +139,188 @@ define_account() ->
 
 %%%----------------------------------------------------------------------------
 %%%
+%%% unit test primitives
+%%%
+%%%----------------------------------------------------------------------------
+
+%%
+%% OAuth2 Authorization Server endpoints
+url_auth() -> "http://localhost:8080/oauth2/authorize".
+
+
+url_signin() -> "http://localhost:8080/oauth2/signin".
+url_token()  -> "http://localhost:8080/oauth2/token".
+
+
+http_302() ->
+   lens:c(
+      lens:at(status), 
+      lens_require(302) 
+   ).
+
+http_200() ->
+   lens:c(
+      lens:at(status), 
+      lens_require(200) 
+   ).
+
+oauth2_redirect_to() ->
+   lens:c(
+      lens:at(headers),  
+      lens:pair(<<"Location">>), 
+      lens_url(), 
+      lens_require(<<"http://example.com/path">>)
+   ).
+
+oauth2_app_state() ->
+   lens:c(
+      lens:at(headers), 
+      lens:pair(<<"Location">>),
+      lens_url_q(), 
+      lens:pair(<<"state">>), 
+      lens_require(<<"opaque">>)
+   ).
+
+oauth2_app_code(Code) ->
+   lens:c(
+      lens:at(headers), 
+      lens:pair(<<"Location">>),
+      lens_url_q(), 
+      lens:pair(<<"code">>),
+      lens_token(),
+      lens_require(Code)
+   ).
+
+oauth2_app_code() ->
+   lens:c(
+      lens:at(headers), 
+      lens:pair(<<"Location">>),
+      lens_url_q(), 
+      lens:pair(<<"code">>),
+      lens_defined()
+   ). 
+
+oauth2_access_token(Token) ->
+   lens:c(
+      lens:at(content),
+      lens_access_token(),
+      lens_token(),
+      lens_require(Token)
+   ).
+
+oauth2_refresh_token(Token) ->
+   lens:c(
+      lens:at(content),
+      lens_refresh_token(),
+      lens_token(),
+      lens_require(Token)
+   ).
+
+
+%%%----------------------------------------------------------------------------
+%%%
 %%% unit tests
 %%%
 %%%----------------------------------------------------------------------------
+
+%%
+%%
+authorize(_) ->
+   {ok, _} = kscript:once(
+      [m_knet ||
+         cats:given(),
+         cats:url( url_auth() ),
+
+         cats:with(),
+         cats:x('GET'),
+         cats:h("Connection: close"),
+
+         cats:then(),
+         cats:require( http_200() )
+      ]
+   ).
+
+
+
+
 -define(ENDPOINT_SIGNIN,     "http://localhost:8080/oauth2/signin").
 -define(ENDPOINT_SIGNUP,     "http://localhost:8080/oauth2/signup").
 -define(ENDPOINT_TOKEN,      "http://localhost:8080/oauth2/token").
 -define(ENDPOINT_JWKS,       "http://localhost:8080/oauth2/jwks").
 -define(ENDPOINT_INTROSPECT, "http://localhost:8080/oauth2/introspect").
+
+
+
+%%
+xxx(_) ->
+   {ok, Code} = kscript:once(
+      [m_knet ||
+         cats:given(),
+         cats:url( url_signin() ),
+         cats:payload(#{
+            access         => <<"account.a">>,
+            secret         => <<"nosecret">>,
+            response_type  => <<"code">>,
+            client_id      => <<"client.p">>,
+            state          => <<"opaque">>
+         }),
+
+         cats:with(),
+         cats:x('POST'),
+         cats:h("Accept: */*"),
+         cats:h("Content-Type: application/x-www-form-urlencoded"),
+         cats:h("Connection: close"),
+
+         cats:then(),
+         cats:require( http_302() ),
+         cats:require( oauth2_redirect_to() ),
+         cats:require( oauth2_app_state() ),
+         cats:require( oauth2_app_code(#{
+            <<"iss">> => <<"http://localhost:8080">>,
+            <<"aud">> => <<"any">>,
+            <<"sub">> => <<"account.a">>,
+            <<"exch">>=> true
+         }) ),
+         cats:require( oauth2_app_code() )
+      ]
+   ),
+
+   {ok, _} = kscript:once(
+      [m_knet ||
+         cats:given(),
+         cats:url( url_token() ),
+         cats:payload(#{
+            grant_type => <<"authorization_code">>,
+            code       => Code,
+            client_id  => <<"client.p">>
+         }),
+
+         cats:with(),
+         cats:x('POST'),
+         cats:h("Accept: */*"),
+         cats:h("Content-Type: application/x-www-form-urlencoded"),
+         cats:h("Connection: close"),
+
+         cats:then(),
+         cats:require( http_200() ),
+         cats:require( oauth2_access_token(#{
+            <<"iss">> => <<"http://localhost:8080">>,
+            <<"aud">> => <<"any">>,            
+            <<"sub">> => <<"account.a">>,
+            <<"rev">> => true,
+            <<"uid">> => true
+         }) ),
+         cats:require( oauth2_refresh_token(#{
+            <<"iss">> => <<"http://localhost:8080">>,
+            <<"aud">> => <<"any">>,            
+            <<"sub">> => <<"account.a">>,
+            <<"rev">> => true,
+            <<"exch">> => true
+         }))
+      ]
+   ).
+
+
 
 
 %%
@@ -400,9 +582,83 @@ restapi_introspect(_) ->
 
 %%%----------------------------------------------------------------------------   
 %%%
-%%% helper
+%%% private
 %%%
 %%%----------------------------------------------------------------------------   
+
+%%
+%% 
+lens_require(Code) ->
+   fun(Fun, X) ->
+      case X of
+         Code ->
+            lens:fmap(fun(_) -> X end, Fun({ok, Code}));
+         _    ->
+            lens:fmap(fun(_) -> X end, Fun({error, {require, Code, X}}))
+      end
+   end.
+
+lens_defined() ->
+   fun(Fun, X) ->
+      lens:fmap(fun(_) -> X end, Fun({ok, X}))
+   end.
+
+%%
+%%
+lens_url() ->
+   fun(Fun, Uri) ->
+      lens:fmap(fun(_) -> Uri end, Fun( decode_url(Uri) ))
+   end.
+
+decode_url(Uri) ->
+   [identity ||
+      uri:new(Uri),
+      uri:q(undefined, _),
+      uri:anchor(undefined, _),
+      uri:s(_)
+   ].
+
+%%
+%%
+lens_url_q() ->
+   lens_uri(fun uri:q/1).
+
+%%
+%%
+lens_token() ->
+   fun(Fun, Token) ->
+      lens:fmap(fun(_) -> Token end, Fun( decode_token(Token) ))
+   end.
+
+decode_token(Token) ->
+   case permit:validate(Token) of
+      {ok, #{<<"tji">> := _, <<"exp">> := _} = Claims} -> 
+         maps:without([<<"tji">>, <<"exp">>], Claims);
+      {error, Reason} ->
+         throw(Reason)
+   end.
+
+%%
+%%
+lens_access_token() ->
+   fun(Fun, Token) ->
+      lens:fmap(fun(_) -> Token end, Fun( decode_access_token(Token) ))
+   end.
+
+decode_access_token(#{<<"token_type">> := <<"bearer">>, <<"expires_in">> := _, <<"access_token">> := Token}) ->
+   Token.
+
+%%
+%%
+lens_refresh_token() ->
+   fun(Fun, Token) ->
+      lens:fmap(fun(_) -> Token end, Fun( decode_refresh_token(Token) ))
+   end.
+
+decode_refresh_token(#{<<"token_type">> := <<"bearer">>, <<"refresh_token">> := Token}) ->
+   Token.
+
+
 
 %%
 %%
@@ -498,10 +754,13 @@ redirect_path() ->
 oauth2_response() ->
    lens:c(lens:hd(), lens:hd(), lens:t3(), lens:pair(<<"Location">>), lens_uri(fun uri:q/1)).
 
+
 lens_uri(Accessor) ->
    fun(Fun, Uri) ->
       lens:fmap(fun(_) -> Uri end, Fun( Accessor(uri:new(Uri)) ))
    end.
+
+
 
 lens_jsx() ->
    fun(Fun, Json) ->
