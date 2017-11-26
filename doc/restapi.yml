@@ -1,0 +1,517 @@
+openapi: "3.0.0"
+info:
+  version: v2.0
+  title: OAuth 2.0 Authorization Server Interface
+  description:
+    The interface implements an authorization layer and separating the role of 
+    the client from that of the resource owner.
+
+    See The OAuth 2.0 Authorization Framework and other related specifications
+      
+      * https://tools.ietf.org/html/rfc6749
+
+      * https://tools.ietf.org/html/rfc8252
+
+      * https://tools.ietf.org/html/rfc7662
+
+      * https://tools.ietf.org/html/rfc7519
+
+
+    This document quotes listed specification to clarify details of interfaces. 
+
+##-----------------------------------------------------------------------------
+##
+## Interface end-points
+##
+##-----------------------------------------------------------------------------
+
+paths:
+
+  ##
+  ##
+  /oauth2/authorize:
+    get:
+      description: |
+        The authorization endpoint is used to interact with the resource owner 
+        and obtain an authorization grant. The OAuth app redirects a consumer's
+        user agent to initiate either Authorization Code or Implicit Grants.
+
+        See RFC 6749 for details
+          * https://tools.ietf.org/html/rfc6749#section-4.1
+          * https://tools.ietf.org/html/rfc6749#section-4.2
+
+        The endpoint renders a user-expereince that verifies the identity of 
+        the resource owner. It uses a traditional username/password pair to
+        authenticate the resources owners.
+
+        After completing its interaction with the resource owner, the authorization 
+        server directs the resource owner's user-agent back to the client. 
+        The authorization server redirects the user-agent to the client's 
+        redirection endpoint previously established with the authorization 
+        server during the client registration process.
+
+
+      parameters:
+        - $ref: '#/components/parameters/client_id'
+        - $ref: '#/components/parameters/response_type'
+        - $ref: '#/components/parameters/state'
+
+      responses:
+        '200':
+          description: |
+            Renders OAuth 2.0 user expereince.
+
+          content:
+            text/html:
+              schema:
+                type: string
+                format: binary
+
+        default:
+          description: |
+            Unable to execute the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  ##
+  ##
+  /oauth2/token:
+    post:
+      description: |
+        The token endpoint is used by the client to obtain an access token by 
+        presenting its authorization grant or refresh token.
+
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/request'
+
+      responses:
+        '200':
+          description: |
+            Authorization server exchanges the grant to valid token.
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/token'
+
+        default:
+          description: |
+            Unable to execute the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  ##
+  ##
+  /oauth2/introspect:
+    post:
+      description: |
+        The contents of access tokens are opaque to clients. The client does not 
+        need to know anything about the content or structure of the token itself, 
+        if there is any. However, there is still a large amount of metadata that 
+        may be attached to a token, such as its current validity, approved scopes, 
+        and information about the context in which the token was issued. These pieces 
+        of information are often vital to protected resources making authorization 
+        decisions based on the tokens being presented.
+
+        This specification defines a protocol that allows authorized protected 
+        resources to query the authorization server to determine the set of metadata 
+        for a given token that was presented to them by an OAuth 2.0 client.
+
+        See https://tools.ietf.org/html/rfc7662
+
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: |
+                    access token issued by the service
+
+      responses:
+        '200':
+          description: |
+            Authorization server return claims assotiated with the token.
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/claims'
+
+        default:
+          description: |
+            Unable to execute the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  ##
+  ##
+  /oauth2/jwks:
+    get:
+      description: |
+        The endpoint returns a public key used to sign access tokens.
+
+      responses:
+        '200':
+          description: |
+            Authorization server return claims assotiated with the token.
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jwks'
+
+        default:
+          description: |
+            Unable to execute the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+  ##
+  ##
+  /oauth2/signin:
+    post:
+      description: |
+        Request the consumer sign-in with username/password credentials. 
+
+        Note: this api is not defined by OAuth 2.0 specification, it is defined
+        by this authorization server to facilitate an implementation of
+        branded identity management process.
+
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/identity'
+
+      responses:
+        '302':
+          description: |
+            The authorization server validates credentials and redirects
+            consumer's user-agent to redirect uri of the client who issues
+            the request. 
+
+        default:
+          description: |
+            Unable to execute the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+
+  /oauth2/signup:
+    post:
+      description: |
+        Request the consumer sign-up with username/password credentials. 
+
+        Note: this api is not defined by OAuth 2.0 specification, it is defined
+        by this authorization server to facilitate an implementation of
+        branded identity management process.
+
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/identity'
+
+      responses:
+        '302':
+          description: |
+            The authorization server validates credentials, creates a basic
+            profile and redirects consumer's user-agent to redirect uri of 
+            the client who issues the request. 
+
+        default:
+          description: |
+            Unable to execute the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
+components:
+
+##-----------------------------------------------------------------------------
+##
+## Request parameters
+##
+##-----------------------------------------------------------------------------
+  parameters:
+
+    ##
+    client_id:
+      name: client_id
+      in: query
+      description: |
+        The valid client identifier issued by the authorization server
+        See https://tools.ietf.org/html/rfc6749#section-2.2
+      required: true
+      schema:
+        type: string
+
+    ##
+    response_type:
+      name: response_type
+      in: query
+      description: |
+        The client informs the authorization server of the desired grant type
+        See https://tools.ietf.org/html/rfc6749#section-3.1.1
+      required: true
+      schema:
+        type: string
+
+    ##
+    state:
+      name: state
+      in: query
+      description: |
+        An opaque value used by the client to maintain state between the request and callback.
+      required: true
+      schema:
+        type: string
+
+
+##-----------------------------------------------------------------------------
+##
+## Data Types (Schemas) definition
+##
+##-----------------------------------------------------------------------------
+  schemas:
+
+    ##
+    ##
+    identity:
+      type: object
+      description: |
+        The class exposes consumer and client identity required for sign-in, sign-up
+        procedures. 
+      required:
+        - access
+        - secret
+        - response_type
+        - client_id
+        - state
+      properties:
+        access:
+          type: string
+          description: |
+            the access key is a public identity of the principal to whom access is granted.
+        secret:
+          type: string
+          description: |
+            the secret key is a private identity of the principal to whom access is granted.
+        response_type:
+          type: string
+          description: |
+            The client informs the authorization server of the desired grant type
+            See https://tools.ietf.org/html/rfc6749#section-3.1.1
+        client_id:
+          type: string
+          description: |
+            The valid client identifier issued by the authorization server
+            See https://tools.ietf.org/html/rfc6749#section-2.2
+        state:
+          type: string
+          description: |
+            An opaque value used by the client to maintain state between the request and callback.
+
+    ##
+    ##
+    request:
+      type: object      
+      description: |
+        The data type represent the access token request
+          * Authorization Code Grant https://tools.ietf.org/html/rfc6749#section-4.1.3
+          * Resource Owner Password Credentials Grant https://tools.ietf.org/html/rfc6749#section-4.3.2
+          * Client Credentials Grant https://tools.ietf.org/html/rfc6749#section-4.4.2
+          * Refreshing access token https://tools.ietf.org/html/rfc6749#section-6
+      required: 
+        - grant_type
+      properties:
+        grant_type:
+          type: string
+          description: |
+            the type of grant
+        code:
+          type: string
+          description: |
+            The authorization code received from the authorization server.
+        username:
+          type: string
+          description: |
+            The resource owner username.
+        password:
+          type: string
+          description: |
+            The resource owner password.
+        refresh_token:
+          type: string
+          description: |
+            The refresh token issued to the client.
+        scopes:
+          type: string
+          description: |
+            The scope of the access request as described by https://tools.ietf.org/html/rfc6749#section-3.3
+
+    ##
+    ##
+    token:
+      type: object      
+      description: |
+        The authorization server issues an access token and optional refresh token.
+        https://tools.ietf.org/html/rfc6749#section-5.1
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: |
+            The access token issued by the authorization server.
+        token_type:
+          type: string
+          description: |
+            The type of the token issued (usually bearer)
+        expires_in:
+          type: string
+          description: |
+            The lifetime in seconds of the access token.
+        refresh_token:
+          type: string
+          description: |
+            The refresh token, which can be used to obtain new access tokens.
+        scopes:
+          type: string
+          description: |
+            The scope of the access request as described by https://tools.ietf.org/html/rfc6749#section-3.3
+
+    ##
+    ##
+    claims:
+      type: object      
+      description: |
+        It represent a set of security claims as a JSON object
+      required:
+        - iss
+        - aud
+        - sub
+        - idp
+        - app
+      properties:
+        iss:
+          type: string
+          description: |
+            identifies the security token service (STS) that constructs and returns the token.
+        aud:
+          type: string
+          description: |
+            identifies intended recipient of the token. The application that receives the token
+            must verify that the audience value is correct and reject any tokens intended for 
+            a different audience.
+        sub:
+          type: string
+          description: |
+            identifies the principal about which the token asserts information, such as 
+            the user of an application.
+        idp:
+          type: string
+          description: |
+            records the identity provider that authenticated the subject of the token.
+        app:
+          type: string
+          description: |
+            identifies the application that is using the token to access a resource.
+        rev:
+          type: string
+          description: |
+            identifies if token is revocable
+
+    ##
+    ##
+    jwks:
+      type: array
+      items:
+        $ref: "#/components/schemas/jwk"
+
+    jwk:
+      type: object
+      required:
+        - alg
+        - kty
+        - kid
+        - e
+        - n
+      properties:
+        alg:
+          type: string
+          description: |
+            the algorithm for the key
+        kty:
+          type: string
+          description: |
+            the key type
+        kid:
+          type: string
+          description: |
+            the unique identifier for the key
+        e:
+          type: string
+          description: |
+            the exponent for a standard pem
+        n:
+          type: string
+          description: |
+            the modulus for a standard pem
+
+    ##
+    ##
+    error:
+      description: |
+        The high-level class to expose interface errors (See RFC 7807).
+      required:
+        - type
+        - status
+        - title
+        - instance
+        - details
+      properties:
+        type:
+          type: string
+          description: |
+            A URI reference that identifies the problem type.
+        status:
+          type: number
+          format: integer
+          description: |
+            The HTTP status code generated by the interface
+        title:
+          type: string
+          description: |
+            A short, human-readable summary of the problem type.
+        instance:
+          type: string
+          description: |
+            A URI reference that identifies faulty resource and its context.
+        details:
+          type: string
+          description: |
+            A human-readable explanation specific to this occurrence of the problem.

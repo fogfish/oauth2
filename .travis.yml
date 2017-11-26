@@ -2,10 +2,17 @@ language: erlang
 dist: trusty
 
 script: 
-   - make
+   - make compile
    - make test
    - ./rebar3 coveralls send
 
 otp_release:
    - 19.2
+   - 20.0
+   - 20.1
+
+addons:
+  apt:
+    packages:
+      - openssl	
 

@@ -38,16 +38,21 @@ init([]) ->
       {
          {one_for_one, 4, 1800},
          [
-            ?CHILD(supervisor, pts, storage_pubkey())
+            storage_pubkey(),
+            restapi()
          ]
       }
    }.
 
+
 %%
 %%
 storage_pubkey() ->
+   ?CHILD(supervisor, pts, storage_pubkey_spec()).
+
+storage_pubkey_spec() ->
    Storage = opts:val(storage, "ephemeral://", oauth2),
-   Backend = backend_pubkey(uri:schema(uri:new(Storage))),   
+   Backend = backend_pubkey_spec(uri:schema(uri:new(Storage))),   
    [permit,
       [
          'read-through',
@@ -56,8 +61,17 @@ storage_pubkey() ->
       ]
    ].
 
-backend_pubkey([ddb, _]) ->
+backend_pubkey_spec([ddb, _]) ->
    oauth2_ddb_pubkey;
-backend_pubkey(_) ->
+backend_pubkey_spec(_) ->
    permit_pubkey_io.
+
+
+%%
+%%
+restapi() ->
+   restd:spec(
+      oauth2_restapi:endpoints(), 
+      [{port, opts:val(port, oauth2)}, {backlog, 1024}]
+   ).
 

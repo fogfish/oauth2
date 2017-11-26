@@ -30,6 +30,6 @@
 
 %%
 %% build-in oauth profile callback
--define(OAUTH2_UX_CALLBACK,  <<"/oauth2/widget/oauth2.html">>).
+-define(OAUTH2_UX_CALLBACK,  <<"/oauth2/developer/widget/oauth2.html">>).
 -define(OAUTH2_UX_ROOT,      <<"/oauth2/developer">>).
 -define(OAUTH2_UX_URL,       <<"/oauth2/developer?response_type=code&client_id=oauth2ux">>).

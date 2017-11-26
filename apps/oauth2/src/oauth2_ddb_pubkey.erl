@@ -52,7 +52,7 @@ init([Uri, Ns, Key]) ->
    case 
       [either ||
          oauth2_ddb:new(uri:new(Uri)),
-         fmap(#state{ddb = _, key = Key}),
+         cats:unit(#state{ddb = _, key = Key}),
          checkout(_)
       ]
    of
@@ -141,19 +141,19 @@ some(pubkey, Pipe, #state{ddb = Ddb, key = Access} = State) ->
 checkout(#state{ddb = Ddb, key = Key} = State) ->
    [either ||
       oauth2_ddb:get(Ddb, Key),
-      fmap(State#state{val = _})
+      cats:unit(State#state{val = _})
    ].
 
 %%
 commit(#state{ddb = Ddb, val = Val} = State) ->
    [either ||
       oauth2_ddb:put(Ddb, Val),
-      fmap(State)
+      cats:unit(State)
    ].
 
 %%
 revoke(#state{ddb = Ddb, key = Key} = State) ->
    [either ||
       oauth2_ddb:remove(Ddb, Key),
-      fmap(State)
+      cats:unit(State)
    ].
