@@ -91,17 +91,35 @@ signup(Request, Client) ->
 
 %%
 %%
-token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code}, _Client) ->
-   [either ||
-      oauth2_token:is_exchangable(Code),
-      oauth2_token:bearer(Code)
-   ];
+token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code}, Client) ->
+   case oauth2_client:is_confidential(Client) of
+      {ok, _} ->
+         [either ||
+            oauth2_token:is_exchangable(Code),
+            oauth2_token:bearer(Code)
+         ];
+      {error, _} ->
+         [either ||
+            oauth2_token:is_exchangable(Code),
+            oauth2_token:bearer(Code),
+            cats:unit(maps:remove(<<"refresh_token">>, _))
+         ]
+   end;
 
-token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret}, _Client) ->
-   [either ||
-      oauth2_token:access(Access, Secret),
-      oauth2_token:bearer(_)
-   ];
+token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret}, Client) ->
+   case oauth2_client:is_confidential(Client) of
+      {ok, _} ->
+         [either ||
+            oauth2_token:access(Access, Secret),
+            oauth2_token:bearer(_)
+         ];
+      {error, _} ->
+         [either ||
+            oauth2_token:access(Access, Secret),
+            oauth2_token:bearer(_),
+            cats:unit(maps:remove(<<"refresh_token">>, _))
+         ]
+   end;
 
 token(#{<<"grant_type">> := <<"client_credentials">>}, #{<<"identity">> := Token} = Client) ->
    [either ||
