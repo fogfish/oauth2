@@ -57,18 +57,9 @@ groups() ->
 init_per_suite(Config) ->
    permit:start(),
    permit:ephemeral(),
-   % pts:start(),
-   % {ok, Pid} = pts:start_link(permit, [
-   %    'read-through',
-   %    {factory, temporary},
-   %    {entity,  {oauth2_kvs_client, start_link, [undefined]}}
-   % ]),
-   % erlang:unlink(Pid),
    Config.
 
 end_per_suite(_Config) ->
-   % erlang:exit(whereis(permit), shutdown),
-   % application:stop(pts),
    application:stop(permit),
    ok.
 
