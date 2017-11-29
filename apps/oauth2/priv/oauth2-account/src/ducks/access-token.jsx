@@ -1,3 +1,4 @@
+import queryString from 'query-string'
 
 const empty = {}
 
@@ -16,8 +17,9 @@ const AUTHORIZE = PROVIDER + '?' + encodeRequest({client_id, response_type, stat
 
 //
 // actions
-const ACCESS_TOKEN = "@@core/access_token";
-const SIGNOUT = "@@core/signout";
+const ACCESS_TOKEN = "@@oauth2/access_token";
+const SIGNOUT = "@@oauth2/signout";
+const ERROR = "@@oauth2/error";
 
 //
 //
@@ -26,6 +28,9 @@ export default (state = empty, action) => {
    {
    case ACCESS_TOKEN:
       return {...state, bearer: action.access_token, ttl: action.ttl};
+
+   case ERROR:
+      return {...state, error: action.reason};
 
    case SIGNOUT:
       window.localStorage.removeItem('access_token');
@@ -41,13 +46,19 @@ export default (state = empty, action) => {
 //
 //
 export const signin = () => {
-   const now = +new Date()
-   const access_token = window.localStorage.getItem('access_token')
-   const ttl = +window.localStorage.getItem('access_token_ttl')
-   if (access_token != null && now < ttl)
-      return {type: ACCESS_TOKEN, access_token, ttl}
-   else
-      return {type: SIGNOUT}
+   const oauth2 = queryString.parse(window.location.search)
+   if (oauth2.error)
+   {
+      return {type: ERROR, reason: oauth2.error}
+   } else {
+      const now = +new Date()
+      const access_token = window.localStorage.getItem('access_token')
+      const ttl = +window.localStorage.getItem('access_token_ttl')
+      if (access_token != null && now < ttl)
+         return {type: ACCESS_TOKEN, access_token, ttl}
+      else
+         return {type: SIGNOUT}
+   }
 }
 
 //

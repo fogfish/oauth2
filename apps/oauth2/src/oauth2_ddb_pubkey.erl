@@ -95,6 +95,12 @@ none(_, Pipe, State) ->
    {stop, normal, State}.
 
 %%
+some({put, _Key, _Val}, Pipe, PubKey) ->
+   %% Note: it is required to disable update of existed account
+   %%       due to security concern
+   pipe:ack(Pipe, {error, conflict}),
+   {next_state, some, PubKey};
+
 some({put, _Key, Val}, Pipe, State0) ->
    case commit(State0#state{val = Val}) of
       {ok, State1} ->

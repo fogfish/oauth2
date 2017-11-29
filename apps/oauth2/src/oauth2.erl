@@ -40,7 +40,7 @@ signin(#{<<"response_type">> := <<"code">>, <<"access">> := Access, <<"secret">>
       {ok, Code} ->
          redirect_uri([{code, Code}], Request, Client);
       {error, _} = Error ->
-         redirect_uri(Error, Request, Client)
+         redirect_uri([Error], Request, Client)
    end;
 
 signin(#{<<"response_type">> := <<"token">>, <<"access">> := Access, <<"secret">> := Secret} = Request, Client) ->

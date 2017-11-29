@@ -116,6 +116,9 @@ export const revokeOAuthApp = (app) =>
 //
 export const lookupOAuthApp = () =>
    (dispatch, getState) => {
+      if (!getState().access_token.bearer)
+         return 
+      
       dispatch(showLoading())
       fetch('/oauth2/client', {
          method: 'GET',
