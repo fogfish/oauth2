@@ -57,7 +57,7 @@ endpoints() ->
 %%
 confidential_client_signin() ->
    [reader ||
-      _ /= restd:path("/oauth2/signin"),
+      _ /= restd:url("/oauth2/signin"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
 
@@ -73,7 +73,7 @@ confidential_client_signin() ->
 
 confidential_client_signup() ->
    [reader ||
-      _ /= restd:path("/oauth2/signup"),
+      _ /= restd:url("/oauth2/signup"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
 
@@ -101,7 +101,7 @@ confidential_client_signup() ->
 %%
 public_client_signin() ->
    [reader ||
-      _ /= restd:path("/oauth2/signin"),
+      _ /= restd:url("/oauth2/signin"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
 
@@ -117,7 +117,7 @@ public_client_signin() ->
 
 public_client_signup() ->
    [reader ||
-      _ /= restd:path("/oauth2/signup"),
+      _ /= restd:url("/oauth2/signup"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
 
@@ -140,7 +140,7 @@ public_client_signup() ->
 %%
 confidential_client_access_token() ->
    [reader ||
-      _ /= restd:path("/oauth2/token"),
+      _ /= restd:url("/oauth2/token"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
       _ /= restd:provided_content({application, json}),
@@ -164,7 +164,7 @@ confidential_client_access_token() ->
 %%
 public_client_access_token() ->
    [reader ||
-      _ /= restd:path("/oauth2/token"),
+      _ /= restd:url("/oauth2/token"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
       _ /= restd:provided_content({application, json}),
@@ -188,7 +188,7 @@ public_client_access_token() ->
 %%
 introspect() ->
    [reader ||
-      _ /= restd:path("/oauth2/introspect"),
+      _ /= restd:url("/oauth2/introspect"),
       _ /= restd:method('POST'),
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
       _ /= restd:provided_content({application, json}),
@@ -208,7 +208,7 @@ introspect() ->
 %%
 jwks() ->
    [reader ||
-      _ /= restd:path("/oauth2/jwks"),
+      _ /= restd:url("/oauth2/jwks"),
       _ /= restd:method('GET'),
       _ /= restd:provided_content({application, json}),
 
@@ -223,7 +223,7 @@ jwks() ->
 %%
 client_create() ->
    [reader ||
-      _ /= restd:path("/oauth2/client"),
+      _ /= restd:url("/oauth2/client"),
       _ /= restd:method('POST'),
       _ /= restd:provided_content({application, json}),
 
@@ -239,14 +239,13 @@ client_create() ->
 
 client_remove() ->
    [reader ||
-      Path /= restd:path("/oauth2/client/_"),
+      Path /= restd:path("/oauth2/client/:id"),
       _ /= restd:method('DELETE'),
       _ /= restd:provided_content({application, json}),
 
       Token /= restd:header(<<"Authorization">>),
       Jwt   <- authenticate_access_token(Token),
-      Id    <- client_identity(Path),
-      cats:unit(oauth2_client:remove(Jwt, Id)),
+      cats:unit(oauth2_client:remove(Jwt, lens:get(lens:pair(<<"id">>), Path))),
 
       Http /= restd:to_json(_),
       _ /= restd:accesslog(Http)
@@ -265,12 +264,6 @@ client_lookup() ->
       Http /= restd:to_json(_),
       _ /= restd:accesslog(Http)
    ].
-
-client_identity([_, _, Id]) ->
-   {ok, Id};
-client_identity(_) ->
-   {error, badarg}.
-
 
 %%-----------------------------------------------------------------------------
 %%
