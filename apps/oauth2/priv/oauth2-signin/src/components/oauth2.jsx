@@ -30,6 +30,12 @@ const Actions = ({children}) => (
    </div>
 )
 
+const ActionsWithLinks = ({children}) => (
+   <div className="dc-dialog__actions dc-dialog__actions--with-link">
+      {children}
+   </div>
+)
+
 const Submit = ({title}) => (
    <button type="submit" className="dc-btn dc-btn--primary">{title}</button>
 )
@@ -81,12 +87,13 @@ export const SignIn = ({onSignUp, authRequest}) => (
          <SecretKey />
          <ClientFix authRequest={authRequest}/>
       </Dialog>
-      <Actions>
+      <ActionsWithLinks>
+         <a className="dc-btn dc-btn--link" onClick={onSignUp}>Create New Account</a>
          <Submit title="Sign In" />
+      </ActionsWithLinks>
+      <Actions>
+         <a className="dc-btn dc-btn" href={window.env.GITHUB}> <i class="fa fa-github"></i> GitHub</a>
       </Actions>
-      <Links>
-         <Link title="Create New Account." action={onSignUp} />
-      </Links>
    </Window>
 )
 
@@ -99,12 +106,10 @@ export const SignUp = ({onSignIn, authRequest}) => (
          <SecretKey />
          <ClientFix authRequest={authRequest}/>
       </Dialog>
-      <Actions>
+      <ActionsWithLinks>
+         <a className="dc-btn dc-btn--link" onClick={onSignIn}>I do have the account</a>
          <Submit title="Sign Up" />
-      </Actions>
-      <Links>
-         <Link title="I do have the account." action={onSignIn} />
-      </Links>
+      </ActionsWithLinks>
    </Window>
 )
 

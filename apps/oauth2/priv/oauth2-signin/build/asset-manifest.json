@@ -1,11 +1,16 @@
 {
-  "main.css": "static/css/main.007da05a.css",
-  "main.css.map": "static/css/main.007da05a.css.map",
-  "main.js": "static/js/main.a0236e19.js",
-  "main.js.map": "static/js/main.a0236e19.js.map",
-  "static/media/DressCodeIcons.eot": "static/media/DressCodeIcons.10dc4733.eot",
-  "static/media/DressCodeIcons.svg?v=2.3.0": "static/media/DressCodeIcons.800e369f.svg",
-  "static/media/DressCodeIcons.ttf?v=2.3.0": "static/media/DressCodeIcons.a83ebb73.ttf",
-  "static/media/DressCodeIcons.woff?v=2.3.0": "static/media/DressCodeIcons.415e7118.woff",
-  "static/media/arrow-right.svg": "static/media/arrow-right.b83d3f90.svg"
+  "main.css": "static/css/main.35cc9b40.css",
+  "main.css.map": "static/css/main.35cc9b40.css.map",
+  "main.js": "static/js/main.a92be4c8.js",
+  "main.js.map": "static/js/main.a92be4c8.js.map",
+  "static/media/DressCodeIcons.eot": "static/media/DressCodeIcons.2a1279a4.eot",
+  "static/media/DressCodeIcons.svg?v=2.4.0": "static/media/DressCodeIcons.42b5f4fd.svg",
+  "static/media/DressCodeIcons.ttf?v=2.4.0": "static/media/DressCodeIcons.5cff76fb.ttf",
+  "static/media/DressCodeIcons.woff?v=2.4.0": "static/media/DressCodeIcons.fb476665.woff",
+  "static/media/arrow-right.svg": "static/media/arrow-right.b83d3f90.svg",
+  "static/media/fontawesome-webfont.eot": "static/media/fontawesome-webfont.674f50d2.eot",
+  "static/media/fontawesome-webfont.svg?v=4.7.0": "static/media/fontawesome-webfont.912ec66d.svg",
+  "static/media/fontawesome-webfont.ttf?v=4.7.0": "static/media/fontawesome-webfont.b06871f2.ttf",
+  "static/media/fontawesome-webfont.woff2?v=4.7.0": "static/media/fontawesome-webfont.af7ae505.woff2",
+  "static/media/fontawesome-webfont.woff?v=4.7.0": "static/media/fontawesome-webfont.fee66e71.woff"
 }

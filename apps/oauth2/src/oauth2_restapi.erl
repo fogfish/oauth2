@@ -43,9 +43,20 @@ endpoints() ->
       client_remove(),
       client_lookup(),
 
+      %%
+      external_github(),
+
+      restd_static:react_env_js("/oauth2/authorize", config()),
       restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
       restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
    ].
+
+%%
+%%
+config() ->
+   #{
+      'GITHUB' => github:auth_url(<<"oauth2-account">>)
+   }.
 
 
 %%
@@ -264,6 +275,19 @@ client_lookup() ->
       Http /= restd:to_json(_),
       _ /= restd:accesslog(Http)
    ].
+
+%%
+external_github() ->
+   [reader ||
+      Url /= restd:url("/oauth2/external/github"),
+        _ /= restd:method('GET'),
+
+      github:account(Url),
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
+      _ /= restd:accesslog(Http)
+   ].
+
 
 %%-----------------------------------------------------------------------------
 %%
