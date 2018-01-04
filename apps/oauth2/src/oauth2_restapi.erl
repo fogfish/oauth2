@@ -27,7 +27,7 @@
 endpoints() ->
    [
       cors(),
-      
+
       %% https://tools.ietf.org/html/rfc6749
       confidential_client_signin(),
       confidential_client_signup(),
@@ -192,10 +192,11 @@ public_client_access_token() ->
 
       Request /= restd:as_form(),
       Client  <- authenticate_public_client(Request),
-
+      
+      Head /= restd:cors(),
       cats:unit(oauth2:token(Request, Client)),
 
-      Http /= restd:to_json(_), 
+      Http /= restd:to_json(Head, _), 
       _ /= restd:accesslog(Http)
    ].
 
