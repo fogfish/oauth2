@@ -15,6 +15,7 @@
         ,ek
         ,knet
         ,restd
+        ,htcodec
         ,erlcloud
         ,github
       ]},
