@@ -26,6 +26,8 @@
 %%
 endpoints() ->
    [
+      cors(),
+      
       %% https://tools.ietf.org/html/rfc6749
       confidential_client_signin(),
       confidential_client_signup(),
@@ -49,6 +51,14 @@ endpoints() ->
       restd_static:react_env_js("/oauth2/authorize", config()),
       restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
       restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
+   ].
+
+cors() ->
+   [reader ||
+         _ /= restd:method('OPTIONS'),
+      %% only to support local loading of the tool
+      Head /= restd:cors(),
+         _ /= restd:to_text(200, Head, <<>>)
    ].
 
 %%
