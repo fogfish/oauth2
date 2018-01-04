@@ -92,7 +92,7 @@ export const SignIn = ({onSignUp, authRequest}) => (
          <Submit title="Sign In" />
       </ActionsWithLinks>
       <Actions>
-         <a className="dc-btn dc-btn" href={window.env.GITHUB}> <i class="fa fa-github"></i> GitHub</a>
+         <a className="dc-btn dc-btn" href={window.env.GITHUB + '&state=' + authRequest.client_id}> <i class="fa fa-github"></i> GitHub</a>
       </Actions>
    </Window>
 )

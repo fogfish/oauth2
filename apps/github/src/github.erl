@@ -5,21 +5,20 @@
 -compile({parse_transform, category}).
 
 -export([
-   auth_url/1,
+   auth_url/0,
    account/1
 ]).
 
 %%
 %%
--spec auth_url(_) -> uri:uri().
+-spec auth_url() -> uri:uri().
 
-auth_url(State) ->
+auth_url() ->
    uri:s(
       uri:q(
          [
             {client_id, opts:val(access_key, github)},
-            {scope,     opts:val(scopes, github)},
-            {state,     State}
+            {scope,     opts:val(scopes, github)}
          ],
          url(oauth_url)
       )

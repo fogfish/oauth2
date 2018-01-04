@@ -4,5 +4,5 @@
 // You can thus use it to define some environment variables that will
 // be made available synchronously in all your JS modules under "src". 
 window.env = {
-   GITHUB: "https://github.com/login/oauth/authorize?client_id=xxx&scope=xxx&state=xxx"
+   GITHUB: "https://github.com/login/oauth/authorize?client_id=xxx&scope=xxx"
 }

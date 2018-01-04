@@ -55,7 +55,7 @@ endpoints() ->
 %%
 config() ->
    #{
-      'GITHUB' => github:auth_url(<<"oauth2-account">>)
+      'GITHUB' => github:auth_url()
    }.
 
 
