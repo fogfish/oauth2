@@ -114,7 +114,7 @@ put(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Value) ->
    [either ||
       oauth2_ddb:encode(Value),
       erlcloud_ddb2:put_item(Bucket, _, [], Config),
-      cats:unit(lens:get(lens:map(HKey), Value))
+      cats:unit(lens:get(lens:at(HKey), Value))
    ].
 
 %%
