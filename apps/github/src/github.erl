@@ -10,19 +10,18 @@
 ]).
 
 %%
-%%
+%% build auth url for service provider
 -spec auth_url() -> uri:uri().
 
 auth_url() ->
-   uri:s(
-      uri:q(
-         [
-            {client_id, opts:val(access_key, github)},
-            {scope,     opts:val(scopes, github)}
-         ],
-         url(oauth_url)
-      )
-   ).
+   [option ||
+      Root   <- opts:val(oauth_url, undefined, github),
+      Scope  <- opts:val(scopes, undefined, github),
+      Client <- opts:val(access_key, github),
+      uri:new(Root),
+      uri:q([{client_id, Client}, {scope, Scope}], _),
+      uri:s(_)
+   ].
 
 %%
 %%

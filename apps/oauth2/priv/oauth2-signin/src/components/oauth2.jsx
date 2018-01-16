@@ -83,17 +83,25 @@ const ClientFix = ({authRequest}) => (
 export const SignIn = ({onSignUp, authRequest}) => (
    <Window url="/oauth2/signin">
       <Dialog title="Sign In" subtitle="with">
+         {window.env.KEYPAIR &&
+         <div>   
          <AccessKey />
          <SecretKey />
          <ClientFix authRequest={authRequest}/>
+         </div>
+         }
       </Dialog>
+      {window.env.KEYPAIR &&
       <ActionsWithLinks>
          <a className="dc-btn dc-btn--link" onClick={onSignUp}>Create New Account</a>
          <Submit title="Sign In" />
       </ActionsWithLinks>
+      }
+      {window.env.GITHUB && 
       <Actions>
          <a className="dc-btn dc-btn" href={window.env.GITHUB + '&state=' + authRequest.client_id}> <i class="fa fa-github"></i> GitHub</a>
       </Actions>
+      }
    </Window>
 )
 

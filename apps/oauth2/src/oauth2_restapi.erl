@@ -65,7 +65,8 @@ cors() ->
 %%
 config() ->
    #{
-      'GITHUB' => github:auth_url()
+      'KEYPAIR' => scalar:a(opts:val(keypair, true, oauth2)),
+      'GITHUB'  => case github:auth_url() of undefined -> false; X -> X end
    }.
 
 
