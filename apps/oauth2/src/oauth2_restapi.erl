@@ -26,6 +26,8 @@
 %%
 endpoints() ->
    [
+      cors(),
+
       %% https://tools.ietf.org/html/rfc6749
       confidential_client_signin(),
       confidential_client_signup(),
@@ -43,9 +45,29 @@ endpoints() ->
       client_remove(),
       client_lookup(),
 
+      %%
+      external_github(),
+
+      restd_static:react_env_js("/oauth2/authorize", config()),
       restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
       restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
    ].
+
+cors() ->
+   [reader ||
+         _ /= restd:method('OPTIONS'),
+      %% only to support local loading of the tool
+      Head /= restd:cors(),
+         _ /= restd:to_text(200, Head, <<>>)
+   ].
+
+%%
+%%
+config() ->
+   #{
+      'KEYPAIR' => scalar:a(opts:val(keypair, true, oauth2)),
+      'GITHUB'  => case github:auth_url() of undefined -> false; X -> X end
+   }.
 
 
 %%
@@ -171,10 +193,11 @@ public_client_access_token() ->
 
       Request /= restd:as_form(),
       Client  <- authenticate_public_client(Request),
-
+      
+      Head /= restd:cors(),
       cats:unit(oauth2:token(Request, Client)),
 
-      Http /= restd:to_json(_), 
+      Http /= restd:to_json(Head, _), 
       _ /= restd:accesslog(Http)
    ].
 
@@ -264,6 +287,19 @@ client_lookup() ->
       Http /= restd:to_json(_),
       _ /= restd:accesslog(Http)
    ].
+
+%%
+external_github() ->
+   [reader ||
+      Url /= restd:url("/oauth2/external/github"),
+        _ /= restd:method('GET'),
+
+      github:account(Url),
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
+      _ /= restd:accesslog(Http)
+   ].
+
 
 %%-----------------------------------------------------------------------------
 %%

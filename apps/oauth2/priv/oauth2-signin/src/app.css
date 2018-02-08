@@ -1,5 +1,5 @@
 @import "../node_modules/dress-code/dist/css/dress-code.min.css";
-
+@import "../node_modules/font-awesome/css/font-awesome.min.css";
 
 .dc-page 
 {
@@ -17,6 +17,12 @@
    transition: inherit;
    transform: inherit;
 }
+
+.dc-dialog__actions--with-link
+{
+   justify-content: space-between;
+}
+
 
 .dc-dialog__content 
 {

@@ -1,0 +1,13 @@
+{application, github,
+   [
+      {description, "oauth2 authorization - github integration"},
+      {vsn,         "0.0.0"},
+      {modules,     []},
+      {registered,  []},
+      {applications,[
+         kernel
+        ,stdlib
+      ]},
+      {env, []}
+   ]
+}.

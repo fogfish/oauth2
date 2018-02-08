@@ -15,7 +15,9 @@
         ,ek
         ,knet
         ,restd
+        ,htcodec
         ,erlcloud
+        ,github
       ]},
       {mod, {oauth2_app, []}},
       {env, []}

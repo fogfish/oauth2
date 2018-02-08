@@ -46,7 +46,7 @@ config_root_access() ->
       #{
          <<"type">>         => <<"oauth2:client">>,
          <<"security">>     => <<"public">>,
-         <<"redirect_uri">> => uri:s(uri:path("/oauth2/account/redirect.html", uri:new(opts:val(issuer, permit))))
+         <<"redirect_uri">> => uri:s(uri:path("/oauth2/account", uri:new(opts:val(issuer, permit))))
       }
    ).
 

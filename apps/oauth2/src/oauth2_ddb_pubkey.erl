@@ -125,6 +125,16 @@ some({remove, _Access}, Pipe, #state{val = Val} = State0) ->
          {stop, normal, State0}
    end;
 
+some({update, Access, PubKey}, Pipe, #state{} = State0) ->
+   case commit(State0#state{val = PubKey}) of
+      {ok, State1} ->
+         pipe:ack(Pipe, {ok, PubKey}),
+         {next_state, some, State1};
+      {error,   _} = Error ->
+         pipe:ack(Pipe, Error),
+         {stop, normal, State0}
+   end;
+
 some(pubkey, Pipe, #state{ddb = Ddb, key = Access} = State) ->
    case 
       oauth2_ddb:match(Ddb, <<"master">>, [{<<"master">>, Access}])
