@@ -149,3 +149,22 @@ TBD
 http://cryto.net/~joepie91/blog/2016/06/13/stop-using-jwt-for-sessions/
 https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid
 
+## Redirect end-point content
+
+3.1.2.5.  Endpoint Content
+
+The redirection request to the client's endpoint typically results in
+an HTML document response, processed by the user-agent.  If the HTML
+response is served directly as the result of the redirection request,
+any script included in the HTML document will execute with full
+access to the redirection URI and the credentials it contains.
+
+The client SHOULD NOT include any third-party scripts (e.g., third-
+party analytics, social plug-ins, ad networks) in the redirection
+endpoint response.  Instead, it SHOULD extract the credentials from
+the URI and redirect the user-agent again to another endpoint without
+exposing the credentials (in the URI or elsewhere).  If third-party
+scripts are included, the client MUST ensure that its own scripts
+(used to extract and remove the credentials from the URI) will
+execute first.
+
