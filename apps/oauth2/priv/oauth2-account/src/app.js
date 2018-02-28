@@ -10,6 +10,9 @@ import OAuthAppRegister from './components/oauth-app-register'
 import OAuthAppSecret from './components/oauth-app-secret'
 import {signout} from './ducks/access-token';
 
+import { Tab, TabElement } from 'react-dress-code'
+
+
 const Failure = ({error, onClick}) => (
    <Window>
       <Dialog title="Error" subtitle="with authorization">
@@ -34,14 +37,22 @@ const Core = ({core}) => (
    </div>   
 )
 
-const App = ({core, access_token, actions}) => (
+const App = ({core, actions}) => (
    <Container>
-      {access_token.error 
-         ? <Failure error={access_token.error} onClick={actions.signout} />
-         : <Core core={core} />
-      }
+      <Tab />
+      <TabElement />
+      <Core core={core} />
    </Container>
 );
+
+// const App = ({core, access_token, actions}) => (
+//    <Container>
+//       {access_token.error 
+//          ? <Failure error={access_token.error} onClick={actions.signout} />
+//          : <Core core={core} />
+//       }
+//    </Container>
+// );
 
 //
 // Visual Map 

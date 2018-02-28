@@ -1,5 +1,21 @@
 @import "../node_modules/dress-code/dist/css/dress-code.min.css";
 
+.dc-row
+{
+  margin-top: 18px; 
+}
+
+.dc-tab__element--right
+{
+  float: right;
+}
+
+.dc-h2 .dc-btn
+{
+  margin-left: auto;
+}
+
+
 .dc-page 
 {
    height: calc(100% - 81px);

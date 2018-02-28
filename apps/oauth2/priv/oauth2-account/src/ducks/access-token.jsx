@@ -33,9 +33,9 @@ export default (state = empty, action) => {
       return {...state, error: action.reason};
 
    case SIGNOUT:
-      window.localStorage.removeItem('access_token');
-      window.localStorage.removeItem('access_token_ttl');
-      window.location = AUTHORIZE;
+      // window.localStorage.removeItem('access_token');
+      // window.localStorage.removeItem('access_token_ttl');
+      // window.location = AUTHORIZE;
       return state;
 
    default:

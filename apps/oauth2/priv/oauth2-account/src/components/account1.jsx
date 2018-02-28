@@ -8,7 +8,7 @@ import {OAuthAppList, OAuthApp} from './oauth-app';
 import {showRegisterNewApp} from '../ducks/core';
 import {signout} from '../ducks/access-token';
 import {revokeOAuthApp} from '../ducks/oauth-app';
-
+import { Link } from "react-router-dom";
 
 const OAuthApps = ({actions, apps}) => (
    <div className="dc-card">
@@ -26,7 +26,7 @@ const OAuthApps = ({actions, apps}) => (
          <div>
             <h4 className="dc-h4">No OAuth applications...</h4>
             <p className="dc-p">OAuth applications are used to access REST API.</p>
-            <a className="dc-btn dc-btn--primary" onClick={actions.showRegisterNewApp}>Register a new Application</a>
+            <Link className="dc-btn dc-btn--primary" to="/oauth2/account/register">Register a new Application</Link>
          </div>
       }
    </div>
