@@ -1,3 +1,4 @@
+import { fail } from '../Notification/ducks'
 
 //
 //
@@ -29,15 +30,18 @@ export const security = (e) =>
 //
 export const commit = () =>
   async (dispatch, getState) => {
-    const keys = await fetch('/oauth2/client', {
-      method: 'POST',
-      headers: {
-        "Authorization": getState().oauth2.token
-      },
-      body: JSON.stringify(spec(getState().app))
-    }).then(jsonify)
-
-    dispatch({type: KEYS, keys})
+    try {
+      const keys = await fetch('/oauth2/client', {
+        method: 'POST',
+        headers: {
+          "Authorization": getState().oauth2.token
+        },
+        body: JSON.stringify(spec(getState().app))
+      }).then(jsonify)
+      dispatch({type: KEYS, keys})
+    } catch (e) {
+      dispatch(fail(e))
+    }
   }
 
 const jsonify = (http) => {
@@ -57,7 +61,7 @@ const spec = ({identity, endpoint, security}) => (
 export const register = (history) =>
   (dispatch, getState) => {
     const app = spec(getState().app)
-    dispatch({ ...app, type: APPLICATION, access: getState().app.keys.access})
+    dispatch({ ...app, type: APPLICATION, access: getState().app.keys.access})    
     history.goBack()
   }
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Page, Container, Row, Column, Card } from 'react-dress-code'
+import { Page, Container, Row, Column } from 'react-dress-code'
 import Header from './Header'
 import Menu from './Menu'
 import { Registry } from '../Registry'

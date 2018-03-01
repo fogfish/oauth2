@@ -1,6 +1,5 @@
 import React from 'react'
 import { Dialog, DialogContent, DialogBody, DialogTitle, DialogSubTitle, DialogActions, Button } from 'react-dress-code'
-import { Link } from 'react-router-dom'
 import Identity from './Identity'
 import Endpoint from './Endpoint'
 import Security from './Security'

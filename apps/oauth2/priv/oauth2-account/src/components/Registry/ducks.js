@@ -1,20 +1,25 @@
 import { APPLICATION } from '../NewApp/ducks'
+import { fail } from '../Notification/ducks'
 
-const REVOKE = "@@registry/revoke"
+const REVOKE   = "@@registry/revoke"
+const REGISTRY = "@@registry/registry"
 
 //
 //
 export const lookup = () =>
   async (dispatch, getState) => {
-    const apps = await fetch('/oauth2/client', {
-      method: 'GET',
-      headers: {
-        "Authorization": getState().oauth2.token
-      }
-    }).then(jsonify)
-
-    console.log("=======")
-    console.log(apps)
+    try {
+      const apps = await fetch('/oauth2/client', {
+        method: 'GET',
+        headers: {
+          "Authorization": getState().oauth2.token
+        }
+      }).then(jsonify)
+      dispatch({type: REGISTRY, registry: apps})
+    } catch (e) {
+      dispatch(fail(e))
+      dispatch({type: REGISTRY, registry: []})
+    }
   }
 
 const jsonify = (http) => {
@@ -29,21 +34,25 @@ const jsonify = (http) => {
 //
 export const revoke = (access) =>
   async (dispatch, getState) => {
-    const app = await fetch(`/oauth2/client/${access}`, {
-      method: 'DELETE',
-      headers: {
-        "Authorization": getState().oauth2.token
-      }
-    }).then(jsonify)
+    try {
+      await fetch(`/oauth2/client/${access}`, {
+        method: 'DELETE',
+        headers: {
+          "Authorization": getState().oauth2.token
+        }
+      }).then(jsonify)
 
-    dispatch({type: REVOKE, access})
+      dispatch({type: REVOKE, access})
+    } catch (e) {
+      dispatch(fail(e))
+    }
   }
 
 
 //
 //
 const empty = {
-  apps: []
+  apps: undefined
 }
 
 export default (state = empty, action) => {
@@ -54,8 +63,10 @@ export default (state = empty, action) => {
       const redirect_uri = action.redirect_uri
       const security = action.security
       return { ...state, apps: state.apps.concat([{name, access, redirect_uri, security}])}
+    case REGISTRY:
+      return { ...state, apps: action.registry}
     case REVOKE:
-      return { ...state, apps: state.apps.filter(x => x.access != action.access)}
+      return { ...state, apps: state.apps.filter(x => x.access !== action.access)}
     default:
       return { ...state }
   }

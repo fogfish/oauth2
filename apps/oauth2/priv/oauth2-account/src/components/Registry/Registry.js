@@ -2,7 +2,7 @@ import React from 'react'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { lifecycle } from 'recompose'
-import { H2, H4, Card, Button } from 'react-dress-code'
+import { H2, Card, Button, LoadingBar } from 'react-dress-code'
 import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'
 import { lookup } from './ducks'
@@ -16,14 +16,16 @@ const Registry = (props) => (
       </Button>
     </H2>
 
-    {props.apps.length == 0 ? <RegistryNone { ...props } /> : <RegistryList { ...props } />}
-    
+    {!props.apps && <LoadingBar />}
+    {(!props.apps || props.apps.length === 0) && <RegistryNone { ...props } />}
+    {(props.apps  && props.apps.length  >  0) && <RegistryList { ...props } />}    
   </Card>
 )
 
 const RegistryWithData = lifecycle({
   componentWillMount() {
-    this.props.lookup()
+    if (!this.props.apps)
+      this.props.lookup()
   }
 })(Registry)
 
