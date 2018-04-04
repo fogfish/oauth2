@@ -67,7 +67,10 @@ groups() ->
             resource_owner_password_grant_with_public_app,
             resource_owner_password_grant_with_confidential_app,
 
-            client_credentials_grant
+            client_credentials_grant,
+
+            jwks,
+            introspect
        ]}
    ].
 
@@ -78,19 +81,19 @@ groups() ->
 %%%----------------------------------------------------------------------------   
 
 %% OAuth2 Authorization Server endpoints
-url_auth()   -> "http://localhost:8080/oauth2/authorize".
-url_signin() -> "http://localhost:8080/oauth2/signin".
-url_signup() -> "http://localhost:8080/oauth2/signup".
-url_token()  -> "http://localhost:8080/oauth2/token".
-url_jwks()   -> "http://localhost:8080/oauth2/jwks".
-url_introspect() -> "http://localhost:8080/oauth2/introspect".
+% url_auth()   -> "http://localhost:8080/oauth2/authorize".
+% url_signin() -> "http://localhost:8080/oauth2/signin".
+% url_signup() -> "http://localhost:8080/oauth2/signup".
+% url_token()  -> "http://localhost:8080/oauth2/token".
+% url_jwks()   -> "http://localhost:8080/oauth2/jwks".
+% url_introspect() -> "http://localhost:8080/oauth2/introspect".
 
 
 init_per_suite(Config) ->
    oauth2:start(),
-   {ok, _} = define_account(),
-   {ok, _} = define_client_public(),
-   {ok, _} = define_client_confidential(),
+   {ok, _} = define_account(oauth2_fixtures:account()),
+   {ok, _} = define_client(oauth2_fixtures:client_public()),
+   {ok, _} = define_client(oauth2_fixtures:client_confidential()),
    Config.
 
 end_per_suite(_Config) ->
@@ -107,30 +110,8 @@ end_per_group(_, _Config) ->
    ok.
 
 %%
-define_client_public() ->
-   define_client(<<"client.p">>, <<"nosecret">>,
-      #{
-         <<"type">> => <<"oauth2:client">>,
-         <<"security">> => <<"public">>,
-         <<"redirect_uri">> => <<"http://example.com/path">>,
-         <<"master">> => <<"account.a">>
-      }
-   ).
-
-%%
-define_client_confidential() ->
-   define_client(<<"client.c">>, <<"nosecret">>, 
-      #{
-         <<"type">> => <<"oauth2:client">>,
-         <<"security">> => <<"confidential">>,
-         <<"redirect_uri">> => <<"http://example.com/path">>,
-         <<"master">> => <<"account.a">>
-      }
-   ).   
-
-%%
 %% a low level implementation to inject a client with given access/secret
-define_client(Access, Secret, Claims) ->
+define_client({Access, Secret, Claims}) ->
    [either ||
       permit_pubkey:new(Access, Secret, Claims),
       cats:unit(lens:put(permit_pubkey:master(), scalar:s(<<"account.a">>), _)),
@@ -138,13 +119,8 @@ define_client(Access, Secret, Claims) ->
    ].
 
 %%
-define_account() ->
-   oauth2_account:create(<<"account.a">>, <<"nosecret">>,
-      #{
-         <<"type">> => <<"oauth2:account">>,
-         <<"uid">> => true
-      }
-   ).   
+define_account({Access, Secret, Claims}) ->
+   oauth2_account:create(Access, Secret, Claims).   
 
 
 
@@ -157,17 +133,13 @@ define_account() ->
 %%
 %%
 authorize(_) ->
-   {ok, _} = kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_auth() ),
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "GET http://localhost:8080/oauth2/authorize",
+         _ > "Accept: */*",
+         _ > "Connection: close",
 
-         cats:with(),
-         cats:x('GET'),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() )
+         _ < 200
       ]
    ).
 
@@ -175,70 +147,47 @@ authorize(_) ->
 %%
 authorization_code_grant_with_public_app_signin(_) ->
    {ok, _} = [either ||
-      authorization_code_grant_public_request(url_signin(), <<"account.a">>),
+      authorization_code_grant_public_request("http://localhost:8080/oauth2/signin", <<"account.a">>),
       authorization_code_grant_public_access_token(_, <<"account.a">>)
    ].
 
 authorization_code_grant_with_public_app_signup(_) ->
    {ok, _} = [either ||
-      authorization_code_grant_public_request(url_signup(), <<"signup.cg.pc.uA">>),
+      authorization_code_grant_public_request("http://localhost:8080/oauth2/signup", <<"signup.cg.pc.uA">>),
       authorization_code_grant_public_access_token(_, <<"signup.cg.pc.uA">>)
    ].
 
-authorization_code_grant_public_request(Url, Access) ->
-   kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( Url ),
-         cats:payload( authorization_request(<<"code">>, Access, <<"client.p">>) ),
+authorization_code_grant_public_request(Endpoint, Access) ->
+   m_http:once(
+      [m_http ||
+         _ > "POST " ++ Endpoint,
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"code">>, Access, <<"client.p">>),
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_302() ),
-         cats:require( oauth2_redirect_url() ),
-         cats:require( oauth2_redirect_url_with_state() ),
-         cats:require( oauth2_redirect_url_with_code(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => Access,
-            <<"exch">>=> true
-         }) ),
-         cats:require( oauth2_redirect_url_with_code() )
+         _ < 302,
+       Url < "Location: _",
+         _ < oauth2_redirect_url(Url),
+         _ < oauth2_redirect_url_with_state(Url),
+         _ < oauth2_redirect_url_with_code(Url, oauth2_fixtures:code(Access)),
+         _ < oauth2_redirect_url_with_code(Url)
       ]
    ).
 
 authorization_code_grant_public_access_token(Code, Access) ->
-   kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_token() ),
-         cats:payload(#{
-            grant_type => <<"authorization_code">>,
-            code       => Code,
-            client_id  => <<"client.p">>
-         }),
+   m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > exchange_request(Code, <<"client.p">>),
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() ),
-         cats:require( oauth2_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => Access,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) ),
-         cats:require( oauth2_not_defined_refresh_token() )
+         _ < 200,
+         _ < "Content-Type: application/json",
+         _ < oauth2_access_token(oauth2_fixtures:access_token(Access)),
+         _ < oauth2_not_defined_refresh_token()
       ]
    ).
 
@@ -246,36 +195,26 @@ authorization_code_grant_public_access_token(Code, Access) ->
 %%
 %%
 implicit_grant_with_public_app_signin(_) ->
-   {ok, _} = implicit_grant_public_request(url_signin(), <<"account.a">>).
+   {ok, _} = implicit_grant_public_request("http://localhost:8080/oauth2/signin", <<"account.a">>).
 
 implicit_grant_with_public_app_signup(_) ->
-   {ok, _} = implicit_grant_public_request(url_signup(), <<"signup.ig.pc.uA">>).
+   {ok, _} = implicit_grant_public_request("http://localhost:8080/oauth2/signup", <<"signup.ig.pc.uA">>).
 
-implicit_grant_public_request(Url, Access) ->
-   kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( Url ),
-         cats:payload( authorization_request(<<"token">>, Access, <<"client.p">>) ),
+implicit_grant_public_request(Endpoint, Access) ->
+   m_http:once(
+      [m_http ||
+         _ > "POST " ++ Endpoint,
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"token">>, Access, <<"client.p">>),
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_302() ),
-         cats:require( oauth2_redirect_url() ),
-         cats:require( oauth2_redirect_url_with_state() ),
-         cats:require( oauth2_redirect_url_with_ttl() ),
-         cats:require( oauth2_redirect_url_with_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => Access,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) )
+         _ < 302,
+       Url < "Location: _",
+         _ < oauth2_redirect_url(Url),
+         _ < oauth2_redirect_url_with_state(Url),
+         _ < oauth2_redirect_url_with_ttl(Url),
+         _ < oauth2_redirect_url_with_access_token(Url, oauth2_fixtures:access_token(Access))
       ]
    ).
 
@@ -284,229 +223,135 @@ implicit_grant_public_request(Url, Access) ->
 %%
 authorization_code_grant_with_confidential_app_signin(_) ->
    {ok, _} = [either ||
-      authorization_code_grant_confidential_request(url_signin(), <<"account.a">>),
+      authorization_code_grant_confidential_request("http://localhost:8080/oauth2/signin", <<"account.a">>),
       authorization_code_grant_confidential_access_token(_, <<"account.a">>),
       refresh_grant_confidential(_, <<"account.a">>)
    ].
 
 authorization_code_grant_with_confidential_app_signup(_) ->
    {ok, _} = [either ||
-      authorization_code_grant_confidential_request(url_signup(), <<"signup.cg.cc.uA">>),
+      authorization_code_grant_confidential_request("http://localhost:8080/oauth2/signup", <<"signup.cg.cc.uA">>),
       authorization_code_grant_confidential_access_token(_, <<"signup.cg.cc.uA">>),
       refresh_grant_confidential(_, <<"signup.cg.cc.uA">>)
    ].
 
 
-authorization_code_grant_confidential_request(Url, Access) ->
-   kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( Url ),
-         cats:payload( authorization_request(<<"code">>, Access, <<"client.c">>) ),
+authorization_code_grant_confidential_request(Endpoint, Access) ->
+   m_http:once(
+      [m_http ||
+         _ > "POST " ++ Endpoint,
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"code">>, Access, <<"client.c">>),
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_302() ),
-         cats:require( oauth2_redirect_url() ),
-         cats:require( oauth2_redirect_url_with_state() ),
-         cats:require( oauth2_redirect_url_with_code(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => Access,
-            <<"exch">>=> true
-         }) ),
-         cats:require( oauth2_redirect_url_with_code() )
+         _ < 302,
+       Url < "Location: _",
+         _ < oauth2_redirect_url(Url),
+         _ < oauth2_redirect_url_with_state(Url),
+         _ < oauth2_redirect_url_with_code(Url, oauth2_fixtures:code(Access)),
+         _ < oauth2_redirect_url_with_code(Url)
       ]
    ).
 
 authorization_code_grant_confidential_access_token(Code, Access) ->
-   kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_token() ),
-         cats:payload(#{
-            grant_type => <<"authorization_code">>,
-            code       => Code,
-            client_id  => <<"client.c">>
-         }),
+   m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > exchange_request(Code, <<"client.c">>),
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() ),
-         cats:require( oauth2_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => Access,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) ),
-         cats:require( oauth2_refresh_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,            
-            <<"sub">> => Access,
-            <<"rev">> => true,
-            <<"exch">> => true
-         })),
-         cats:require( oauth2_refresh_token() )
+         _ < 200,
+         _ < "Content-Type: application/json",
+         _ < oauth2_access_token(oauth2_fixtures:access_token(Access)),
+         _ < oauth2_refresh_token(oauth2_fixtures:refresh_token(Access)),
+         _ < oauth2_refresh_token()
       ]
    ).
 
 
 refresh_grant_confidential(Token, Access) ->
-   kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_token() ),
-         cats:payload(#{
-            grant_type => <<"refresh_token">>,
-            refresh_token => Token
-         }),
+   m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > #{grant_type => <<"refresh_token">>, refresh_token => Token},
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() ),
-         cats:require( oauth2_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => Access,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) ),
-         cats:require( oauth2_refresh_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,            
-            <<"sub">> => Access,
-            <<"rev">> => true,
-            <<"exch">> => true
-         }))
+         _ < 200,
+         _ < "Content-Type: application/json",
+         _ < oauth2_access_token(oauth2_fixtures:access_token(Access)),
+         _ < oauth2_refresh_token(oauth2_fixtures:refresh_token(Access))
       ]
    ).
 
 %%
 %%
 implicit_grant_with_confidential_app_signin(_) ->
-   {ok, _} = implicit_grant_confidential_request(url_signin(), <<"account.a">>).
+   {ok, _} = implicit_grant_confidential_request("http://localhost:8080/oauth2/signin", <<"account.a">>).
 
 implicit_grant_with_confidential_app_signup(_) ->
-   {ok, _} = implicit_grant_confidential_request(url_signup(), <<"signup.ig.cc.uA">>).
+   {ok, _} = implicit_grant_confidential_request("http://localhost:8080/oauth2/signup", <<"signup.ig.cc.uA">>).
 
-implicit_grant_confidential_request(Url, Access) ->
-   kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( Url ),
-         cats:payload( authorization_request(<<"token">>, Access, <<"client.c">>) ),
+implicit_grant_confidential_request(Endpoint, Access) ->
+   m_http:once(
+      [m_http ||
+         _ > "POST " ++ Endpoint,
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"token">>, Access, <<"client.c">>),
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),         
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_302() ),
-         cats:require( oauth2_redirect_url() ),
-         cats:require( oauth2_redirect_url_with_state() ),
-         cats:require( oauth2_redirect_url_with_ttl() ),
-         cats:require( oauth2_redirect_url_with_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => Access,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) )
+         _ < 302,
+       Url < "Location: _",
+         _ < oauth2_redirect_url(Url),
+         _ < oauth2_redirect_url_with_state(Url),
+         _ < oauth2_redirect_url_with_ttl(Url),
+         _ < oauth2_redirect_url_with_access_token(Url, oauth2_fixtures:access_token(Access))
       ]
    ).
 
 %%
 %%
 resource_owner_password_grant_with_public_app(_) ->
-   {ok, _} = kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_token() ),
-         cats:payload(#{
-            grant_type => <<"password">>,
-            username   => <<"account.a">>,
-            password   => <<"nosecret">>,
-            client_id  => <<"client.p">>
-         }),
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > #{grant_type => <<"password">>, username => <<"account.a">>, password => <<"nosecret">>, client_id  => <<"client.p">>},
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() ),
-         cats:require( oauth2_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => <<"account.a">>,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) ),
-         cats:require( oauth2_not_defined_refresh_token() )
+         _ < 200,
+         _ < "Content-Type: application/json",
+         _ < oauth2_access_token(oauth2_fixtures:access_token(<<"account.a">>)),
+         _ < oauth2_not_defined_refresh_token()
       ]
    ).
 
 %%
 %%
 resource_owner_password_grant_with_confidential_app(_) ->
-   {ok, _} = kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_token() ),
-         cats:payload(#{
-            grant_type => <<"password">>,
-            username   => <<"account.a">>,
-            password   => <<"nosecret">>,
-            client_id  => <<"client.p">>
-         }),
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),         
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > #{grant_type => <<"password">>, username => <<"account.a">>, password => <<"nosecret">>, client_id  => <<"client.c">>},
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() ),
-         cats:require( oauth2_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"sub">> => <<"account.a">>,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) ),
-         cats:require( oauth2_refresh_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,            
-            <<"sub">> => <<"account.a">>,
-            <<"rev">> => true,
-            <<"exch">> => true
-         }))
+         _ < 200,
+         _ < "Content-Type: application/json",
+         _ < oauth2_access_token(oauth2_fixtures:access_token(<<"account.a">>)),
+         _ < oauth2_refresh_token(oauth2_fixtures:refresh_token(<<"account.a">>))
       ]
    ).
 
@@ -514,69 +359,38 @@ resource_owner_password_grant_with_confidential_app(_) ->
 %%
 %%
 client_credentials_grant(_) ->
-   {ok, _} = kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_token() ),
-         cats:payload(#{
-            grant_type => <<"client_credentials">>
-         }),
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),         
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > #{grant_type => <<"client_credentials">>},
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() ),
-         cats:require( oauth2_access_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"idp">> => <<"account.a">>,
-            <<"sub">> => <<"client.c">>,
-            <<"rev">> => true,
-            <<"uid">> => true
-         }) ),
-         cats:require( oauth2_refresh_token(#{
-            <<"iss">> => <<"http://localhost:8080">>,
-            <<"aud">> => <<"any">>,
-            <<"idp">> => <<"account.a">>,
-            <<"sub">> => <<"client.c">>,
-            <<"rev">> => true,
-            <<"exch">> => true
-         }))
-
+         _ < 200,
+         _ < "Content-Type: application/json",
+         _ < oauth2_access_token(oauth2_fixtures:access_token_client(<<"client.c">>)),
+         _ < oauth2_refresh_token(oauth2_fixtures:refresh_token_client(<<"client.c">>))
       ]
    ).
 
 %%
 %%
 jwks(_) ->
-   {ok, _} = kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_jwks() ),
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "GET http://localhost:8080/oauth2/jwks",
+         _ > "Accept: */*",
+         _ > "Connection: close",
 
-         cats:with(),
-         cats:x('GET'),
-         cats:h("Accept: */*"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() )
-         % cats:require(json(#{
-         %    <<"keys">> => [
-         %       #{
-         %          <<"kid">> := <<"jwt">>,
-         %          <<"alg">> := <<"RS256">>,
-         %          <<"kty">> := <<"RSA">>,
-         %          <<"n">>   := _,
-         %          <<"e">>   := _
-         %       }
-         %    ]
-         % }))
+         _ < 200,
+         _ < "Content-Type: application/json",
+         _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"kid">>), lens:require(<<"jwt">>)),
+         _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"alg">>), lens:require(<<"RS256">>)),
+         _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"kty">>), lens:require(<<"RSA">>)),
+         _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"n">>), lens:defined()),
+         _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"e">>), lens:defined())
       ]
    ).
 
@@ -585,31 +399,22 @@ jwks(_) ->
 %%
 introspect(_) ->
    {ok, Token} = oauth2_token:access(<<"account.a">>, <<"nosecret">>),
-   {ok, _} = kscript:once(
-      [m_knet ||
-         cats:given(),
-         cats:url( url_introspect() ),
-         cats:payload(#{
-            token => Token
-         }),
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/introspect",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),         
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > #{token => Token},
 
-         cats:with(),
-         cats:x('POST'),
-         cats:h("Accept: */*"),
-         cats:h("Authorization", <<"Basic ", (base64:encode(<<"client.c:nosecret">>))/binary>>),
-         cats:h("Content-Type: application/x-www-form-urlencoded"),
-         cats:h("Connection: close"),
-
-         cats:then(),
-         cats:require( http_200() )
-         % cats:require( json(#{
-         %    <<"iss">> := <<"http://localhost:8080">>,
-         %    <<"sub">> := <<"account.a">>,
-         %    <<"uid">> := true,
-         %    <<"aud">> := <<"any">>,
-         %    <<"exp">> := _,
-         %    <<"tji">> := _
-         % }))
+         _ < 200,
+         _ < lens:c(lens:at(<<"iss">>), lens:require(<<"http://localhost:8080">>)),
+         _ < lens:c(lens:at(<<"sub">>), lens:require(<<"account.a">>)),
+         _ < lens:c(lens:at(<<"uid">>), lens:require(true)),
+         _ < lens:c(lens:at(<<"aud">>), lens:require(<<"any">>)),
+         _ < lens:c(lens:at(<<"exp">>), lens:defined()),
+         _ < lens:c(lens:at(<<"tji">>), lens:defined())
       ]
    ).
 
@@ -618,6 +423,7 @@ introspect(_) ->
 %%% private
 %%%
 %%%----------------------------------------------------------------------------   
+
 
 %%
 %% data type to issue authorization request
@@ -634,212 +440,184 @@ authorization_request(Type, Access, OAuthApp) ->
    }.
 
 %%
-%% pattern-match: 
-%%   redirect header to valid url
-oauth2_redirect_url() ->
+%% data type to issue code exchange request
+exchange_request(Code, OAuth2App) ->
+   #{
+      grant_type => <<"authorization_code">>,
+      code       => Code,
+      client_id  => OAuth2App
+   }.
+
+
+%%
+-spec oauth2_redirect_url(_) -> datum:lens().
+
+oauth2_redirect_url(Url) ->
    lens:c(
-      lens:at(headers),  
-      lens:pair(<<"Location">>), 
+      lens_const(Url),
       lens_url(), 
-      lens_require(<<"http://example.com/path">>)
+      lens:require(<<"http://example.com/path">>)
    ).
 
 %%
-%% pattern-match:
-%%   opaque oauth2 app state is handled by server
-oauth2_redirect_url_with_state() ->
+-spec oauth2_redirect_url_with_state(_) -> datum:lens().
+
+oauth2_redirect_url_with_state(Url) ->
    lens:c(
-      lens:at(headers), 
-      lens:pair(<<"Location">>),
-      lens_url_q(), 
+      lens_const(Url),
+      lens_url_q(),
       lens:pair(<<"state">>), 
-      lens_require(<<"opaque">>)
+      lens:require(<<"opaque">>)
    ).
 
 %%
-%% pattern-match:
-%%   presence of authorization code
-oauth2_redirect_url_with_code() ->
+-spec oauth2_redirect_url_with_code(_) -> datum:lens().
+
+oauth2_redirect_url_with_code(Url) ->
    lens:c(
-      lens:at(headers), 
-      lens:pair(<<"Location">>),
-      lens_url_q(), 
+      lens_const(Url),
+      lens_url_q(),
       lens:pair(<<"code">>),
-      lens_defined()
+      lens:defined()
    ). 
 
 %%
-%% pattern-match:
-%%   authorization code is valid and contains required claims
-oauth2_redirect_url_with_code(Claims) ->
+-spec oauth2_redirect_url_with_code(_, _) -> datum:lens().
+
+oauth2_redirect_url_with_code(Url, Claims) ->
    lens:c(
-      lens:at(headers), 
-      lens:pair(<<"Location">>),
-      lens_url_q(), 
+      lens_const(Url),
+      lens_url_q(),
       lens:pair(<<"code">>),
       lens_token(),
-      lens_require(Claims)
+      lens:require(Claims)
    ).
 
 %%
-%% pattern-match:
-%%   access token is valid and contains required claims
-oauth2_redirect_url_with_access_token(Claims) ->
+-spec oauth2_redirect_url_with_ttl(_) -> datum:lens().
+
+oauth2_redirect_url_with_ttl(Url) ->
    lens:c(
-      lens:at(headers), 
-      lens:pair(<<"Location">>),
-      lens_url_q(), 
+      lens_const(Url),
+      lens_url_q(),
+      lens:pair(<<"expires_in">>),
+      lens:defined()
+   ). 
+
+%%
+-spec oauth2_redirect_url_with_access_token(_, _) -> datum:lens().
+
+oauth2_redirect_url_with_access_token(Url, Claims) ->
+   lens:c(
+      lens_const(Url),
+      lens_url_q(),
       lens:pair(<<"access_token">>),
       lens_token(),
-      lens_require(Claims)
-   ).
-
-oauth2_redirect_url_with_ttl() ->
-   lens:c(
-      lens:at(headers), 
-      lens:pair(<<"Location">>),
-      lens_url_q(), 
-      lens:pair(<<"expires_in">>),
-      lens_defined()
+      lens:require(Claims)
    ).
 
 %%
-%% pattern-match:
-%%   access token is valid and contains require claims
+-spec oauth2_access_token(_) -> datum:lens().
+
 oauth2_access_token(Claims) ->
    lens:c(
-      lens:at(content),
       lens_access_token(),
       lens_token(),
-      lens_require(Claims)
+      lens:require(Claims)
    ).
 
 %%
-%% pattern-match:
-%%   refresh token is valid and contains require claims
+-spec oauth2_not_defined_refresh_token() -> datum:lens().
+
+oauth2_not_defined_refresh_token() ->
+   lens:c(
+      lens:at(<<"refresh_token">>, undefined),
+      lens:require(undefined)
+   ).
+
+%%
+-spec oauth2_refresh_token(_) -> datum:lens().
+
 oauth2_refresh_token(Claims) ->
    lens:c(
-      lens:at(content),
       lens_refresh_token(),
       lens_token(),
-      lens_require(Claims)
+      lens:require(Claims)
    ).
+
+%%
+-spec oauth2_refresh_token() -> datum:lens().
 
 oauth2_refresh_token() ->
    lens:c(
-      lens:at(content),
       lens_refresh_token(),
-      lens_defined()
-   ).
+      lens:defined()
+   ).   
+
+
+%%%----------------------------------------------------------------------------   
+%%%
+%%% lenses
+%%%
+%%%----------------------------------------------------------------------------   
 
 %%
-%% pattern-match:
-%%   refresh token is not defined
-oauth2_not_defined_refresh_token() ->
-   lens:c(
-      lens:at(content),
-      lens:at(<<"refresh_token">>, undefined),
-      lens_require(undefined)
-   ).
+-spec lens_const(_) -> datum:lens().
 
-
-
-http_302() ->
-   lens:c(
-      lens:at(status), 
-      lens_require(302) 
-   ).
-
-http_200() ->
-   lens:c(
-      lens:at(status), 
-      lens_require(200) 
-   ).
-
-json(Json) ->
-   lens:c(
-      lens:at(content),
-      lens_require(Json)
-   ).
-
-
-%%
-%% lenses implements a either semantic required by kscript 
-%%
-lens_require(Code) ->
-   fun(Fun, X) ->
-      case X of
-         Code ->
-            lens:fmap(fun(_) -> X end, Fun({ok, Code}));
-         _    ->
-            lens:fmap(fun(_) -> X end, Fun({error, {require, Code, X}}))
-      end
-   end.
-
-lens_defined() ->
-   fun(Fun, X) ->
-      lens:fmap(fun(_) -> X end, Fun({ok, X}))
+lens_const(X) ->
+   fun(Fun, _) ->
+      lens:fmap(fun(_) -> X end, Fun(X)) 
    end.
 
 %%
-%%
-lens_url() ->
-   fun(Fun, Uri) ->
-      lens:fmap(fun(_) -> Uri end, Fun( decode_url(Uri) ))
-   end.
-
-decode_url(Uri) ->
-   [identity ||
-      uri:new(Uri),
-      uri:q(undefined, _),
-      uri:anchor(undefined, _),
-      uri:s(_)
-   ].
-
-%%
-%%
-lens_url_q() ->
-   lens_uri(fun uri:q/1).
-
-%%
-%%
-lens_token() ->
-   fun(Fun, Token) ->
-      lens:fmap(fun(_) -> Token end, Fun( decode_token(Token) ))
-   end.
-
-decode_token(Token) ->
-   case permit:validate(Token) of
-      {ok, #{<<"tji">> := _, <<"exp">> := _} = Claims} -> 
-         maps:without([<<"tji">>, <<"exp">>], Claims);
-      {error, Reason} ->
-         throw(Reason)
-   end.
-
-%%
-%%
-lens_access_token() ->
-   fun(Fun, Token) ->
-      lens:fmap(fun(_) -> Token end, Fun( decode_access_token(Token) ))
-   end.
-
-decode_access_token(#{<<"token_type">> := <<"bearer">>, <<"expires_in">> := _, <<"access_token">> := Token}) ->
-   Token.
-
-%%
-%%
-lens_refresh_token() ->
-   fun(Fun, Token) ->
-      lens:fmap(fun(_) -> Token end, Fun( decode_refresh_token(Token) ))
-   end.
-
-decode_refresh_token(#{<<"token_type">> := <<"bearer">>, <<"refresh_token">> := Token}) ->
-   Token.
-
-
+-spec lens_uri(_) -> datum:lens().
 
 lens_uri(Accessor) ->
    fun(Fun, Uri) ->
       lens:fmap(fun(_) -> Uri end, Fun( Accessor(uri:new(Uri)) ))
    end.
 
+%%
+-spec lens_url() -> datum:lens().
+
+lens_url() ->
+   lens_uri(fun(Uri) -> uri:s(uri:anchor(undefined, uri:q(undefined, Uri))) end).
+
+%%
+-spec lens_url_q()-> datum:lens().
+
+lens_url_q() ->
+   lens_uri(fun uri:q/1).
+
+%%
+-spec lens_token() -> datum:lens().
+
+lens_token() ->
+   fun(Fun, Token) ->
+      case permit:validate(Token) of
+         {ok, #{<<"tji">> := _, <<"exp">> := _} = Claims} -> 
+            lens:fmap(
+               fun(_) -> Token end, 
+               Fun( maps:without([<<"tji">>, <<"exp">>], Claims) )
+            );
+         {error, Reason} ->
+            throw(Reason)
+      end
+   end.
+
+
+%%
+-spec lens_access_token() -> datum:lens().
+
+lens_access_token() ->
+   fun(Fun, #{<<"token_type">> := <<"bearer">>, <<"expires_in">> := _, <<"access_token">> := Token} = Access) ->
+      lens:fmap(fun(_) -> Access end, Fun( Token ))
+   end.
+
+%%
+-spec lens_refresh_token() -> datum:lens().
+
+lens_refresh_token() ->
+   fun(Fun, #{<<"token_type">> := <<"bearer">>, <<"refresh_token">> := Token} = Refresh) ->
+      lens:fmap(fun(_) -> Refresh end, Fun( Token ))
+   end.
