@@ -35,34 +35,21 @@
 -type pairs() :: [pair()]. 
 
 -record(ddb, {
-   config = undefined :: _  %% aws config 
-  ,bucket = undefined :: _  %% ddb bucket
-  ,hashkey= undefined :: _  %% identity attribute for bucket     
+   uri     = undefined :: _  %% ddb access uri
+  ,bucket  = undefined :: _  %% ddb bucket
+  ,hashkey = undefined :: _  %% identity attribute for bucket     
 }).
 
 -spec new(uri:uri()) -> {ok, #ddb{}} | {error, _}.
 
 new(Uri) ->
-   [either ||
-      erlcloud_aws:auto_config(),
-      cats:unit(config_ddb_endpoint(Uri, _)),
-      cats:unit(config_ddb_fd(Uri, _))
-   ].
+   {ok, config_ddb_fd(Uri)}.
 
-%% Note: erlcloud_aws:auto_config() might retrun {ok, undefined}
-config_ddb_endpoint(Uri, Config) ->
-   Schema = case uri:schema(Uri) of [_, X] -> X; X -> X end,
-   Config#aws_config{
-      ddb_scheme = scalar:c(Schema) ++ "://",
-      ddb_host   = scalar:c(uri:host(Uri)),
-      ddb_port   = uri:port(Uri)
-   }.
-
-config_ddb_fd(Uri, Config) ->
+config_ddb_fd(Uri) ->
    #ddb{
-      config = Config,
-      bucket = hd(uri:segments(Uri)),
-      hashkey= lens:get(lens:pair(<<"hashkey">>), uri:q(Uri))
+      uri     = Uri,
+      bucket  = hd(uri:segments(Uri)),
+      hashkey = lens:get(lens:pair(<<"hashkey">>), uri:q(Uri))
    }.
 
 %%
@@ -110,8 +97,9 @@ decode_pair(X) ->
 %%
 -spec put(#ddb{}, _) -> {ok, _} | {error, _}.
 
-put(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Value) ->
+put(#ddb{uri = Uri, bucket = Bucket, hashkey = HKey}, Value) ->
    [either ||
+      Config <- aws_auto_config(Uri),
       oauth2_ddb:encode(Value),
       erlcloud_ddb2:put_item(Bucket, _, [], Config),
       cats:unit(lens:get(lens:at(HKey), Value))
@@ -121,8 +109,9 @@ put(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Value) ->
 %%
 -spec get(#ddb{}, _) -> {ok, map()} | {error, _}.
 
-get(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Key) ->
+get(#ddb{uri = Uri, bucket = Bucket, hashkey = HKey}, Key) ->
    [either ||
+      Config <- aws_auto_config(Uri),
       erlcloud_ddb2:get_item(Bucket, [{HKey, Key}], [], Config),
       oauth2_ddb:decode(_)
    ].
@@ -131,8 +120,9 @@ get(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Key) ->
 %%
 -spec remove(#ddb{}, _) -> {ok, _} | {error, _}.
 
-remove(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Key) ->
+remove(#ddb{uri = Uri, bucket = Bucket, hashkey = HKey}, Key) ->
    [either ||
+      Config <- aws_auto_config(Uri),
       erlcloud_ddb2:delete_item(Bucket, [{HKey, Key}], [], Config),
       cats:unit(Key)
    ].
@@ -141,8 +131,30 @@ remove(#ddb{config = Config, bucket = Bucket, hashkey = HKey}, Key) ->
 %%
 -spec match(#ddb{}, _, _) -> {ok, _} | {error, _}.
 
-match(#ddb{config = Config, bucket = Bucket}, Index, Query) ->
+match(#ddb{uri = Uri, bucket = Bucket}, Index, Query) ->
    [either ||
+      Config <- aws_auto_config(Uri),
       erlcloud_ddb2:q(Bucket, Query, [{index_name, scalar:s(Index)}], Config),
       cats:unit(lists:map(fun(X) -> erlang:element(2, oauth2_ddb:decode(X)) end, _))
    ].
+
+
+
+aws_auto_config(Uri) ->
+   [either ||
+      erlcloud_aws:auto_config(),
+      cats:unit(config_ddb_endpoint(Uri, _))
+   ].
+
+%% Note: erlcloud_aws:auto_config() might retrun {ok, undefined}
+config_ddb_endpoint(Uri, Config) ->
+   Schema = case uri:schema(Uri) of [_, X] -> X; X -> X end,
+   Config#aws_config{
+      ddb_scheme = scalar:c(Schema) ++ "://",
+      ddb_host   = scalar:c(uri:host(Uri)),
+      ddb_port   = uri:port(Uri)
+   }.
+
+
+
+
