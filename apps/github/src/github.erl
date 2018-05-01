@@ -27,91 +27,147 @@ auth_url() ->
 %%
 -spec account(_) -> datum:either(_).
 
-
 account(Url) ->
    [either ||
-      %% authenticate client application
-      cats:optionT(badarg, uri:q(<<"state">>, undefined, Url)),
-      Client <- oauth2_client:lookup(_),
-      oauth2_client:is_public(Client),
+      Client <- authenticate_oauth_client(Url),
+
 
       %% exchange code with github
       cats:optionT(badarg, uri:q(<<"code">>, undefined, Url)),
-      access_token(_),
-      access_profile(_),
+      authenticate_github_user(_),
       create_account(Client, _)
    ].
 
 %%
-%%
-access_token(Code) ->
+authenticate_oauth_client(Url) ->
    [either ||
-      Sock <- knet:socket(url(token_url), [{active, true}]),
-      Data <- cats:unit([either ||
-         Req <- access_token_request(Code),
-         knet:send(Sock, {'POST', url(token_url), [{<<"Connection">>, <<"keep-alive">>}, {<<"Content-Type">>, <<"application/x-www-form-urlencoded">>}, {<<"Transfer-Encoding">>, <<"chunked">>}]}),
-         knet:send(Sock, {packet, Req}),
-         knet:send(Sock, eof),
-         cats:unit(stream:list(knet:stream(Sock))),
-         htcodec:decode(_),
-         cats:unit(lens:get(lens:at(<<"access_token">>), _))
-      ]),
-      knet:close(Sock),
-      cats:flatten(Data)
+      %% OAuth2 implements federated accounts for GitHub users
+      %% The feature is only available for public application
+      %% OAuth2 state flag is used to communicate clientId across the session
+      cats:optionT(badarg, uri:q(<<"state">>, undefined, Url)),
+      oauth2_client:lookup(_),
+      oauth2_client:is_public(_)
    ].
 
-access_token_request(Code) ->
-   htcodec:encode(<<"application/x-www-form-urlencoded">>, 
-      #{
-         client_id => opts:val(access_key, github),
-         client_secret => opts:val(secret_key, github),
-         code => Code
-      }
-   ).
-
 %%
-%%
-access_profile(Token) ->
-   [either ||
-      Sock  <- knet:socket(url(ghapi_url), [{active, true}]),
-      Data  <- cats:unit([either ||
-         knet:send(Sock, {'GET', url(ghapi_url), [{<<"Connection">>, <<"keep-alive">>}, {<<"Authorization">>, <<"Bearer ", Token/binary>>}, {<<"Accept">>, <<"application/json">>}, {<<"User-Agent">>, <<"knet">>}]}),
-         knet:send(Sock, eof),
-         cats:unit(stream:list(knet:stream(Sock))),
-         htcodec:decode(_),
-         Access <- cats:unit(lens:get(lens:at(<<"login">>), _)),
-
-         knet:send(Sock, {'GET', uri:join([orgs], url(ghapi_url)), [{<<"Connection">>, <<"keep-alive">>}, {<<"Authorization">>, <<"Bearer ", Token/binary>>}, {<<"Accept">>, <<"application/json">>}, {<<"User-Agent">>, <<"knet">>}]}),
-         knet:send(Sock, eof),
-         cats:unit(stream:list(knet:stream(Sock))),
-         htcodec:decode(_),
-         Master  <- org(_),
-         cats:unit(#{access => Access, master => Master})
-      ]),
-      knet:close(Sock),
-      cats:flatten(Data)
-   ].
-
-
-%%
-%%
-org(List) ->
-   case
-      lens:get(
-         lens:c(lens:takewith(fun allowed_org/1, undefined), lens:at(<<"login">>)),
-         List
-      )
-   of
-      undefined ->
+authenticate_github_user(Code) ->
+   case (request_github_api(Code))(#{}) of
+      [{Access, undefined} | State] ->
+         lager:warning("[github] unauthorized attempt from ~s", [Access]),
+         [knet:close(Sock) || Sock <- maps:values(maps:without([req, ret, so], State))],
          {error, unauthorized};
 
-      Org ->
-         {ok, Org}
+      [{Access, Source} | State] ->
+         lager:notice("[github] access to ~s is derived from ~s", [Access, Source]),
+         [knet:close(Sock) || Sock <- maps:values(maps:without([req, ret, so], State))],         
+         {ok, #{access => Access, master => scalar:s(opts:val(org, github))}}
    end.
+
+request_github_api(Code) ->
+   [m_state ||
+      Token   <- github_access_token(Code),
+      User    <- github_user_profile(Token),
+      Access  <- allows_access_contributor(Token),
+      cats:unit({User, Access})
+   ].
+
+allows_access_contributor(Token) ->
+   fun(State0) ->
+      case (github_user_orgs(Token))(State0) of
+         [undefined | State1] ->
+            (github_user_contribution(Token))(State1);
+
+         [_ | _] = State1 ->
+            State1
+      end
+   end.   
+
+%%
+%%
+github_access_token(Code) ->
+   [m_http ||
+      cats:new( url(token_url) ),
+      cats:so([{active, true}]),
+      cats:method('POST'),
+      cats:header("Connection", "keep-alive"),
+      cats:header("Content-Type", "application/x-www-form-urlencoded"),
+      cats:header("Transfer-Encoding", "chunked"),
+      cats:payload( access_token_request(Code) ),
+      cats:request(),
+      cats:require(content, lens:at(<<"access_token">>))
+   ].
+
+%%
+%%
+github_user_profile(Token) ->
+   [m_http ||
+      cats:new( uri:segments([user], url(ghapi_url)) ),
+      cats:so([{active, true}]),
+      cats:method('GET'),
+      cats:header("Connection", "keep-alive"),
+      cats:header("Accept", "application/json"),
+      cats:header("User-Agent", "knet"),
+      cats:header("Authorization", <<"Bearer ", Token/binary>>),
+      cats:request(),
+      cats:require(content, lens:at(<<"login">>))
+   ].
+
+%%
+%%
+github_user_orgs(Token) ->
+   [m_http ||
+      cats:new( uri:segments([user, orgs], url(ghapi_url)) ),
+      cats:so([{active, true}]),
+      cats:method('GET'),
+      cats:header("Connection", "keep-alive"),
+      cats:header("Accept", "application/json"),
+      cats:header("User-Agent", "knet"),
+      cats:header("Authorization", <<"Bearer ", Token/binary>>),
+      cats:request(),
+      cats:require(content, 
+         lens:c(
+            lens:takewith(fun allowed_org/1, #{}), 
+            lens:at(<<"login">>)
+         )
+      )
+   ].
+
+%%
+%%
+github_user_contribution(Token) ->
+   [m_http ||
+      cats:new( uri:q([{affiliation, collaborator}], uri:segments([user, repos], url(ghapi_url))) ),
+      cats:so([{active, true}]),
+      cats:method('GET'),
+      cats:header("Connection", "keep-alive"),
+      cats:header("Accept", "application/json"),
+      cats:header("User-Agent", "knet"),
+      cats:header("Authorization", <<"Bearer ", Token/binary>>),
+      cats:request(),
+      cats:require(content,
+         lens:c(
+            lens:takewith(fun allowed_contrib/1, #{}), 
+            lens:at(<<"name">>)
+         )         
+      )
+   ].
 
 allowed_org(#{<<"login">> := Org}) ->
    Org =:= scalar:s(opts:val(org, github)).
 
+allowed_contrib(#{<<"name">> := Name}) ->
+   [identity ||
+      scalar:s(opts:val(contrib, github)),
+      binary:split(_, <<$,>>, [global]),
+      lists:member(Name, _)
+   ].
+
+access_token_request(Code) ->
+   #{
+      client_id => opts:val(access_key, github),
+      client_secret => opts:val(secret_key, github),
+      code => Code
+   }.
 
 %%
 %%

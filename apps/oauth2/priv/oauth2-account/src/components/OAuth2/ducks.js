@@ -22,7 +22,8 @@ const OAUTH2_FLOW_TYPE = process.env.REACT_APP_OAUTH2_FLOW_TYPE
 export const accessToken = () =>
   async (dispatch, getState) => {
     const oauth2 = decode(window.location.search.substring(1))
-    window.history.replaceState({}, document.title, '/oauth2/account')
+    // window.history.replaceState({}, document.title, '/oauth2/account')
+    window.history.replaceState({}, document.title, window.location.pathname)
     dispatch({ type: EXCHANGE })
 
     if (oauth2.error) {

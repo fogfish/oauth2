@@ -111,7 +111,7 @@ define_client(Access, Secret, Claims) ->
 %%
 %%
 auth_url(_) ->
-   <<"https://github.com/login/oauth/authorize?client_id=YourAccessKey&scope=user%3Aemail%20read%3Aorg">> = github:auth_url().
+   <<"https://github.com/login/oauth/authorize?client_id=YourAccessKey&scope=user%3Aemail%20read%3Aorg%20repo">> = github:auth_url().
 
 
 %%

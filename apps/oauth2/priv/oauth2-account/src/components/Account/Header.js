@@ -8,7 +8,7 @@ const Header = ({ authorize }) => (
   <Tab>
     <TabElement header>
       Account
-   </TabElement>
+    </TabElement>
     <TabElement right>
       <Button link small onClick={authorize}>
          Sign Out

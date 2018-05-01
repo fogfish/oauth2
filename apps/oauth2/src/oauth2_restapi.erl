@@ -57,8 +57,12 @@ cors() ->
    [reader ||
          _ /= restd:method('OPTIONS'),
       %% only to support local loading of the tool
-      Head /= restd:cors(),
-         _ /= restd:to_text(200, Head, <<>>)
+      Head /= restd:cors([
+         {<<"Access-Control-Allow-Methods">>, <<"GET, PUT, POST, DELETE, OPTIONS">>}
+        ,{<<"Access-Control-Allow-Headers">>, <<"Content-Type, Authorization, Accept">>}
+        ,{<<"Access-Control-Max-Age">>,       600}
+      ]),
+         _ /= restd:to_text(200, Head, <<" ">>)
    ].
 
 %%
