@@ -35,3 +35,10 @@ account:
 	rm node_modules ;\
 	cd -
 
+##
+##
+it:
+	make clean
+	make dist PLAT=Linux
+	make docker
+	docker push ${ORG}/${APP}:latest

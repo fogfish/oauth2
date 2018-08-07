@@ -92,15 +92,15 @@ is_exchangable(Token) ->
 %%
 %%
 ttl_access_token() ->
-   opts:val(ttl_access_token, 1200, oauth2).
+   scalar:i(opts:val(ttl_access_token, 1200, oauth2)).
 
 %%
 %%
 ttl_refresh_token() ->
-   opts:val(ttl_refresh_token, 86400, oauth2).
+   scalar:i(opts:val(ttl_refresh_token, 86400, oauth2)).
 
 %%
 %%
 ttl_exchange_code() ->
-   opts:val(ttl_exchange_code, 60, oauth2).
+   scalar:i(opts:val(ttl_exchange_code, 60, oauth2)).
 
