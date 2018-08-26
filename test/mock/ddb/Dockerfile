@@ -2,10 +2,12 @@ FROM centos
 
 ##
 ## Install basic utilities, java and python
+## we need python to create dynamo tables
 RUN set -e \
-   && yum -y -q update \
-   && yum -y -q install java \
-   && yum -y -q install python python-setuptools \
+   && yum -y -q install \
+      java \
+      python \
+      python-setuptools \
    && easy_install -U pip \
    && pip install --no-cache-dir -U awscli
 
@@ -16,9 +18,7 @@ RUN set -e \
    && cd /usr/local/aws-ddb \
    && curl -L -O http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest.tar.gz \
    && tar -xvf dynamodb_local_latest.tar.gz \
-   && rm dynamodb_local_latest.tar.gz
-
-RUN set -e \
+   && rm dynamodb_local_latest.tar.gz \
    && mkdir /var/lib/aws-ddb 
 
 EXPOSE 8000

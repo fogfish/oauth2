@@ -6,10 +6,11 @@
 ##   ORG - identity of the organization 
 ##   URI - identity of the docker repository with last /  
 
-APP = oauth2
-ORG = fogfish
-URI = 
+APP  = oauth2
+ORG  = fogfish
+URI  = 
 
+ENV ?= dev
 
 include erlang.mk
 
@@ -37,8 +38,34 @@ account:
 
 ##
 ##
+config-aws: rel/aws/resources.yml
+	@aws cloudformation create-stack \
+		--stack-name ${ENV}-${APP}-resources \
+		--parameters ParameterKey=Env,ParameterValue=${ENV} \
+		--template-body file://$< \
+		--capabilities CAPABILITY_NAMED_IAM
+	@aws cloudformation wait stack-create-complete \
+		--stack-name ${ENV}-oauth2-resources
+
+##
+##
+service-up: rel/aws/compose.yml
+	ecs-cli compose \
+		-cluster ${ECS} \
+		--project-name ${APP} \
+		--task-role-arn ${ENV}-${APP}-role \
+   	--file $< \
+   	service up
+
+service-rm: rel/aws/compose.yml
+	ecs-cli compose -c ${ECS} -p ${APP} -f $< service list \
+		&& ecs-cli compose -c ${ECS} -p ${APP} -f $< service rm --timeout 10 \
+		|| echo "service down ${APP}"
+
+##
+##
 it:
 	make clean
-	make dist PLAT=Linux
+	make release
 	make docker
 	docker push ${ORG}/${APP}:latest

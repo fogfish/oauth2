@@ -23,7 +23,7 @@ export const accessToken = () =>
   async (dispatch, getState) => {
     const oauth2 = decode(window.location.search.substring(1))
     // window.history.replaceState({}, document.title, '/oauth2/account')
-    window.history.replaceState({}, document.title, window.location.pathname)
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash)
     dispatch({ type: EXCHANGE })
 
     if (oauth2.error) {

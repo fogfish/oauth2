@@ -1,5 +1,5 @@
 ## Name of the node
--name oauth2@127.0.0.1
+-name ${ERL_NODE}
 
 ## Cookie for distributed erlang
 -setcookie oauth2

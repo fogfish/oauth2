@@ -1,22 +1,20 @@
 # OAuth2 
 
-The microservice based implementation of OAuth 2.0 Authorization Framework, [RFC 6749](https://tools.ietf.org/html/rfc6749). It provides an out-of-the-box, cross-platform solution for identity management. This appliance implements an automated and immutable operation of the OAuth 2.0 framework and all required cloud resources. It provides Infrastructure-as-a-Code templates to spawn required cloud resources and treats them as backing services from the appliance perspective.
+The microservice based implementation of OAuth 2.0 Authorization Framework, [RFC 6749](https://tools.ietf.org/html/rfc6749). It provides an out-of-the-box, cross-platform solution for identity management. This appliance implements an automated and immutable deployment of OAuth 2.0 framework and its cloud resources using Infrastructure-as-a-Code.
 
 [![Build Status](https://secure.travis-ci.org/fogfish/oauth2.svg?branch=master)](http://travis-ci.org/fogfish/oauth2) [![GitHub release](https://img.shields.io/github/release/fogfish/oauth2.svg)](https://github.com/fogfish/oauth2/releases/latest) [![Coverage Status](https://coveralls.io/repos/github/fogfish/oauth2/badge.svg?branch=master)](https://coveralls.io/github/fogfish/oauth2?branch=master)
 
 ## Key Features and Functionality
 
-Work In Progress
+The appliance architecture and design reflect the principles of incremental scalability, decentralization and fault tolerance. The appliance targets no configuration experience for cloud operation and deployment. 
 
 **OAuth 2.0 grants flow**: It supports out of the box grants defined by RFC 6749: Authorization code grant, Implicit grant, Client credentials grant, Resource owner password credentials grant and Refresh Token grant.
 
-**Required client identity**: [RFC 6749](https://tools.ietf.org/html/rfc6749#section-3.2.1) discusses about client authentication. This implementation requires HTTP basic digest schema to identity confidential clients and demands `client_id` parameter to identify public clients when sending requests to service endpoints. 
+**Required client identity**: [RFC 6749](https://tools.ietf.org/html/rfc6749#section-3.2.1) discusses about client authentication. This implementation requires HTTP basic digest schema to identity confidential clients and demands `client_id` parameter to identify public clients when sending requests to service endpoints.
 
+**Account settings dashboard**: provides reference implementation of account setting dashboard using react.js
 
-## Inspiration
-
-The appliance architecture and design reflect the principles of incremental scalability, decentralization and fault tolerance. The appliance targets no configuration experience for cloud operation and deployment. 
-
+**Account federation** supports an integration with 3rd party services such GitHub
 
 
 ## Getting Started
@@ -50,7 +48,7 @@ Open `http://localhost:8080/oauth2/developer` in your web browser to manage acco
 ## Next Steps
 
 * study [The OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749) and its authorization flows.
-* [install guidelines](docs/install.md) to the cloud for production operation.
+* [installation and configuration guidelines](docs/install.md) to the cloud for production operation.
 
 
 ## Contribution
@@ -84,19 +82,12 @@ Now you are able to start oauth2 is **debug** mode. You shall be able to use OAu
 oauth2:start().
 ```
 
-**Package** the application into bundle tar-ball archive, which is as-is deployable to any host. 
+**Package** the application into docker container. 
 
-```
-make clean
-make pkg PLAT=Linux
+```bash
+make clean && make && make release && make docker
 ```
 The archive `oauth2-{vsn}.{arch}.{plat}.bundle` contains both a Erlang VM, all required dependencies and the application.
-
-You can package this archive into the docker **container** for deployment purposes
-
-```
-make docker
-```
 
 
 ### commit message
@@ -135,6 +126,8 @@ If you discover any security related issues, please [email](mailto:dmkolesnikov@
 
 The appliance uses [semantic versions](http://semver.org) to identify stable releases. 
 
+* 0.3.0 - support for https 
+* 0.2.0 - production ready release candidate
 * 0.0.0 - initial release for testing purpose 
 
 ## References

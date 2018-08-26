@@ -49,7 +49,7 @@
   {git,"https://github.com/fogfish/permit",
        {ref,"09a4c2278fea3ac677af7ab11726116b3cb2e695"}},
   0},
- {<<"pipe">>,{pkg,<<"pipes">>,<<"1.8.0">>},0},
+ {<<"pipe">>,{pkg,<<"pipes">>,<<"1.9.0">>},0},
  {<<"pns">>,
   {git,"https://github.com/fogfish/pns",
        {ref,"92bfcf925064227dad32568ec84172e9321ca761"}},
@@ -61,6 +61,10 @@
  {<<"restd">>,
   {git,"https://github.com/kfsm/restd",
        {ref,"acd66de8895433195ab0170eb595bb7333bdc672"}},
+  0},
+ {<<"s3am">>,
+  {git,"https://github.com/fogfish/s3am.git",
+       {ref,"36e3b36f5fac259dc9a3e4a9912bde3700cd66d8"}},
   0},
  {<<"uid">>,
   {git,"https://github.com/fogfish/uid",
@@ -78,5 +82,5 @@
  {<<"lager">>, <<"2C72950A0E75FFD927DD35BC85EA30E7680A264C4BBD08B328250871AC456CC2">>},
  {<<"lhttpc">>, <<"405E4F460D67FE8F43F0E6D64E4D168F8A5CFF3AD34D78114688753DAA80FBEB">>},
  {<<"meck">>, <<"64C5C0BD8BCCA3A180B44196265C8ED7594E16BCC845D0698EC6B4E577F48188">>},
- {<<"pipe">>, <<"512C831A47605D43688C8CB9266A3DCAE88BA6A3845FA65E40EB9EC22E77F5C7">>}]}
+ {<<"pipe">>, <<"54D55797ECB36920BE9ACBDD1297DA6D68ABD0F74DC7EF7E08DBC5538AFEE2BB">>}]}
 ].

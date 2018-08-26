@@ -15,6 +15,7 @@
 %%
 -module(oauth2_sup).
 -behaviour(supervisor).
+-include_lib("public_key/include/public_key.hrl").
 
 -export([
    start_link/0, init/1
@@ -39,6 +40,7 @@ init([]) ->
          {one_for_one, 4, 1800},
          [
             storage_pubkey(),
+            % tls_config(),
             restapi()
          ]
       }
@@ -66,12 +68,40 @@ backend_pubkey_spec([ddb, _]) ->
 backend_pubkey_spec(_) ->
    permit_pubkey_io.
 
-
 %%
 %%
 restapi() ->
    restd:spec(
       oauth2_restapi:endpoints(), 
-      [{port, opts:val(port, oauth2)}, {backlog, 1024}]
+      [
+         {port, opts:val(port, oauth2)}, 
+         {backlog, 1024},
+         {sock, so(uri:new(opts:val(port, oauth2)))}
+      ]
    ).
+
+
+so({uri, http, _}) ->
+   [];
+
+so({uri, https, _}) ->
+   [
+      {certfile, certificate()},
+      {keyfile, private_key()}
+   ].
+
+
+certificate() ->
+   File = filename:join([code:priv_dir(oauth2), "certificate.pem"]),
+   {ok, Steam} = s3am:fetch(opts:val(tls_certificate, oauth2)),
+   ok = file:write_file(File, stream:list(Steam)),
+   File.
+
+
+private_key() ->
+   File = filename:join([code:priv_dir(oauth2), "private_key.pem"]),
+   {ok, Steam} = s3am:fetch(opts:val(tls_private_key, oauth2)),
+   ok = file:write_file(File, stream:list(Steam)),
+   File.
+
 

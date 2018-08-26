@@ -19,12 +19,7 @@ Resources:
   DynamoDB:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName:
-        Fn::Join:
-          - "-"
-          -
-            - !Ref Env
-            - "oauth2pubkey"
+      TableName: !Sub ${Env}-oauth2-pubkey
 
       AttributeDefinitions:
         -
@@ -58,16 +53,10 @@ Resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
-  DynamoDBAccessPolicy:
+  OAuth2IAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: 
-        Fn::Join:
-          - "-"
-          -
-            - !Ref Env
-            - "ddb"
-            - "io"
+      RoleName: !Sub ${Env}-oauth2-role
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -79,7 +68,16 @@ Resources:
               - 'sts:AssumeRole'
       Path: /
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 
+      Policies:
+        - PolicyName: !Sub ${Env}-oauth2-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
 
-
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource:
+                  - !Sub arn:aws:dynamodb:*:*:table/${Env}-oauth2-pubkey

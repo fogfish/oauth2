@@ -9,33 +9,7 @@
 ##   This dockerfile is a reference container for Erlang releases
 ##
 ## @version 1.0.0
-FROM centos
+FROM fogfish/erlang-alpine-rt:20.3
 
-##
-## install dependencies
-##   * iproute - discover ip address for non-cloud cployments
-##   * openssl - generate public / private keys
-RUN set -e \
-   && yum -y update  \
-   && yum -y install \
-      tar  \
-      unzip \
-      iproute \
-      openssl 
-
-ENV   ARCH  x86_64
-ENV   PLAT  Linux
-ARG   APP=
-ARG   VSN=
-
-##
-## install application
-COPY ${APP}-${VSN}+${ARCH}.${PLAT}.bundle /tmp/${APP}.bundle
-RUN set -e \
-   && sh /tmp/${APP}.bundle \
-   && rm /tmp/${APP}.bundle 
-
-ENV PATH $PATH:/usr/local/${APP}/bin/
-
-
-ENTRYPOINT /etc/init.d/application foreground
+COPY _build/default/rel /rel
+ENTRYPOINT spawn-erlang-node oauth2
