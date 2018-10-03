@@ -9,9 +9,7 @@
    all/0,
    groups/0,
    init_per_suite/1,
-   end_per_suite/1,
-   init_per_group/2,
-   end_per_group/2
+   end_per_suite/1
 ]).
 
 -export([
@@ -20,11 +18,17 @@
    authorization_code_grant_with_public_app_signup/1,
    implicit_grant_with_public_app_signin/1,
    implicit_grant_with_public_app_signup/1,
+   authorization_code_grant_with_invalid_public_app_signin/1,
+   authorization_code_grant_with_invalid_public_app_signup/1,
+   authorization_code_grant_public_access_token_invalid_code/1,
+   authorization_code_grant_invalid_public_access_token/1,
 
    authorization_code_grant_with_confidential_app_signin/1,
    authorization_code_grant_with_confidential_app_signup/1,
    implicit_grant_with_confidential_app_signin/1,
    implicit_grant_with_confidential_app_signup/1,
+   authorization_code_grant_with_invalid_confidential_app_signin/1,
+   authorization_code_grant_with_invalid_confidential_app_signup/1,
 
    resource_owner_password_grant_with_public_app/1,
    resource_owner_password_grant_with_confidential_app/1,
@@ -32,7 +36,9 @@
    client_credentials_grant/1,
 
    jwks/1,
-   introspect/1
+   introspect/1,
+   introspect_invalid_token/1,
+   introspect_invalid_client/1
 ]).
 
 %%%----------------------------------------------------------------------------   
@@ -50,28 +56,14 @@ groups() ->
    [
       %%
       %% 
-      {restapi, [parallel], 
-         [
-            authorize,
-
-            authorization_code_grant_with_public_app_signin,
-            authorization_code_grant_with_public_app_signup,
-            implicit_grant_with_public_app_signin,
-            implicit_grant_with_public_app_signup,
-
-            authorization_code_grant_with_confidential_app_signin,
-            authorization_code_grant_with_confidential_app_signup,
-            implicit_grant_with_confidential_app_signin,
-            implicit_grant_with_confidential_app_signup,
-
-            resource_owner_password_grant_with_public_app,
-            resource_owner_password_grant_with_confidential_app,
-
-            client_credentials_grant,
-
-            jwks,
-            introspect
-       ]}
+      {restapi, [parallel],
+         [Test || {Test, NAry} <- ?MODULE:module_info(exports), 
+            Test =/= module_info,
+            Test =/= init_per_suite,
+            Test =/= end_per_suite,
+            NAry =:= 1
+         ]
+      }
    ].
 
 %%%----------------------------------------------------------------------------   
@@ -79,15 +71,6 @@ groups() ->
 %%% init
 %%%
 %%%----------------------------------------------------------------------------   
-
-%% OAuth2 Authorization Server endpoints
-% url_auth()   -> "http://localhost:8080/oauth2/authorize".
-% url_signin() -> "http://localhost:8080/oauth2/signin".
-% url_signup() -> "http://localhost:8080/oauth2/signup".
-% url_token()  -> "http://localhost:8080/oauth2/token".
-% url_jwks()   -> "http://localhost:8080/oauth2/jwks".
-% url_introspect() -> "http://localhost:8080/oauth2/introspect".
-
 
 init_per_suite(Config) ->
    oauth2:start(),
@@ -101,13 +84,6 @@ end_per_suite(_Config) ->
    application:stop(permit),
    ok.
 
-%% 
-%%
-init_per_group(_, Config) ->
-   Config.
-
-end_per_group(_, _Config) ->
-   ok.
 
 %%
 %% a low level implementation to inject a client with given access/secret
@@ -188,6 +164,59 @@ authorization_code_grant_public_access_token(Code, Access) ->
          _ < "Content-Type: application/json",
          _ < oauth2_access_token(oauth2_fixtures:access_token(Access)),
          _ < oauth2_not_defined_refresh_token()
+      ]
+   ).
+
+%%
+authorization_code_grant_with_invalid_public_app_signin(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/signin",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"code">>, <<"account.a">>, <<"client.invalid">>),
+
+         _ < 401
+      ]
+   ).
+
+authorization_code_grant_with_invalid_public_app_signup(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/signup",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"code">>, <<"account.a">>, <<"client.invalid">>),
+
+         _ < 401
+      ]
+   ).
+
+authorization_code_grant_public_access_token_invalid_code(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > exchange_request(<<"invalid_exchange_code">>, <<"client.p">>),
+
+         _ < 403
+      ]
+   ).
+
+authorization_code_grant_invalid_public_access_token(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/token",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > exchange_request(<<"">>, <<"client.invalid">>),
+
+         _ < 401
       ]
    ).
 
@@ -293,6 +322,36 @@ refresh_grant_confidential(Token, Access) ->
 
 %%
 %%
+authorization_code_grant_with_invalid_confidential_app_signin(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/signin",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.invalid:nosecret">>)),
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"code">>, <<"account.a">>, <<"client.invalid">>),
+
+         _ < 401
+      ]
+   ).
+
+authorization_code_grant_with_invalid_confidential_app_signup(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/signup",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.invalid:nosecret">>)),
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > authorization_request(<<"code">>, <<"account.a">>, <<"client.invalid">>),
+
+         _ < 401
+      ]
+   ).
+
+%%
+%%
 implicit_grant_with_confidential_app_signin(_) ->
    {ok, _} = implicit_grant_confidential_request("http://localhost:8080/oauth2/signin", <<"account.a">>).
 
@@ -387,7 +446,6 @@ jwks(_) ->
          _ < 200,
          _ < "Content-Type: application/json",
          _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"kid">>), lens:require(<<"jwt">>)),
-         _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"alg">>), lens:require(<<"RS256">>)),
          _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"kty">>), lens:require(<<"RSA">>)),
          _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"n">>), lens:defined()),
          _ < lens:c(lens:at(<<"keys">>), lens:hd(), lens:at(<<"e">>), lens:defined())
@@ -409,12 +467,46 @@ introspect(_) ->
          _ > #{token => Token},
 
          _ < 200,
+         _ < lens:c(lens:at(<<"active">>), lens:require(true)),
          _ < lens:c(lens:at(<<"iss">>), lens:require(<<"http://localhost:8080">>)),
          _ < lens:c(lens:at(<<"sub">>), lens:require(<<"account.a">>)),
          _ < lens:c(lens:at(<<"uid">>), lens:require(true)),
          _ < lens:c(lens:at(<<"aud">>), lens:require(<<"any">>)),
          _ < lens:c(lens:at(<<"exp">>), lens:defined()),
          _ < lens:c(lens:at(<<"tji">>), lens:defined())
+      ]
+   ).
+
+%%
+%%
+introspect_invalid_token(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/introspect",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.c:nosecret">>)),         
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > #{token => <<"invalid">>},
+
+         _ < 200,
+         _ < lens:c(lens:at(<<"active">>), lens:require(false))
+      ]
+   ).
+
+%%
+%%
+introspect_invalid_client(_) ->
+   {ok, _} = m_http:once(
+      [m_http ||
+         _ > "POST http://localhost:8080/oauth2/introspect",
+         _ > "Accept: */*",
+         _ > "Connection: close",
+         _ > "Authorization: Basic " ++ scalar:c(base64:encode(<<"client.invalid:nosecret">>)),         
+         _ > "Content-Type: application/x-www-form-urlencoded",
+         _ > #{token => <<"invalid">>},
+
+         _ < 401
       ]
    ).
 

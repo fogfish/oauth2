@@ -72,23 +72,24 @@ backend_pubkey_spec(_) ->
 %%
 restapi() ->
    restd:spec(
-      oauth2_restapi:endpoints(), 
-      [
-         {port, opts:val(port, oauth2)}, 
-         {backlog, 1024},
-         {sock, so(uri:new(opts:val(port, oauth2)))}
-      ]
+      oauth2_restapi:endpoints(),
+      oauth2_restapi:filters(),
+      #{
+         port => opts:val(port, oauth2)
+      ,  backlog => 1024
+      ,  sock =>  so(uri:new(opts:val(port, oauth2)))
+      }
    ).
 
 
 so({uri, http, _}) ->
-   [];
+   #{};
 
 so({uri, https, _}) ->
-   [
-      {certfile, certificate()},
-      {keyfile, private_key()}
-   ].
+   #{
+      certfile => certificate()
+   ,  keyfile => private_key()
+   }.
 
 
 certificate() ->

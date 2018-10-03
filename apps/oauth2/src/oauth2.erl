@@ -94,45 +94,57 @@ signup(Request, Client) ->
 token(#{<<"grant_type">> := <<"authorization_code">>, <<"code">> := Code}, Client) ->
    case oauth2_client:is_confidential(Client) of
       {ok, _} ->
-         [either ||
-            oauth2_token:is_exchangable(Code),
-            oauth2_token:bearer(Code)
-         ];
+         failure(forbidden,
+            [either ||
+               oauth2_token:is_exchangable(Code),
+               oauth2_token:bearer(Code)
+            ]
+         );
       {error, _} ->
-         [either ||
-            oauth2_token:is_exchangable(Code),
-            oauth2_token:bearer(Code),
-            cats:unit(maps:remove(<<"refresh_token">>, _))
-         ]
+         failure(forbidden,
+            [either ||
+               oauth2_token:is_exchangable(Code),
+               oauth2_token:bearer(Code),
+               cats:unit(maps:remove(<<"refresh_token">>, _))
+            ]
+         )
    end;
 
 token(#{<<"grant_type">> := <<"password">>, <<"username">> := Access, <<"password">> := Secret}, Client) ->
    case oauth2_client:is_confidential(Client) of
       {ok, _} ->
-         [either ||
-            oauth2_token:access(Access, Secret),
-            oauth2_token:bearer(_)
-         ];
+         failure(forbidden,
+            [either ||
+               oauth2_token:access(Access, Secret),
+               oauth2_token:bearer(_)
+            ]
+         );
       {error, _} ->
-         [either ||
-            oauth2_token:access(Access, Secret),
-            oauth2_token:bearer(_),
-            cats:unit(maps:remove(<<"refresh_token">>, _))
-         ]
+         failure(forbidden,
+            [either ||
+               oauth2_token:access(Access, Secret),
+               oauth2_token:bearer(_),
+               cats:unit(maps:remove(<<"refresh_token">>, _))
+            ]
+         )
    end;
 
 token(#{<<"grant_type">> := <<"client_credentials">>}, #{<<"identity">> := Token} = Client) ->
-   [either ||
-      oauth2_client:is_confidential(Client),
-      oauth2_token:bearer(Token)
-   ];
+   failure(forbidden,
+      [either ||
+         oauth2_client:is_confidential(Client),
+         oauth2_token:bearer(Token)
+      ]
+   );
 
 token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_token">> := Token}, Client) ->
-   [either ||
-      oauth2_token:is_exchangable(Token),
-      oauth2_client:is_confidential(Client),
-      oauth2_token:bearer(Token)
-   ];
+   failure(forbidden,
+      [either ||
+         oauth2_token:is_exchangable(Token),
+         oauth2_client:is_confidential(Client),
+         oauth2_token:bearer(Token)
+      ]
+   );
 
 token(_, _) ->
    {error, invalid_request}.
@@ -158,4 +170,12 @@ create_account(#{<<"access">> := Access, <<"secret">> := Secret}) ->
 redirect_uri(Status, Request, Client) ->
    State = lens:get(lens:at(<<"state">>, undefined), Request),
    oauth2_client:redirect_uri(Client, [{state, State} | Status]).
+
+
+%%
+%%
+failure(_, {ok, _} = Return) ->
+   Return;
+failure(Reason, _) ->
+   {error, Reason}.
 

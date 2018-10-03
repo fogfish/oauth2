@@ -87,7 +87,7 @@ allows_access_contributor(Token) ->
 github_access_token(Code) ->
    [m_http ||
       cats:new( url(token_url) ),
-      cats:so([{active, true}]),
+      cats:so(#{active => true}),
       cats:method('POST'),
       cats:header("Connection", "keep-alive"),
       cats:header("Content-Type", "application/x-www-form-urlencoded"),
@@ -102,7 +102,7 @@ github_access_token(Code) ->
 github_user_profile(Token) ->
    [m_http ||
       cats:new( uri:segments([user], url(ghapi_url)) ),
-      cats:so([{active, true}]),
+      cats:so(#{active => true}),
       cats:method('GET'),
       cats:header("Connection", "keep-alive"),
       cats:header("Accept", "application/json"),
@@ -117,7 +117,7 @@ github_user_profile(Token) ->
 github_user_orgs(Token) ->
    [m_http ||
       cats:new( uri:segments([user, orgs], url(ghapi_url)) ),
-      cats:so([{active, true}]),
+      cats:so(#{active => true}),
       cats:method('GET'),
       cats:header("Connection", "keep-alive"),
       cats:header("Accept", "application/json"),
@@ -137,7 +137,7 @@ github_user_orgs(Token) ->
 github_user_contribution(Token) ->
    [m_http ||
       cats:new( uri:q([{affiliation, collaborator}], uri:segments([user, repos], url(ghapi_url))) ),
-      cats:so([{active, true}]),
+      cats:so(#{active => true}),
       cats:method('GET'),
       cats:header("Connection", "keep-alive"),
       cats:header("Accept", "application/json"),

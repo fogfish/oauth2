@@ -20,14 +20,17 @@
 
 -include("oauth2.hrl").
 
--export([endpoints/0]).
+-export([filters/0, endpoints/0]).
+
+filters() ->
+   [
+      restd:cors()
+   ].
 
 %%
 %%
 endpoints() ->
    [
-      cors(),
-
       %% https://tools.ietf.org/html/rfc6749
       confidential_client_signin(),
       confidential_client_signup(),
@@ -51,18 +54,6 @@ endpoints() ->
       restd_static:react_env_js("/oauth2/authorize", config()),
       restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
       restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
-   ].
-
-cors() ->
-   [reader ||
-         _ /= restd:method('OPTIONS'),
-      %% only to support local loading of the tool
-      Head /= restd:cors([
-         {<<"Access-Control-Allow-Methods">>, <<"GET, PUT, POST, DELETE, OPTIONS">>}
-        ,{<<"Access-Control-Allow-Headers">>, <<"Content-Type, Authorization, Accept">>}
-        ,{<<"Access-Control-Max-Age">>,       600}
-      ]),
-         _ /= restd:to_text(200, Head, <<" ">>)
    ].
 
 %%
@@ -198,10 +189,9 @@ public_client_access_token() ->
       Request /= restd:as_form(),
       Client  <- authenticate_public_client(Request),
       
-      Head /= restd:cors(),
       cats:unit(oauth2:token(Request, Client)),
 
-      Http /= restd:to_json(Head, _), 
+      Http /= restd:to_json(_), 
       _ /= restd:accesslog(Http)
    ].
 
@@ -220,16 +210,25 @@ introspect() ->
       _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
       _ /= restd:provided_content({application, json}),
 
+      % Note: password based auth of client is expensive operation
       Digest  /= restd:header(<<"Authorization">>),
            _  <- authenticate_http_digest(Digest),
       Request /= restd:as_form(),
 
       cats:optionT(badarg, lens:get(lens:at(<<"token">>, undefined), Request)),
-      cats:unit(permit:validate(_)),
+      cats:unit(introspect(_)),
 
       Http /= restd:to_json(_),
       _ /= restd:accesslog(Http)
    ].
+
+introspect(Token) ->
+   case permit:validate(Token) of
+      {ok, Claims} ->
+         {ok, Claims#{<<"active">> => true}};
+      {error,   _} ->
+         {ok, #{<<"active">> => false}}
+   end.
 
 %%
 %%
@@ -314,23 +313,31 @@ external_github() ->
 %%
 authenticate_http_digest(<<"Basic ", Digest/binary>>) ->
    [Access, Secret] = binary:split(base64:decode(Digest), <<$:>>),
-   [either ||
-      permit:stateless(Access, Secret, 1, #{}),
-      Client <- oauth2_client:lookup(Access),
-      oauth2_client:is_confidential(Client),
-      Token  <- oauth2_token:exchange_code(Access, Secret),
-      %% how to pass client access / secret so that bearer token is allocatable
-      unit(Client#{<<"identity">> => Token})
-   ];
+   failure(unauthorized,
+      [either ||
+         permit:stateless(Access, Secret, 1, #{}),
+         Client <- oauth2_client:lookup(Access),
+         oauth2_client:is_confidential(Client),
+         Token  <- oauth2_token:exchange_code(Access, Secret),
+         %% how to pass client access / secret so that bearer token is allocatable
+         unit(Client#{<<"identity">> => Token})
+      ]
+   );
+authenticate_http_digest(<<"Bearer ", Token/binary>>) ->
+   failure(unauthorized, permit:validate(Token));
 authenticate_http_digest(_) ->
    {error, unauthorized_client}.
 
 %%
 authenticate_public_client(#{<<"client_id">> := Access}) ->
-   [either ||
-      oauth2_client:lookup(Access),
-      oauth2_client:is_public(_)
-   ];
+   %% The authorization server MAY return an HTTP 401
+   failure(unauthorized, 
+      [either ||
+         oauth2_client:lookup(Access),
+         oauth2_client:is_public(_)
+      ]
+   );
+ 
 authenticate_public_client(_) ->
    {error, badarg}.   
 
@@ -345,4 +352,13 @@ authenticate_access_token(<<"Bearer ", Token/binary>>) ->
    end;
 authenticate_access_token(_) ->
    {error, unauthorized}.
+
+
+%%
+%%
+failure(_, {ok, _} = Return) ->
+   Return;
+failure(Reason, _) ->
+   {error, Reason}.
+
 
