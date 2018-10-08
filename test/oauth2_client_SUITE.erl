@@ -56,6 +56,7 @@ groups() ->
 %%%----------------------------------------------------------------------------   
 init_per_suite(Config) ->
    permit:start(),
+   permit:config(),
    permit:ephemeral(),
    Config.
 

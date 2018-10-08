@@ -29,6 +29,7 @@
 %%
 %%
 start(_Type, _Args) ->
+   permit:config(),
    {ok, Sup} = oauth2_sup:start_link(),
    config_root_access(),
    {ok, Sup}.
