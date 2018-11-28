@@ -23,7 +23,9 @@
 -export([
    signin/2,
    signup/2,
-   token/2
+   token/2,
+   reset/2,
+   recover/2
 ]).
 
 %%
@@ -149,6 +151,40 @@ token(#{<<"grant_type">> := <<"refresh_token">>, <<"refresh_token">> := Token}, 
 token(_, _) ->
    {error, invalid_request}.
 
+%%
+%%
+reset(#{<<"access">> := Access} = Request, Client) ->
+   case
+      [either ||
+         oauth2_account:lookup(Access),
+         oauth2_account:claims(_),
+         permit:update(Access, crypto:strong_rand_bytes(30), _),
+         oauth2_token:recovery(_),
+         io:format("==> http://localhost:8080/oauth2/authorize?client_id=~s&access=~s&code=~s#recover~n", ['oauth2-account', Access, _])
+      ]
+   of
+      ok ->
+         redirect_uri([{error, recovery}], Request, Client);      
+      {error, _} = Error ->
+         redirect_uri([Error], Request, Client)
+   end.
+
+%%
+%%
+recover(#{<<"token">> := Token, <<"secret">> := Secret} = Request, Client) ->
+   case
+      [either ||
+         oauth2_token:is_recoverable(Token),
+         Access =< lens:get(lens:at(<<"sub">>), _),
+         permit:update(Access, Secret),
+         oauth2_token:exchange_code(Access, Secret)
+      ]
+   of
+      {ok, Code} ->
+         redirect_uri([{code, Code}], Request, Client);
+      {error, _} = Error ->
+         redirect_uri([Error], Request, Client)
+   end.
 
 %%-----------------------------------------------------------------------------
 %%

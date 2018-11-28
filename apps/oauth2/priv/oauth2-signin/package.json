@@ -3,18 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "dress-code": "^2.2.0",
+    "dress-code": "^2.4.0",
     "font-awesome": "^4.7.0",
-    "query-string": "^5.0.1",
-    "react": "^16.1.1",
-    "react-dom": "^16.1.1",
-    "react-dress-code": "git+https://git@github.com/fogfish/react-dress-code.git",
-    "react-redux": "^5.0.6",
-    "react-router-dom": "^4.2.2",
-    "react-scripts": "1.0.17",
-    "recompose": "^0.26.0",
-    "redux": "^3.7.2",
-    "redux-logger": "^3.0.6"
+    "query-string": "^6.2.0",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-dress-code": "^0.5.1",
+    "react-router-dom": "^4.3.1",
+    "react-scripts": "2.1.1",
+    "recompose": "^0.30.0"
   },
   "devDependencies": {},
   "scripts": {
@@ -22,5 +19,11 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
-  }
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }

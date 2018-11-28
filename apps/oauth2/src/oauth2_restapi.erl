@@ -40,6 +40,10 @@ endpoints() ->
       public_client_signup(),
       public_client_access_token(),
 
+      %%
+      public_client_password_reset(),
+      public_client_password_recover(),
+
       %% 
       introspect(),
       jwks(),
@@ -61,6 +65,7 @@ endpoints() ->
 config() ->
    #{
       'KEYPAIR' => scalar:a(opts:val(keypair, true, oauth2)),
+      'KEYPAIR_RESET' => scalar:a(opts:val(keypair_reset, true, oauth2)),
       'GITHUB'  => case github:auth_url() of undefined -> false; X -> X end
    }.
 
@@ -192,6 +197,41 @@ public_client_access_token() ->
       cats:unit(oauth2:token(Request, Client)),
 
       Http /= restd:to_json(_), 
+      _ /= restd:accesslog(Http)
+   ].
+
+%%
+%%
+%%
+public_client_password_reset() ->
+   [reader ||
+      _ /= restd:url("/oauth2/reset"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+      _ /= restd:provided_content({application, json}),
+
+      Request /= restd:as_form(),
+      Client  <- authenticate_public_client(Request),
+
+      oauth2:reset(Request, Client),
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
+      _ /= restd:accesslog(Http)
+   ].
+
+
+public_client_password_recover() ->
+   [reader ||
+      _ /= restd:url("/oauth2/recover"),
+      _ /= restd:method('POST'),
+      _ /= restd:accepted_content({application, 'x-www-form-urlencoded'}),
+
+      Request /= restd:as_form(),
+      Client  <- authenticate_public_client(Request),
+
+      oauth2:recover(Request, Client),
+
+      Http /= restd:to_text(redirect, [{<<"Location">>, _}], <<$ >>),
       _ /= restd:accesslog(Http)
    ].
 

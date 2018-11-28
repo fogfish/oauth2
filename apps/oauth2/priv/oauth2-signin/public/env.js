@@ -15,6 +15,10 @@ window.env = {
    KEYPAIR: true,
 
    //
+   // Enable user initiated reset of secret key
+   KEYPAIR_RESET: true,
+
+   //
    // Enable SignIn using GitHub account
    GITHUB: "https://github.com/login/oauth/authorize?client_id=xxx&scope=xxx"
 }

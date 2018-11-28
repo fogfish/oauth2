@@ -8,7 +8,9 @@
    access/2,
    refresh/1,
    exchange_code/2,
-   is_exchangable/1
+   is_exchangable/1,
+   recovery/1,
+   is_recoverable/1
 ]).
 
 
@@ -65,8 +67,6 @@ refresh(Token) ->
       #{<<"exch">> => true}
    ).
 
-
-
 %%
 %% issue new exchange code
 exchange_code(Access, Secret) ->
@@ -81,6 +81,18 @@ exchange_code(Access, Secret) ->
 %% 
 is_exchangable(Token) ->
    permit:include(Token, #{<<"exch">> => true}).
+
+%%
+%% issue new recovery token
+recovery(Token) ->
+   permit:revocable(
+      Token,
+      ttl_recovery_token(),
+      #{<<"recovery">> => true}
+   ).
+
+is_recoverable(Token) ->
+   permit:include(Token, #{<<"recovery">> => true}).
 
 %%-----------------------------------------------------------------------------
 %%
@@ -103,4 +115,9 @@ ttl_refresh_token() ->
 %%
 ttl_exchange_code() ->
    scalar:i(opts:val(ttl_exchange_code, 60, oauth2)).
+
+%%
+%%
+ttl_recovery_token() ->
+   scalar:i(opts:val(ttl_recovery_token, 30000, oauth2)).
 
