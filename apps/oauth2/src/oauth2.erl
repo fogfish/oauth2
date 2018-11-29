@@ -157,7 +157,6 @@ reset(#{<<"access">> := Access} = Request, #{<<"access">> := Id} = Client) ->
    case
       [either ||
          oauth2_account:lookup(Access),
-         oauth2_account:claims(_),
          permit:update(Access, crypto:strong_rand_bytes(30), _),
          oauth2_token:recovery(_),
          oauth2_email:password_reset(
@@ -173,7 +172,7 @@ reset(#{<<"access">> := Access} = Request, #{<<"access">> := Id} = Client) ->
       ]
    of
       {ok, Message} ->
-         lager:notice("[oauth2]: rest account ~s with email ~p", [Access, Request]),
+         lager:notice("[oauth2]: rest account ~s with email ~p", [Access, Message]),
          redirect_uri([{error, recovery}], Request, Client);      
       {error, _} = Error ->
          lager:notice("[oauth2]: failed to rest account ~s with reason ~p", [Access, Error]),
@@ -187,7 +186,8 @@ recover(#{<<"token">> := Token, <<"secret">> := Secret} = Request, Client) ->
       [either ||
          oauth2_token:is_recoverable(Token),
          Access =< lens:get(lens:at(<<"sub">>), _),
-         permit:update(Access, Secret),
+         oauth2_account:lookup(Access),
+         permit:update(Access, Secret, _),
          oauth2_token:exchange_code(Access, Secret)
       ]
    of

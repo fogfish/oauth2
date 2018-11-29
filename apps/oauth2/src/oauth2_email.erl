@@ -24,7 +24,7 @@ password_reset_email(Access, Link) ->
    io_lib:format("
       <h3>Hello,</h3>
       <p>
-      You recently requested to reset your password for your ~s account <b>~s</b> at ~s. 
+      You recently requested to reset your password for your ~s account <b>~s</b> at ~s environment. 
       Click the link below to reset it.
       </p>
       <p><a href=\"~s\">Reset Your Password</a></p>
