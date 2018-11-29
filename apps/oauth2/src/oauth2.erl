@@ -172,9 +172,11 @@ reset(#{<<"access">> := Access} = Request, #{<<"access">> := Id} = Client) ->
          )
       ]
    of
-      {ok, _} ->
+      {ok, Message} ->
+         lager:notice("[oauth2]: rest account ~s with email ~p", [Access, Request]),
          redirect_uri([{error, recovery}], Request, Client);      
-      {error, _} ->
+      {error, _} = Error ->
+         lager:notice("[oauth2]: failed to rest account ~s with reason ~p", [Access, Error]),
          redirect_uri([{error, forbidden}], Request, Client)
    end.
 
