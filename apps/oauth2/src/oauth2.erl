@@ -153,20 +153,29 @@ token(_, _) ->
 
 %%
 %%
-reset(#{<<"access">> := Access} = Request, Client) ->
+reset(#{<<"access">> := Access} = Request, #{<<"access">> := Id} = Client) ->
    case
       [either ||
          oauth2_account:lookup(Access),
          oauth2_account:claims(_),
          permit:update(Access, crypto:strong_rand_bytes(30), _),
          oauth2_token:recovery(_),
-         io:format("==> http://localhost:8080/oauth2/authorize?client_id=~s&access=~s&code=~s#recover~n", ['oauth2-account', Access, _])
+         oauth2_email:password_reset(
+            Access,
+            uri:anchor(<<"recover">>,
+               uri:q([{client_id, Id}, {access, Access}, {code, _}],
+                  uri:path(<<"/oauth2/authorize">>, 
+                     uri:new(opts:val(issuer, permit))
+                  )
+               )
+            )
+         )
       ]
    of
-      ok ->
+      {ok, _} ->
          redirect_uri([{error, recovery}], Request, Client);      
-      {error, _} = Error ->
-         redirect_uri([Error], Request, Client)
+      {error, _} ->
+         redirect_uri([{error, forbidden}], Request, Client)
    end.
 
 %%

@@ -87,7 +87,7 @@ is_exchangable(Token) ->
 recovery(Token) ->
    permit:revocable(
       Token,
-      ttl_recovery_token(),
+      ttl_recovery_code(),
       #{<<"recovery">> => true}
    ).
 
@@ -118,6 +118,6 @@ ttl_exchange_code() ->
 
 %%
 %%
-ttl_recovery_token() ->
-   scalar:i(opts:val(ttl_recovery_token, 30000, oauth2)).
+ttl_recovery_code() ->
+   scalar:i(opts:val(ttl_recovery_code, 300, oauth2)).
 

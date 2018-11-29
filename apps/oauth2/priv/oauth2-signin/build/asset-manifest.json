@@ -7,10 +7,10 @@
   "static/js/1.30f3ba83.chunk.js.map": "/oauth2/authorize/static/js/1.30f3ba83.chunk.js.map",
   "runtime~main.js": "/oauth2/authorize/static/js/runtime~main.0214c111.js",
   "runtime~main.js.map": "/oauth2/authorize/static/js/runtime~main.0214c111.js.map",
-  "static/media/App.css": "/oauth2/authorize/static/media/DressCodeIcons.fb476665.woff",
+  "static/media/App.css": "/oauth2/authorize/static/media/fontawesome-webfont.b06871f2.ttf",
   "static/css/main.91f4f12b.chunk.css.map": "/oauth2/authorize/static/css/main.91f4f12b.chunk.css.map",
   "static/css/1.7f22f2c5.chunk.css.map": "/oauth2/authorize/static/css/1.7f22f2c5.chunk.css.map",
   "index.html": "/oauth2/authorize/index.html",
-  "precache-manifest.f12410cba0b7ddf5280560f457b45871.js": "/oauth2/authorize/precache-manifest.f12410cba0b7ddf5280560f457b45871.js",
+  "precache-manifest.a9d689bc7990f1f93dee10fade712931.js": "/oauth2/authorize/precache-manifest.a9d689bc7990f1f93dee10fade712931.js",
   "service-worker.js": "/oauth2/authorize/service-worker.js"
 }
