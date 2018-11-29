@@ -16,7 +16,7 @@ const SignIn = props => (
           {window.env.KEYPAIR && 
             <KeyPair { ...props } />  
           }
-          {window.env.KEYPAIR_RESET && 
+          {(window.env.KEYPAIR && window.env.KEYPAIR_RESET) && 
             <Link className="dc-link" to="/reset">Forgot Password?</Link>
           }
         </DialogBody>
@@ -28,7 +28,7 @@ const SignIn = props => (
         }
         {window.env.GITHUB &&
           <DialogActions>
-            <GitHub />
+            <GitHub { ...props } />
           </DialogActions>
         }
       </form>
