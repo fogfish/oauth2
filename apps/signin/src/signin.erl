@@ -7,14 +7,26 @@
 
 %%
 %%
+opts() ->
+   [
+      {help,      $h,   "help",     undefined,  "Print usage"}
+   ,  {profile,   $f,   "profile",  string,     "Configuration profile"}
+   ,  {oauth2,    $a,   "oauth2",   string,     "Authorization server"}
+   ,  {client,    $c,   "client",   string,     "Identity of client application"}
+   ,  {access,    $u,   "username", string,     "Username"}
+   ,  {secret,    $p,   "password", string,     "Password"}
+   ].
+
+%%
+%%
 main(Args) ->
    {ok, {Opts, _Files}} = getopt:parse(opts(), Args),
+   Profile = profile(Opts),
    case 
-      lists:member(help, Opts) orelse
-      lens:get(lens:pair(oauth2, undefined), Opts) =:= undefined orelse 
-      lens:get(lens:pair(client, undefined), Opts) =:= undefined orelse
-      lens:get(lens:pair(access, undefined), Opts) =:= undefined orelse
-      lens:get(lens:pair(secret, undefined), Opts) =:= undefined
+      lists:member(help, Profile) orelse
+      lens:get(lens:pair(oauth2, undefined), Profile) =:= undefined orelse 
+      lens:get(lens:pair(access, undefined), Profile) =:= undefined orelse
+      lens:get(lens:pair(secret, undefined), Profile) =:= undefined
 
    of
       true ->
@@ -24,23 +36,21 @@ main(Args) ->
       {ok, _} = application:ensure_all_started(ssl),
       {ok, _} = application:ensure_all_started(knet),
       main(
-         lens:get(lens:pair(oauth2), Opts),
-         lens:get(lens:pair(client), Opts),
-         lens:get(lens:pair(access), Opts),
-         lens:get(lens:pair(secret), Opts)
+         lens:get(lens:pair(oauth2), Profile),
+         lens:get(lens:pair(client, <<"oauth2-account">>), Profile),
+         lens:get(lens:pair(access), Profile),
+         lens:get(lens:pair(secret), Profile)
       )
    end.
 
-%%
-%%
-opts() ->
-   [
-      {help,      $h,   "help",     undefined,  "Print usage"}
-   ,  {oauth2,    $a,   "oauth2",   string,     "Authorization server"}
-   ,  {client,    $c,   "client",   string,     "Identity of client application"}
-   ,  {access,    $u,   "username", string,     "Username"}
-   ,  {secret,    $p,   "password", string,     "Password"}
-   ].
+profile(Opts) ->
+   case lens:get(lens:pair(profile, undefined), Opts) of
+      undefined ->
+         Opts;
+      File ->
+         {ok, Profile} = file:consult(File),
+         Opts ++ Profile
+   end.
 
 %%
 %%
