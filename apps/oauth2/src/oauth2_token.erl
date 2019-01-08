@@ -20,24 +20,36 @@ bearer(Token) ->
    [either ||
       AccessT <- oauth2_token:access(Token),
       Refresh <- oauth2_token:refresh(Token),
-      cats:unit(#{
-         <<"token_type">> => <<"bearer">>, 
-         <<"expires_in">> => ttl_access_token(),
-         <<"access_token">>  => AccessT,
-         <<"refresh_token">> => Refresh
-      })
+      ClaimsT <- permit:claims(AccessT),
+      cats:unit(
+         maps:merge(
+            ClaimsT,
+            #{
+               <<"token_type">> => <<"bearer">>, 
+               <<"expires_in">> => ttl_access_token(),
+               <<"access_token">>  => AccessT,
+               <<"refresh_token">> => Refresh
+            }
+         )
+      )
    ].
 
 bearer(Access, Secret) ->
    [either ||
-      AccessT  <- oauth2_token:access(Access, Secret),
+      AccessT <- oauth2_token:access(Access, Secret),
       Refresh <- oauth2_token:refresh(AccessT),
-      cats:unit(#{
-         <<"token_type">> => <<"bearer">>, 
-         <<"expires_in">> => ttl_access_token(),
-         <<"access_token">>  => AccessT,
-         <<"refresh_token">> => Refresh
-      })
+      ClaimsT <- permit:claims(AccessT),
+      cats:unit(
+         maps:merge(
+            ClaimsT,
+            #{
+               <<"token_type">> => <<"bearer">>, 
+               <<"expires_in">> => ttl_access_token(),
+               <<"access_token">>  => AccessT,
+               <<"refresh_token">> => Refresh
+            }
+         )
+      )
    ].
 
 

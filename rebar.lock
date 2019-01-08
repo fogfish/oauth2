@@ -52,7 +52,7 @@
   {git,"https://github.com/fogfish/permit",
        {ref,"281c8ba302a283d871d32ef25362420d965ef62e"}},
   0},
- {<<"pipe">>,{pkg,<<"pipes">>,<<"2.0.0">>},0},
+ {<<"pipe">>,{pkg,<<"pipes">>,<<"2.0.1">>},0},
  {<<"pns">>,
   {git,"https://github.com/fogfish/pns",
        {ref,"f9b37630d0a8797063a2a443b42f14353ad858c8"}},
@@ -84,5 +84,5 @@
  {<<"jwt">>, <<"F080AB90EED51B1159E43CF775277BD30AEDA85033AE2D278B4FFCAA32FF14B7">>},
  {<<"lager">>, <<"23C8F5ABC4189F46804791E16BF6421C14EBC5B529DC113BC54639C6C62F255D">>},
  {<<"lhttpc">>, <<"CAE8E318063B4A431385BB3483D9C17116B264BE87442308450B3E879F9BD3CF">>},
- {<<"pipe">>, <<"A10DF54F1EC80EAA491EE7BD689C794886E6E668A9F05436514695E9CF5370AE">>}]}
+ {<<"pipe">>, <<"A2B56796C63690ED0E78BB77BB389AF250BD70AFA15A6869369DBDC11087D68F">>}]}
 ].

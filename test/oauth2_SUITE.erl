@@ -296,6 +296,7 @@ authorization_code_grant_confidential_access_token(Code, Access) ->
 
          _ < 200,
          _ < "Content-Type: application/json",
+         _ < oauth2_bearer_token(oauth2_fixtures:access_token(Access)),
          _ < oauth2_access_token(oauth2_fixtures:access_token(Access)),
          _ < oauth2_refresh_token(oauth2_fixtures:refresh_token(Access)),
          _ < oauth2_refresh_token()
@@ -315,6 +316,7 @@ refresh_grant_confidential(Token, Access) ->
 
          _ < 200,
          _ < "Content-Type: application/json",
+         _ < oauth2_bearer_token(oauth2_fixtures:access_token(Access)),
          _ < oauth2_access_token(oauth2_fixtures:access_token(Access)),
          _ < oauth2_refresh_token(oauth2_fixtures:refresh_token(Access))
       ]
@@ -390,6 +392,7 @@ resource_owner_password_grant_with_public_app(_) ->
 
          _ < 200,
          _ < "Content-Type: application/json",
+         _ < oauth2_bearer_token(oauth2_fixtures:access_token(<<"account.a">>)),
          _ < oauth2_access_token(oauth2_fixtures:access_token(<<"account.a">>)),
          _ < oauth2_not_defined_refresh_token()
       ]
@@ -409,6 +412,7 @@ resource_owner_password_grant_with_confidential_app(_) ->
 
          _ < 200,
          _ < "Content-Type: application/json",
+         _ < oauth2_bearer_token(oauth2_fixtures:access_token(<<"account.a">>)),
          _ < oauth2_access_token(oauth2_fixtures:access_token(<<"account.a">>)),
          _ < oauth2_refresh_token(oauth2_fixtures:refresh_token(<<"account.a">>))
       ]
@@ -609,6 +613,15 @@ oauth2_redirect_url_with_access_token(Url, Claims) ->
    ).
 
 %%
+-spec oauth2_bearer_token(_) -> datum:lens().
+
+oauth2_bearer_token(Claims) ->
+   lens:c(
+      lens_bearer_token(),
+      lens:require(Claims)
+   ).
+
+%%
 -spec oauth2_access_token(_) -> datum:lens().
 
 oauth2_access_token(Claims) ->
@@ -697,6 +710,13 @@ lens_token() ->
       end
    end.
 
+%%
+-spec lens_bearer_token() -> datum:lens().
+
+lens_bearer_token() ->
+   fun(Fun, #{<<"token_type">> := <<"bearer">>, <<"expires_in">> := _, <<"access_token">> := _} = Access) ->
+      lens:fmap(fun(_) -> Access end, Fun( maps:without([<<"token_type">>, <<"expires_in">>, <<"access_token">>, <<"refresh_token">>, <<"tji">>, <<"exp">>], Access) ))
+   end.
 
 %%
 -spec lens_access_token() -> datum:lens().
