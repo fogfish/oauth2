@@ -1,4 +1,5 @@
 _build/
+cdk.out/
 log/
 rebar3
 *.sublime-*

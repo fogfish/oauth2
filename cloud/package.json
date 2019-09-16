@@ -1,0 +1,13 @@
+{
+  "name": "aws-oauth2",
+  "version": "0.0.0",
+  "dependencies": {
+    "@types/node": "*",
+    "aws-cdk-pure": "*",
+    "@aws-cdk/core": "*",
+    "@aws-cdk/aws-iam": "*",
+    "@aws-cdk/aws-lambda": "*",
+    "@aws-cdk/aws-apigateway": "*",
+    "@aws-cdk/aws-logs": "*"
+  }
+}

@@ -7,8 +7,7 @@ phases:
     commands:
       - |-
         echo "==> install"
-      # - npm install
-      # - (cd cloud; npm install)
+      - (cd cloud; npm install)
 
   pre_build:
     commands:
@@ -27,9 +26,9 @@ phases:
       - |-
           case $BUILD in
             CleanUp)
-              # (cd cloud; VSN=${BUILD_RELEASE} cdk destroy -f)
+              #(cd cloud; VSN=${BUILD_RELEASE} cdk destroy -f)
               ;;
             *)
-              # (cd cloud; VSN=${BUILD_RELEASE} cdk deploy)
+              #(cd cloud; VSN=${BUILD_RELEASE} cdk deploy)
               ;;
           esac

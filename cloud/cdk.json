@@ -1,0 +1,4 @@
+{
+  "app": "ts-node app",
+  "requireApproval": "never"
+}

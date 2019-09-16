@@ -23,6 +23,13 @@ The appliance supplies pre-built releases for Linux/x86_64 and Docker platforms.
 
 Build the latest version of authorization server from the `master` branch. The build process requires [Erlang/OTP](http://www.erlang.org/downloads) version 19.0 or later. All development, including new features and bug fixes, take place on the `master` branch using forking and pull requests as described in contribution guidelines.
 
+Build toolchain
+
+```bash
+npm install -g typescript
+npm install -g aws-cdk
+npm install -g ts-node
+```
 
 ### Running authorization server
 
