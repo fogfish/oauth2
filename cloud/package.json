@@ -8,6 +8,7 @@
     "@aws-cdk/aws-iam": "*",
     "@aws-cdk/aws-lambda": "*",
     "@aws-cdk/aws-apigateway": "*",
-    "@aws-cdk/aws-logs": "*"
+    "@aws-cdk/aws-logs": "*",
+    "@aws-cdk/aws-dynamodb": "*"
   }
 }

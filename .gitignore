@@ -1,6 +1,7 @@
 _build/
 cdk.out/
 log/
+node_modules/
 rebar3
 *.sublime-*
 *.dump

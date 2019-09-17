@@ -5,10 +5,13 @@ import * as security from './security'
 
 const LAYER='erlang-serverless:3'
 
-export function SignIn(parent: cdk.Construct): lambda.FunctionProps {
+//
+// https://tools.ietf.org/html/rfc6749
+//   Section 4.1.1.  Authorization Request
+export function Auth(parent: cdk.Construct): lambda.FunctionProps {
   return {
     runtime: lambda.Runtime.PROVIDED,
-    code: new lambda.AssetCode('../rel'),
+    code: new lambda.AssetCode('../apps/auth/_build/default/bin'),
     handler: 'index.main',
     timeout: cdk.Duration.seconds(10),
     memorySize: 256,
