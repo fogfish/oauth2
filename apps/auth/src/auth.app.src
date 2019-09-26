@@ -6,7 +6,9 @@
       {registered,  []},
       {applications,[
          kernel
-        ,stdlib
+      ,  stdlib
+      ,  feta
+      ,  oauth2
       ]},
       {env, []}
    ]

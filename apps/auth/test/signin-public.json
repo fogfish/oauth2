@@ -1,0 +1,8 @@
+{
+  "httpMethod": "POST",
+  "path": "/signin",
+  "headers": {
+    "Content-Type": "application/x-www-form-urlencoded"
+  },
+  "body": "response_type=code&client_id=public@org&access=access@org&secret=secret"
+}

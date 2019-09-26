@@ -7,7 +7,7 @@ const gateway = iaac(api.RestApi)
 const service = iaac(lambda.Function)
 const method  = wrap(api.LambdaIntegration)
 
-function Gateway(): api.RestApiProps {
+function OAuth2(): api.RestApiProps {
   return {
     endpointTypes: [api.EndpointType.REGIONAL],
     deploy: true,
@@ -20,7 +20,7 @@ function Gateway(): api.RestApiProps {
 
 export function RestApi(): IaaC<api.RestApi> {
   return use({
-    restapi: gateway(Gateway),
+    restapi: gateway(OAuth2),
     auth: method(service(Auth))
   })
   .effect(x => {
