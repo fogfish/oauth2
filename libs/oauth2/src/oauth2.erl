@@ -13,7 +13,8 @@
 %%
 -spec auth_client_public(digest()) -> datum:either(permit:claims()).
 
-auth_client_public(Access) ->
+auth_client_public(Access)
+ when is_binary(Access) ->
    [either ||
       iri(Access),
       permit:lookup(_),
@@ -42,8 +43,8 @@ auth_client_confidential(<<"Basic ", Digest/binary>>) ->
 %%
 %%
 iri(Access) ->
-   case binary:split(Access, <<$.>>) of
-      [Prefix, Suffix] ->
+   case binary:split(Access, <<$@>>) of
+      [Suffix, Prefix] ->
          {ok, {iri, Prefix, Suffix}};
       _ ->
          {error, {badarg, Access}}

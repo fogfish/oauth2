@@ -57,17 +57,17 @@ client_spec_confidential() ->
 
 auth_client_public(_) ->
    Expect = client_spec_public(),
-   {ok, Expect} = oauth2:auth_client_public(<<"org.public">>),
-   {error, forbidden} = oauth2:auth_client_public(<<"org.confidential">>),
-   {error, not_found} = oauth2:auth_client_public(<<"org.undefined">>).
+   {ok, Expect} = oauth2:auth_client_public(<<"public@org">>),
+   {error, forbidden} = oauth2:auth_client_public(<<"confidential@org">>),
+   {error, not_found} = oauth2:auth_client_public(<<"undefined@org">>).
 
 
 auth_client_confidential(_) ->
    Expect = client_spec_confidential(), 
-   {ok, Expect} = oauth2:auth_client_confidential(digest(<<"org.confidential">>, <<"secret">>)),
-   {error,unauthorized} = oauth2:auth_client_confidential(digest(<<"org.confidential">>, <<"undefined">>)),
-   {error, forbidden} = oauth2:auth_client_confidential(digest(<<"org.public">>, <<"secret">>)),
-   {error, not_found} = oauth2:auth_client_confidential(digest(<<"org.undefined">>, <<"secret">>)).
+   {ok, Expect} = oauth2:auth_client_confidential(digest(<<"confidential@org">>, <<"secret">>)),
+   {error,unauthorized} = oauth2:auth_client_confidential(digest(<<"confidential@org">>, <<"undefined">>)),
+   {error, forbidden} = oauth2:auth_client_confidential(digest(<<"public@org">>, <<"secret">>)),
+   {error, not_found} = oauth2:auth_client_confidential(digest(<<"undefined@org">>, <<"secret">>)).
 
 
 digest(Access, Secret) ->
