@@ -1,0 +1,15 @@
+{application, oauth2,
+   [
+      {description, "oauth2 protocol"},
+      {vsn,         "git"},
+      {modules,     []},
+      {registered,  []},
+      {applications,[
+         kernel
+      ,  stdlib
+      ,  datum
+      ,  permit
+      ]},
+      {env, []}
+   ]
+}.
