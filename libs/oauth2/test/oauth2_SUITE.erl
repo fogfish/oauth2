@@ -24,7 +24,6 @@ init_per_suite(Config) ->
    {ok, _} = application:ensure_all_started(oauth2),
    {ok, _} = permit:create({iri, <<"org">>, <<"public">>}, <<"secret">>, client_spec_public()),
    {ok, _} = permit:create({iri, <<"org">>, <<"confidential">>}, <<"secret">>, client_spec_confidential()),
-
    Config.
 
 
@@ -56,8 +55,20 @@ client_spec_confidential() ->
 %%%
 %%%----------------------------------------------------------------------------   
 
-auth_public_client(_) ->
+auth_client_public(_) ->
    Expect = client_spec_public(),
-   {ok, Expect} = oauth2:auth_public_client(<<"org.public">>),
-   {error, forbidden} = oauth2:auth_public_client(<<"org.confidential">>),
-   {error, not_found} = oauth2:auth_public_client(<<"org.undefined">>).
+   {ok, Expect} = oauth2:auth_client_public(<<"org.public">>),
+   {error, forbidden} = oauth2:auth_client_public(<<"org.confidential">>),
+   {error, not_found} = oauth2:auth_client_public(<<"org.undefined">>).
+
+
+auth_client_confidential(_) ->
+   Expect = client_spec_confidential(), 
+   {ok, Expect} = oauth2:auth_client_confidential(digest(<<"org.confidential">>, <<"secret">>)),
+   {error,unauthorized} = oauth2:auth_client_confidential(digest(<<"org.confidential">>, <<"undefined">>)),
+   {error, forbidden} = oauth2:auth_client_confidential(digest(<<"org.public">>, <<"secret">>)),
+   {error, not_found} = oauth2:auth_client_confidential(digest(<<"org.undefined">>, <<"secret">>)).
+
+
+digest(Access, Secret) ->
+   <<"Basic ", (base64:encode(<<Access/binary, $:, Secret/binary>>))/binary>>.
