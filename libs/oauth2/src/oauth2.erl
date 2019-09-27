@@ -13,12 +13,33 @@
 %%
 -spec auth_client_public(digest()) -> datum:either(permit:claims()).
 
+auth_client_public(<<"account@oauth2">>) ->
+   %% Note: console@oauth2 is built-in expereince
+   case auth_client_public({iri, <<"oauth2">>, <<"account">>}) of
+      {error, not_found} ->
+         auth_client_public_default();
+      Result ->
+         Result
+   end;
+
 auth_client_public(Access)
  when is_binary(Access) ->
+   [either || iri(Access), auth_client_public(_)];
+
+auth_client_public({iri, _, _} = Access) ->
    [either ||
-      iri(Access),
-      permit:lookup(_),
+      permit:lookup(Access),
       permit:include(_, #{<<"security">> => <<"public">>})
+   ].
+
+auth_client_public_default() ->
+   [either ||
+      Spec =< #{
+         <<"security">> => <<"public">>,
+         <<"redirect_uri">> => uri:s(uri:path("/oauth2/account", uri:new(permit_config:iss())))
+      },
+      permit:create({iri, <<"oauth2">>, <<"account">>}, crypto:strong_rand_bytes(30), Spec),
+      cats:unit(Spec)
    ].
 
 %%

@@ -42,6 +42,12 @@ client_spec_public() ->
       <<"redirect_uri">> => <<"http://example.com/public">>
    }.
 
+client_spec_default() ->
+   #{
+      <<"security">> => <<"public">>,
+      <<"redirect_uri">> => <<"http://example.com/oauth2/account">>
+   }.
+
 client_spec_confidential() ->
    #{
       <<"security">> => <<"confidential">>,
@@ -61,6 +67,9 @@ auth_client_public(_) ->
    {error, forbidden} = oauth2:auth_client_public(<<"confidential@org">>),
    {error, not_found} = oauth2:auth_client_public(<<"undefined@org">>).
 
+auth_client_default(_) ->
+   Expect = client_spec_default(),
+   {ok, Expect} = oauth2:auth_client_public(<<"account@oauth2">>).
 
 auth_client_confidential(_) ->
    Expect = client_spec_confidential(), 
