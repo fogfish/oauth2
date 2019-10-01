@@ -1,5 +1,6 @@
 -module(oauth2_SUITE).
 -include_lib("common_test/include/ct.hrl").
+-include_lib("oauth2/include/oauth2.hrl").
 
 -export([all/0]).
 -compile(export_all).
@@ -18,7 +19,7 @@ all() ->
 %%%
 %%%----------------------------------------------------------------------------   
 init_per_suite(Config) ->
-   os:putenv("PERMIT_ISSUER", "http://example.com"),
+   os:putenv("PERMIT_ISSUER", "https://example.com"),
    os:putenv("PERMIT_AUDIENCE", "suite"),
    os:putenv("PERMIT_CLAIMS", "read=true&write=true"),
    {ok, _} = application:ensure_all_started(oauth2),
@@ -39,19 +40,19 @@ end_per_suite(_Config) ->
 client_spec_public() ->
    #{
       <<"security">> => <<"public">>,
-      <<"redirect_uri">> => <<"http://example.com/public">>
+      <<"redirect_uri">> => <<"https://example.com/public">>
    }.
 
 client_spec_default() ->
    #{
       <<"security">> => <<"public">>,
-      <<"redirect_uri">> => <<"http://example.com/oauth2/account">>
+      <<"redirect_uri">> => <<"https://example.com/oauth2/account">>
    }.
 
 client_spec_confidential() ->
    #{
       <<"security">> => <<"confidential">>,
-      <<"redirect_uri">> => <<"http://example.com/confidential">>
+      <<"redirect_uri">> => <<"https://example.com/confidential">>
    }.
 
 
@@ -61,16 +62,19 @@ client_spec_confidential() ->
 %%%
 %%%----------------------------------------------------------------------------   
 
+%%
 auth_client_public(_) ->
    Expect = client_spec_public(),
    {ok, Expect} = oauth2:auth_client_public(<<"public@org">>),
    {error, forbidden} = oauth2:auth_client_public(<<"confidential@org">>),
    {error, not_found} = oauth2:auth_client_public(<<"undefined@org">>).
 
+%%
 auth_client_default(_) ->
    Expect = client_spec_default(),
    {ok, Expect} = oauth2:auth_client_public(<<"account@oauth2">>).
 
+%%
 auth_client_confidential(_) ->
    Expect = client_spec_confidential(), 
    {ok, Expect} = oauth2:auth_client_confidential(digest(<<"confidential@org">>, <<"secret">>)),
@@ -78,6 +82,26 @@ auth_client_confidential(_) ->
    {error, forbidden} = oauth2:auth_client_confidential(digest(<<"public@org">>, <<"secret">>)),
    {error, not_found} = oauth2:auth_client_confidential(digest(<<"undefined@org">>, <<"secret">>)).
 
-
 digest(Access, Secret) ->
    <<"Basic ", (base64:encode(<<Access/binary, $:, Secret/binary>>))/binary>>.
+
+%%
+signup(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   Code = uri:q(<<"code">>, undefined, Uri),
+   {ok, #{
+      <<"iss">> := <<"https://example.com">>
+   ,  <<"aud">> := <<"suite">>
+   ,  <<"idp">> := <<"org">>
+   ,  <<"exp">> := _
+   ,  <<"tji">> := _
+   ,  <<"sub">> := {iri, <<"org">>, <<"access">>}
+   }} = permit:validate(Code),
+   {ok, #{}} = permit:equals(Code, #{}).
+
+
+
+
