@@ -83,7 +83,7 @@ signup(Redirect, #authorization{
    case
       [either ||
          permit:create(Access, Secret, Claims),
-         permit:stateless(_, 3600, #{})
+         permit:stateless(_, 3600, #{}) %% TODO: configurable ttl
       ]
    of
       {ok, Code} ->

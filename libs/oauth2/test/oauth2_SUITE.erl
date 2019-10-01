@@ -102,6 +102,16 @@ signup(_) ->
    }} = permit:validate(Code),
    {ok, #{}} = permit:equals(Code, #{}).
 
+%%
+signup_conflict(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=public@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   <<"conflict">> = uri:q(<<"error">>, undefined, Uri).
 
-
+%%
+signup_client_unknown(_) ->
+   Request = <<"response_type=code&client_id=unknown@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {error, not_found} = oauth2:signup(Request).
 
