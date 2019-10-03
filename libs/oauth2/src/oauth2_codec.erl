@@ -51,7 +51,7 @@ iri(IRI) ->
 scope() ->
    fun
    (Fun, undefined) ->
-      lens:fmap(fun(X) -> X end, Fun(undefined));
+      lens:fmap(fun(X) -> X end, Fun(#{}));
    (Fun, Scope) ->
       lens:fmap(fun(X) -> X end, Fun(decode(uri:unescape(Scope))))
    end.

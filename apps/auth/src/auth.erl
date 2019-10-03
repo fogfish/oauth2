@@ -19,7 +19,12 @@ main(Opts) ->
 api(#{
    <<"httpMethod">> := <<"POST">>
 } = Json) ->
-   serverless_api:return(dispatch(Json));
+   case dispatch(Json) of
+      {ok, Redirect} ->
+         serverless_api:return({302, #{<<"Location">> => uri:s(Redirect)}, uri:s(Redirect)});
+      {error, _} = Error ->
+         serverless_api:return(Error)
+   end;
 api(_) -> 
    {error, not_supported}.
 
@@ -51,7 +56,7 @@ dispatch(#{
          client_id = Client
       } = Auth <- request(Request),
       oauth2:auth_client_public(Client),
-      cats:unit(labelled_of:authorization(Auth))
+      oauth2:signup(Request)
    ];
 
 dispatch(#{
@@ -80,7 +85,7 @@ dispatch(#{
          client_id = Client
       } = Auth <- request(Request),
       oauth2:auth_client_public(Client),
-      cats:unit(labelled_of:authorization(Auth))
+      oauth2:signup(Request)
    ];
 
 dispatch(_) ->

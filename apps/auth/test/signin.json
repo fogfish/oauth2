@@ -4,5 +4,5 @@
   "headers": {
     "Content-Type": "application/x-www-form-urlencoded"
   },
-  "body": "response_type=code&client_id=public@org&access=access@org&secret=secret"
+  "body": "response_type=code&client_id=account@oauth2&access=access@org&secret=secret"
 }

@@ -1,4 +1,4 @@
 APP       = auth
-EVENT    ?= test/signin-public.json
+EVENT    ?= test/signin.json
 
 include ../../serverless.mk

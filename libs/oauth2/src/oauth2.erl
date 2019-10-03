@@ -64,7 +64,7 @@ auth_client_confidential(<<"Basic ", Digest/binary>>) ->
 
 signup(Request)
  when is_binary(Request) ->
-    signup(lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request)));
+   signup(lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request)));
 
 signup(#authorization{client_id = {iri, _, _} = Client} = Request) ->
    [either ||
