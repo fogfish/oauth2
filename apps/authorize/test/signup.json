@@ -1,6 +1,6 @@
 {
   "httpMethod": "POST",
-  "path": "/signin",
+  "path": "/signup",
   "headers": {
     "Content-Type": "application/x-www-form-urlencoded"
   },

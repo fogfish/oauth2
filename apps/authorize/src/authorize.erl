@@ -1,8 +1,7 @@
--module(auth).
+-module(authorize).
 
 -compile({parse_transform, category}).
 -compile({parse_transform, generic}).
--include_lib("oauth2/include/oauth2.hrl").
 
 -export([main/1]).
 
@@ -40,8 +39,7 @@ dispatch(#{
 }) ->
    [either ||
       oauth2:auth_client_confidential(Digest),
-      request(Request),
-      cats:unit(labelled_of:authorization(_))
+      oauth2:signin(Request)
    ];
 
 dispatch(#{
@@ -52,11 +50,9 @@ dispatch(#{
    <<"body">> := Request
 }) ->
    [either ||
-      #authorization{
-         client_id = Client
-      } = Auth <- request(Request),
+      #{<<"client_id">> := Client} =< oauth2_codec:decode(Request),
       oauth2:auth_client_public(Client),
-      oauth2:signup(Request)
+      oauth2:signin(Request)
    ];
 
 dispatch(#{
@@ -69,8 +65,7 @@ dispatch(#{
 }) ->
    [either ||
       oauth2:auth_client_confidential(Digest),
-      request(Request),
-      cats:unit(labelled_of:authorization(_))
+      oauth2:signup(Request)
    ];
 
 dispatch(#{
@@ -81,29 +76,10 @@ dispatch(#{
    <<"body">> := Request
 }) ->
    [either ||
-      #authorization{
-         client_id = Client
-      } = Auth <- request(Request),
+      #{<<"client_id">> := Client} =< oauth2_codec:decode(Request),
       oauth2:auth_client_public(Client),
       oauth2:signup(Request)
    ];
 
 dispatch(_) ->
    {error, not_supported}.
-
-%%
-%%
--spec request(binary()) -> datum:either(#authorization{}).
-
-request(Request) ->
-   {ok, [identity ||
-      binary:split(Request, <<$&>>, [trim, global]),
-      lists:map(fun as_pair/1, _),
-      maps:from_list(_),
-      labelled_to:authorization(_)
-   ]}.
-
-as_pair(Pair) ->
-   erlang:list_to_tuple(
-      [uri:unescape(X) || X <- binary:split(Pair, <<$=>>)]
-   ).

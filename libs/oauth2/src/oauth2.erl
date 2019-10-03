@@ -112,7 +112,7 @@ signin(Redirect, #authorization{
    response_type = <<"code">>
 ,  access = {iri, _, _} = Access
 ,  secret = Secret
-,  scope  = Claims
+% ,  scope  = Claims
 ,  state  = State
 }) ->
    case
