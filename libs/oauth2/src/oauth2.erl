@@ -7,6 +7,7 @@
    auth_client_public/1
 ,  auth_client_confidential/1
 ,  signup/1
+,  signin/1
 ]).
 
 -type digest() :: binary().
@@ -91,6 +92,38 @@ signup(Redirect, #authorization{
       {error, Reason} ->
          {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
    end.
+
+%%
+%%
+-spec signin(binary() | #authorization{}) -> datum:either(uri:uri()).
+
+signin(Request)
+ when is_binary(Request) ->
+   signin(lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request)));
+
+signin(#authorization{client_id = {iri, _, _} = Client} = Request) ->
+   [either ||
+      permit:lookup(Client),
+      #{<<"redirect_uri">> := Redirect} <- permit:include(_, #{}),
+      signin(uri:new(Redirect), Request)
+   ].
+
+signin(Redirect, #authorization{
+   response_type = <<"code">>
+,  access = {iri, _, _} = Access
+,  secret = Secret
+,  scope  = Claims
+,  state  = State
+}) ->
+   case
+      permit:stateless(Access, Secret, 3600, #{}) %% TODO: configurable ttl
+   of
+      {ok, Code} ->
+         {ok, uri:q([{code, Code}, {state, State}], Redirect)};
+      {error, Reason} ->
+         {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
+   end.
+
 
 %%-----------------------------------------------------------------------------
 %%

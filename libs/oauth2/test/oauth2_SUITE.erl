@@ -25,6 +25,7 @@ init_per_suite(Config) ->
    {ok, _} = application:ensure_all_started(oauth2),
    {ok, _} = permit:create({iri, <<"org">>, <<"public">>}, <<"secret">>, client_spec_public()),
    {ok, _} = permit:create({iri, <<"org">>, <<"confidential">>}, <<"secret">>, client_spec_confidential()),
+   {ok, _} = permit:create({iri, <<"org">>, <<"user">>}, <<"secret">>, #{<<"a">> => <<"b">>}),
    Config.
 
 
@@ -115,3 +116,32 @@ signup_client_unknown(_) ->
    Request = <<"response_type=code&client_id=unknown@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
    {error, not_found} = oauth2:signup(Request).
 
+%%
+signin(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=user@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   Code = uri:q(<<"code">>, undefined, Uri),
+   {ok, #{
+      <<"iss">> := <<"https://example.com">>
+   ,  <<"aud">> := <<"suite">>
+   ,  <<"idp">> := <<"org">>
+   ,  <<"exp">> := _
+   ,  <<"tji">> := _
+   ,  <<"sub">> := {iri, <<"org">>, <<"user">>}
+   }} = permit:validate(Code),
+   {ok, #{}} = permit:equals(Code, #{}).
+
+%%
+signin_not_found(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=unknown@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   <<"not_found">> = uri:q(<<"error">>, undefined, Uri).
+
+%%
+signin_client_unknown(_) ->
+   Request = <<"response_type=code&client_id=unknown@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {error, not_found} = oauth2:signin(Request).
