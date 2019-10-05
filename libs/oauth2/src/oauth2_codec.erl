@@ -7,6 +7,7 @@
 -export([
    decode/1
 ,  authorization/0
+,  access_token/0
 ]).
 
 %%
@@ -35,6 +36,17 @@ authorization() ->
          client_id = iri()
       ,  scope     = scope()
       ,  access    = iri()
+      }
+   ).
+
+%%
+%%
+-spec access_token() -> lens:lens().
+
+access_token() ->
+   labelled:lens(
+      #access_token{
+         client_id = iri()
       }
    ).
 

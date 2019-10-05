@@ -31,3 +31,12 @@ authorization(_) ->
    ,  secret         = <<"secret">>
    ,  scope          = #{<<"read">> := <<"true">>, <<"write">> := <<"true">>}
    } = lens:get(oauth2_codec:authorization(), Generic).
+
+access_token(_) ->
+   Request = <<"grant_type=authorization_code&client_id=public@org&code=xxx">>,
+   Generic = oauth2_codec:decode(Request),
+   #access_token{
+      grant_type = <<"authorization_code">>
+   ,  client_id  = {iri, <<"org">>, <<"public">>}
+   ,  code       = <<"xxx">>
+   }.
