@@ -25,7 +25,7 @@ init_per_suite(Config) ->
    {ok, _} = application:ensure_all_started(oauth2),
    {ok, _} = permit:create({iri, <<"org">>, <<"public">>}, <<"secret">>, client_spec_public()),
    {ok, _} = permit:create({iri, <<"org">>, <<"confidential">>}, <<"secret">>, client_spec_confidential()),
-   {ok, _} = permit:create({iri, <<"org">>, <<"user">>}, <<"secret">>, #{<<"a">> => <<"b">>}),
+   {ok, _} = permit:create({iri, <<"org">>, <<"user">>}, <<"secret">>, #{<<"read">> => <<"true">>, <<"write">> => <<"true">>}),
    Config.
 
 
@@ -87,7 +87,7 @@ digest(Access, Secret) ->
    <<"Basic ", (base64:encode(<<Access/binary, $:, Secret/binary>>))/binary>>.
 
 %%
-signup(_) ->
+signup_authorization_code(_) ->
    Request = <<"response_type=code&client_id=public@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
    {ok, {uri, https, _} = Uri} = oauth2:signup(Request),
    <<"example.com">> = uri:host(Uri),
@@ -101,7 +101,23 @@ signup(_) ->
    ,  <<"tji">> := _
    ,  <<"sub">> := {iri, <<"org">>, <<"access">>}
    }} = permit:validate(Code),
-   {ok, #{}} = permit:equals(Code, #{}).
+   {ok, _} = permit:equals(Code, #{}).
+
+signup_implicit(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=implicit@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   Code = uri:q(<<"access_token">>, undefined, Uri),
+   {ok, #{
+      <<"iss">> := <<"https://example.com">>
+   ,  <<"aud">> := <<"suite">>
+   ,  <<"idp">> := <<"org">>
+   ,  <<"exp">> := _
+   ,  <<"tji">> := _
+   ,  <<"sub">> := {iri, <<"org">>, <<"implicit">>}
+   }} = permit:validate(Code),
+   {ok, _} = permit:equals(Code, #{<<"read">> => <<"true">>, <<"write">> => <<"true">>}).
 
 %%
 signup_conflict(_) ->
@@ -117,7 +133,7 @@ signup_client_unknown(_) ->
    {error, not_found} = oauth2:signup(Request).
 
 %%
-signin(_) ->
+signin_authorization_code(_) ->
    Request = <<"response_type=code&client_id=public@org&access=user@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
    {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
    <<"example.com">> = uri:host(Uri),
@@ -131,7 +147,24 @@ signin(_) ->
    ,  <<"tji">> := _
    ,  <<"sub">> := {iri, <<"org">>, <<"user">>}
    }} = permit:validate(Code),
-   {ok, #{}} = permit:equals(Code, #{}).
+   {ok, _} = permit:equals(Code, #{}).
+
+signin_implicit(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=user@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   Code = uri:q(<<"access_token">>, undefined, Uri),
+   {ok, #{
+      <<"iss">> := <<"https://example.com">>
+   ,  <<"aud">> := <<"suite">>
+   ,  <<"idp">> := <<"org">>
+   ,  <<"exp">> := _
+   ,  <<"tji">> := _
+   ,  <<"sub">> := {iri, <<"org">>, <<"user">>}
+   }} = permit:validate(Code),
+   {ok, _} = permit:equals(Code, #{<<"read">> => <<"true">>, <<"write">> => <<"true">>}).
+
 
 %%
 signin_not_found(_) ->
@@ -145,3 +178,19 @@ signin_not_found(_) ->
 signin_client_unknown(_) ->
    Request = <<"response_type=code&client_id=unknown@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
    {error, not_found} = oauth2:signin(Request).
+
+%%
+signin_authorization_code_escalation_attack(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=user@org&secret=secret&scope=read%3Dfalse%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   <<"forbidden">> = uri:q(<<"error">>, undefined, Uri).
+
+%%
+signin_implicit_escalation_attack(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=user@org&secret=secret&scope=read%3Dfalse%26write%3Dtrue">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   <<"forbidden">> = uri:q(<<"error">>, undefined, Uri).

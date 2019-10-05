@@ -91,6 +91,25 @@ signup(Redirect, #authorization{
          {ok, uri:q([{code, Code}, {state, State}], Redirect)};
       {error, Reason} ->
          {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
+   end;
+
+signup(Redirect, #authorization{
+   response_type = <<"token">>
+,  access = {iri, _, _} = Access
+,  secret = Secret
+,  scope  = Claims
+,  state  = State  
+}) ->
+   case
+      [either ||
+         permit:create(Access, Secret, Claims),
+         permit:revocable(_, 3600, Claims) %% TODO: configurable ttl
+      ]
+   of
+      {ok, Token} ->
+         {ok, uri:q([{access_token, Token}, {expires_in, 3600}, {state, State}], Redirect)};
+      {error, Reason} ->
+         {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
    end.
 
 %%
@@ -112,18 +131,36 @@ signin(Redirect, #authorization{
    response_type = <<"code">>
 ,  access = {iri, _, _} = Access
 ,  secret = Secret
-% ,  scope  = Claims
+,  scope  = Claims
 ,  state  = State
 }) ->
    case
-      permit:stateless(Access, Secret, 3600, #{}) %% TODO: configurable ttl
+      [either ||
+         permit:stateless(Access, Secret, 3600, Claims), 
+         permit:stateless(_, 3600, #{}) %% TODO: configurable ttl
+      ]
    of
       {ok, Code} ->
          {ok, uri:q([{code, Code}, {state, State}], Redirect)};
       {error, Reason} ->
          {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
-   end.
+   end;
 
+signin(Redirect, #authorization{
+   response_type = <<"token">>
+,  access = {iri, _, _} = Access
+,  secret = Secret
+,  scope  = Claims
+,  state  = State
+}) ->
+   case
+      permit:revocable(Access, Secret, 3600, Claims) %% TODO: configurable ttl
+   of
+      {ok, Token} ->
+         {ok, uri:q([{access_token, Token}, {expires_in, 3600}, {state, State}], Redirect)};
+      {error, Reason} ->
+         {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
+   end.
 
 %%-----------------------------------------------------------------------------
 %%
