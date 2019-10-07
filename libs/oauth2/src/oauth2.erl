@@ -85,7 +85,7 @@ signup(Redirect, #authorization{
    case
       [either ||
          permit:create(Access, Secret, Claims),
-         exchange_code(_)
+         exchange_code(_, Claims)
       ]
    of
       {ok, Code} ->
@@ -141,7 +141,7 @@ signin(Redirect, #authorization{
    case
       [either ||
          permit:stateless(Access, Secret, 3600, Claims),
-         exchange_code(_)
+         exchange_code(_, Claims)
       ]
    of
       {ok, Code} ->
@@ -169,9 +169,12 @@ signin(Redirect, #authorization{
 signin(_, _) ->
    {error, invalid_request}.
 
-exchange_code(Token) ->
+exchange_code(Token, Claims) ->
    %% TODO: configurable ttl
-   permit:stateless(Token, 3600, #{<<"aud">> => <<"oauth2">>}).
+   permit:stateless(Token, 3600, #{
+      <<"aud">> => <<"oauth2">>
+   ,  <<"app">> => base64url:encode(jsx:encode(Claims))
+   }).
 
 %%
 %%
@@ -186,13 +189,12 @@ token(#access_token{
 }) ->
    [either ||
       permit:include(Code, #{<<"aud">> => <<"oauth2">>}),
-      permit:equals(Code, #{}),
+      #{<<"app">> := Claims} <- permit:equals(Code, #{}),
       Access  <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl and claims from code 
       Refresh <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl
-      Claims  <- permit:claims(Access),
       cats:unit(
          maps:merge(
-            Claims,
+            jsx:decode(base64url:decode(Claims), [return_maps]),
             #{
                <<"token_type">>    => <<"bearer">>, 
                <<"expires_in">>    => 3600,

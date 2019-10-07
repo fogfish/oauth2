@@ -197,11 +197,21 @@ signin_implicit_escalation_attack(_) ->
 
 %%
 token_gt_authorization_code(_) ->
-   {ok, Code} = permit:stateless({iri, <<"org">>, <<"user">>}, <<"secret">>, 3600, #{<<"aud">> => <<"oauth2">>}),
+   Claims = #{<<"read">> => <<"true">>},
+   {ok, Code} = permit:stateless(
+      {iri, <<"org">>, <<"user">>},
+      <<"secret">>,
+      3600,
+      #{
+         <<"aud">> => <<"oauth2">>
+      ,  <<"app">> => base64url:encode(jsx:encode(Claims))
+      }
+   ),
    Request = <<"grant_type=authorization_code&client_id=public@org&code=", Code/binary>>,
    {ok, #{
       <<"token_type">>   := <<"bearer">>
    ,  <<"expires_in">>   := _
    ,  <<"access_token">> := _
    ,  <<"refresh_token">>:= _
+   ,  <<"read">>         := <<"true">>
    }} = oauth2:token(Request).
