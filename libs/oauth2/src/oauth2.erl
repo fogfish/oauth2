@@ -185,6 +185,7 @@ token(#access_token{
 ,  code       = Code
 }) ->
    [either ||
+      permit:include(Code, #{<<"aud">> => <<"oauth2">>}),
       permit:equals(Code, #{}),
       Access  <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl and claims from code 
       Refresh <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl
