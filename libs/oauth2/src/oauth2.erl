@@ -189,12 +189,12 @@ token(#access_token{
 }) ->
    [either ||
       permit:include(Code, #{<<"aud">> => <<"oauth2">>}),
-      #{<<"app">> := Claims} <- permit:equals(Code, #{}),
-      Access  <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl and claims from code 
-      Refresh <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl
+      #{<<"app">> := Encoded} <- permit:equals(Code, #{}),
+      Claims  <- cats:unit(jsx:decode(base64url:decode(Encoded), [return_maps])),
+      Access  <- permit:revocable(Code, 3600, Claims), %% TODO: configurable ttl 
+      Refresh <- exchange_code(Code, Claims),
       cats:unit(
-         maps:merge(
-            jsx:decode(base64url:decode(Claims), [return_maps]),
+         maps:merge(Claims,
             #{
                <<"token_type">>    => <<"bearer">>, 
                <<"expires_in">>    => 3600,
