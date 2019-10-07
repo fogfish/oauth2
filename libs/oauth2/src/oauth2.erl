@@ -8,6 +8,7 @@
 ,  auth_client_confidential/1
 ,  signup/1
 ,  signin/1
+,  token/1
 ]).
 
 -type digest() :: binary().
@@ -84,7 +85,7 @@ signup(Redirect, #authorization{
    case
       [either ||
          permit:create(Access, Secret, Claims),
-         permit:stateless(_, 3600, #{}) %% TODO: configurable ttl
+         exchange_code(_)
       ]
    of
       {ok, Code} ->
@@ -110,7 +111,10 @@ signup(Redirect, #authorization{
          {ok, uri:q([{access_token, Token}, {expires_in, 3600}, {state, State}], Redirect)};
       {error, Reason} ->
          {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
-   end.
+   end;
+
+signup(_, _) ->
+   {error, invalid_request}.
 
 %%
 %%
@@ -136,8 +140,8 @@ signin(Redirect, #authorization{
 }) ->
    case
       [either ||
-         permit:stateless(Access, Secret, 3600, Claims), 
-         permit:stateless(_, 3600, #{}) %% TODO: configurable ttl
+         permit:stateless(Access, Secret, 3600, Claims),
+         exchange_code(_)
       ]
    of
       {ok, Code} ->
@@ -160,7 +164,66 @@ signin(Redirect, #authorization{
          {ok, uri:q([{access_token, Token}, {expires_in, 3600}, {state, State}], Redirect)};
       {error, Reason} ->
          {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
-   end.
+   end;
+
+signin(_, _) ->
+   {error, invalid_request}.
+
+exchange_code(Token) ->
+   %% TODO: configurable ttl
+   permit:stateless(Token, 3600, #{<<"aud">> => <<"oauth2">>}).
+
+%%
+%%
+token(Request)
+ when is_binary(Request) ->
+   token(lens:get(oauth2_codec:access_token(), oauth2_codec:decode(Request)));
+
+token(#access_token{
+   grant_type = <<"authorization_code">>
+,  client_id  = {iri, _, _} = Client
+,  code       = Code
+}) ->
+   [either ||
+      permit:equals(Code, #{}),
+      Access  <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl and claims from code 
+      Refresh <- permit:revocable(Code, 3600, #{}), %% TODO: configurable ttl
+      Claims  <- permit:claims(Access),
+      cats:unit(
+         maps:merge(
+            Claims,
+            #{
+               <<"token_type">>    => <<"bearer">>, 
+               <<"expires_in">>    => 3600,
+               <<"access_token">>  => Access,
+               <<"refresh_token">> => Refresh
+            }
+         )
+      )
+   ];
+
+token(#access_token{
+   grant_type = <<"password">>
+}) ->
+   ok;
+
+token(#access_token{
+   grant_type = <<"password">>
+}) ->
+   ok;
+
+token(#access_token{
+   grant_type = <<"client_credentials">>
+}) ->
+   ok;
+
+token(#access_token{
+   grant_type = <<"refresh_token">>
+}) ->
+   ok;
+
+token(_) ->
+   {error, invalid_request}.
 
 %%-----------------------------------------------------------------------------
 %%

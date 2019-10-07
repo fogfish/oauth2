@@ -95,7 +95,7 @@ signup_authorization_code(_) ->
    Code = uri:q(<<"code">>, undefined, Uri),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
-   ,  <<"aud">> := <<"suite">>
+   ,  <<"aud">> := <<"oauth2">>
    ,  <<"idp">> := <<"org">>
    ,  <<"exp">> := _
    ,  <<"tji">> := _
@@ -141,7 +141,7 @@ signin_authorization_code(_) ->
    Code = uri:q(<<"code">>, undefined, Uri),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
-   ,  <<"aud">> := <<"suite">>
+   ,  <<"aud">> := <<"oauth2">>
    ,  <<"idp">> := <<"org">>
    ,  <<"exp">> := _
    ,  <<"tji">> := _
@@ -194,3 +194,14 @@ signin_implicit_escalation_attack(_) ->
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
    <<"forbidden">> = uri:q(<<"error">>, undefined, Uri).
+
+%%
+token_gt_authorization_code(_) ->
+   {ok, Code} = permit:stateless({iri, <<"org">>, <<"user">>}, <<"secret">>, 3600, #{}),
+   Request = <<"grant_type=authorization_code&client_id=public@org&code=", Code/binary>>,
+   {ok, #{
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"expires_in">>   := _
+   ,  <<"access_token">> := _
+   ,  <<"refresh_token">>:= _
+   }} = oauth2:token(Request).
