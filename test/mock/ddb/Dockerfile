@@ -6,10 +6,11 @@ FROM centos
 RUN set -e \
    && yum -y -q install \
       java \
-      python \
-      python-setuptools \
-   && easy_install -U pip \
-   && pip install --no-cache-dir -U awscli
+      python3 \
+   && curl -O https://bootstrap.pypa.io/get-pip.py \
+   && python3 get-pip.py \
+   && pip3 install awscli --upgrade \
+   && rm get-pip.py
 
 ##
 ## Install DynamoDB mock

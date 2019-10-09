@@ -18,7 +18,7 @@ export AWS_SECRET_ACCESS_KEY="aws-secret-key"
 
 ##
 ##
-DDB_PUBKEY=oauth2pubkey
+DDB_PUBKEY=pubkey
 aws dynamodb describe-table \
    --table-name ${DDB_PUBKEY} \
    --endpoint-url ${SERVICE} \
@@ -27,15 +27,13 @@ aws dynamodb describe-table \
 || aws dynamodb create-table \
    --table-name ${DDB_PUBKEY} \
    --attribute-definitions \
-      AttributeName=access,AttributeType=S \
-      AttributeName=master,AttributeType=S \
+      AttributeName=prefix,AttributeType=S \
+      AttributeName=suffix,AttributeType=S \
    --key-schema \
-      AttributeName=access,KeyType=HASH \
-   --global-secondary-indexes \
-      IndexName=master,KeySchema=["{AttributeName=master,KeyType=HASH}"],Projection="{ProjectionType=INCLUDE,NonKeyAttributes=[access]}",ProvisionedThroughput="{ReadCapacityUnits=5,WriteCapacityUnits=5}" \
+      AttributeName=prefix,KeyType=HASH \
+      AttributeName=suffix,KeyType=RANGE \
    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
    --endpoint-url ${SERVICE} \
    --region aws-region
 
 wait
-
