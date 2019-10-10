@@ -11,6 +11,7 @@
 -export([
    signup/2
 ,  signin/2
+,  exchange_code/2
 ]).
 
 %%
@@ -24,8 +25,11 @@ signup(Headers, Request)
 %%
 req_signup_auth(#{<<"Authorization">> := Digest}, Request) ->
    [either ||
-      #{<<"redirect_uri">> := Redirect} <- oauth2_client:confidential(Digest),
-      req_signup(uri:new(Redirect), Request)
+      #{
+         <<"client_id">>    := ClientId,
+         <<"redirect_uri">> := Redirect
+      } <- oauth2_client:confidential(Digest),
+      req_signup(uri:new(Redirect), Request#authorization{client_id = ClientId})
    ];
 
 req_signup_auth(_, #authorization{client_id = Client} = Request) ->
@@ -87,8 +91,11 @@ signin(Headers, Request)
 %%
 req_signin_auth(#{<<"Authorization">> := Digest}, Request) ->
    [either ||
-      #{<<"redirect_uri">> := Redirect} <- oauth2_client:confidential(Digest),
-      req_signin(uri:new(Redirect), Request)
+      #{
+         <<"client_id">>    := ClientId,
+         <<"redirect_uri">> := Redirect
+      } <- oauth2_client:confidential(Digest),
+      req_signin(uri:new(Redirect), Request#authorization{client_id = ClientId})
    ];
 
 req_signin_auth(_, #authorization{client_id = Client} = Request) ->

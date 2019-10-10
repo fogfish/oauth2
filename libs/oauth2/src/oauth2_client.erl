@@ -59,7 +59,8 @@ confidential(<<"Basic ", Digest/binary>>) ->
       Identity <- iri(Access),
       permit:stateless(Identity, Secret, 1, #{}),
       permit:lookup(Identity),
-      permit:include(_, #{<<"security">> => <<"confidential">>})
+      permit:include(_, #{<<"security">> => <<"confidential">>}),
+      cats:unit(_#{<<"client_id">> => Identity})
    ].
 
 %%

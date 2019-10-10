@@ -6,7 +6,7 @@
 -export([
    signup/2
 ,  signin/2
-,  token/1
+% ,  token/1
 ]).
 
 %%
@@ -76,64 +76,13 @@ signin(Headers, Request) ->
 % signup(_, _) ->
 %    {error, invalid_request}.
 
-exchange_code(Token, Claims) ->
-   %% TODO: configurable ttl
-   permit:stateless(Token, 3600, #{
-      <<"aud">> => <<"oauth2">>
-   ,  <<"app">> => base64url:encode(jsx:encode(Claims))
-   }).
+% exchange_code(Token, Claims) ->
+%    %% TODO: configurable ttl
+%    permit:stateless(Token, 3600, #{
+%       <<"aud">> => <<"oauth2">>
+%    ,  <<"app">> => base64url:encode(jsx:encode(Claims))
+%    }).
 
-%%
-%%
-token(Request)
- when is_binary(Request) ->
-   token(lens:get(oauth2_codec:access_token(), oauth2_codec:decode(Request)));
-
-token(#access_token{
-   grant_type = <<"authorization_code">>
-,  client_id  = {iri, _, _} = Client
-,  code       = Code
-}) ->
-   [either ||
-      permit:include(Code, #{<<"aud">> => <<"oauth2">>}),
-      #{<<"app">> := Encoded} <- permit:equals(Code, #{}),
-      Claims  <- cats:unit(jsx:decode(base64url:decode(Encoded), [return_maps])),
-      Access  <- permit:revocable(Code, 3600, Claims), %% TODO: configurable ttl 
-      Refresh <- exchange_code(Code, Claims),
-      cats:unit(
-         maps:merge(Claims,
-            #{
-               <<"token_type">>    => <<"bearer">>, 
-               <<"expires_in">>    => 3600,
-               <<"access_token">>  => Access,
-               <<"refresh_token">> => Refresh
-            }
-         )
-      )
-   ];
-
-token(#access_token{
-   grant_type = <<"password">>
-}) ->
-   ok;
-
-token(#access_token{
-   grant_type = <<"password">>
-}) ->
-   ok;
-
-token(#access_token{
-   grant_type = <<"client_credentials">>
-}) ->
-   ok;
-
-token(#access_token{
-   grant_type = <<"refresh_token">>
-}) ->
-   ok;
-
-token(_) ->
-   {error, invalid_request}.
 
 %%-----------------------------------------------------------------------------
 %%
@@ -143,10 +92,10 @@ token(_) ->
 
 %%
 %%
-iri(Access) ->
-   case binary:split(Access, <<$@>>) of
-      [Suffix, Prefix] ->
-         {ok, {iri, Prefix, Suffix}};
-      _ ->
-         {error, {badarg, Access}}
-   end.
+% iri(Access) ->
+%    case binary:split(Access, <<$@>>) of
+%       [Suffix, Prefix] ->
+%          {ok, {iri, Prefix, Suffix}};
+%       _ ->
+%          {error, {badarg, Access}}
+%    end.

@@ -1,6 +1,6 @@
 -module(oauth2_codec).
 
--include_lib("oauth2/include/oauth2.hrl").
+-include_lib("include/oauth2.hrl").
 -compile({parse_transform, category}).
 -compile({parse_transform, generic}).
 
@@ -50,20 +50,25 @@ access_token() ->
       }
    ).
 
-
+%%
 iri() ->
    fun(Fun, IRI) ->
       lens:fmap(fun(X) -> X end, Fun(iri(IRI)))
    end.
 
+iri(undefined) ->
+   undefined;
 iri(IRI) ->
    [Suffix, Prefix] = binary:split(IRI, <<$@>>),
    {iri, Prefix, Suffix}.
 
+%%
 scope() ->
-   fun
-   (Fun, undefined) ->
-      lens:fmap(fun(X) -> X end, Fun(#{}));
-   (Fun, Scope) ->
-      lens:fmap(fun(X) -> X end, Fun(decode(uri:unescape(Scope))))
+   fun(Fun, Scope) ->
+      lens:fmap(fun(X) -> X end, Fun(scope(Scope)))
    end.
+
+scope(undefined) ->
+   #{};
+scope(Scope) ->
+   decode(uri:unescape(Scope)).
