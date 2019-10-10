@@ -4,6 +4,7 @@
    client_default/0
 ,  client_public/0
 ,  client_confidential/0
+,  joe/0
 ]).
 
 %%
@@ -36,5 +37,16 @@ client_confidential() ->
    ,  #{
          <<"security">> => <<"confidential">>,
          <<"redirect_uri">> => <<"https://example.com/confidential">>
+      }
+   ].
+
+%%
+joe() ->
+   [
+      {iri, <<"org">>, <<"joe">>}
+   ,  <<"secret">>
+   ,  #{
+         <<"rd">> => <<"api">>,
+         <<"wr">> => <<"ddb">>
       }
    ].

@@ -21,41 +21,17 @@ all() ->
 init_per_suite(Config) ->
    os:putenv("PERMIT_ISSUER", "https://example.com"),
    os:putenv("PERMIT_AUDIENCE", "suite"),
-   os:putenv("PERMIT_CLAIMS", "read=true&write=true"),
+   os:putenv("PERMIT_CLAIMS", "rd=none&wr=none"),
    {ok, _} = application:ensure_all_started(oauth2),
-   {ok, _} = permit:create({iri, <<"org">>, <<"public">>}, <<"secret">>, client_spec_public()),
-   {ok, _} = permit:create({iri, <<"org">>, <<"confidential">>}, <<"secret">>, client_spec_confidential()),
-   {ok, _} = permit:create({iri, <<"org">>, <<"user">>}, <<"secret">>, #{<<"read">> => <<"true">>, <<"write">> => <<"true">>}),
+   erlang:apply(permit, create, oauth2_FIXTURES:client_public()),
+   erlang:apply(permit, create, oauth2_FIXTURES:client_confidential()),
+   erlang:apply(permit, create, oauth2_FIXTURES:joe()),
    Config.
 
 
 end_per_suite(_Config) ->
+   application:stop(permit),
    ok.
-
-%%%----------------------------------------------------------------------------   
-%%%
-%%% fixtures
-%%%
-%%%----------------------------------------------------------------------------   
-
-client_spec_public() ->
-   #{
-      <<"security">> => <<"public">>,
-      <<"redirect_uri">> => <<"https://example.com/public">>
-   }.
-
-client_spec_default() ->
-   #{
-      <<"security">> => <<"public">>,
-      <<"redirect_uri">> => <<"https://example.com/oauth2/account">>
-   }.
-
-client_spec_confidential() ->
-   #{
-      <<"security">> => <<"confidential">>,
-      <<"redirect_uri">> => <<"https://example.com/confidential">>
-   }.
-
 
 %%%----------------------------------------------------------------------------   
 %%%
@@ -64,34 +40,42 @@ client_spec_confidential() ->
 %%%----------------------------------------------------------------------------   
 
 %%
-auth_client_public(_) ->
-   Expect = client_spec_public(),
-   {ok, Expect} = oauth2:auth_client_public(<<"public@org">>),
-   {error, forbidden} = oauth2:auth_client_public(<<"confidential@org">>),
-   {error, not_found} = oauth2:auth_client_public(<<"undefined@org">>).
+digest() ->
+   #{<<"Authorization">> => <<"Basic ", (base64:encode(<<"confidential@org:secret">>))/binary>>}.
 
 %%
-auth_client_default(_) ->
-   Expect = client_spec_default(),
-   {ok, Expect} = oauth2:auth_client_public(<<"account@oauth2">>).
-
-%%
-auth_client_confidential(_) ->
-   Expect = client_spec_confidential(), 
-   {ok, Expect} = oauth2:auth_client_confidential(digest(<<"confidential@org">>, <<"secret">>)),
-   {error,unauthorized} = oauth2:auth_client_confidential(digest(<<"confidential@org">>, <<"undefined">>)),
-   {error, forbidden} = oauth2:auth_client_confidential(digest(<<"public@org">>, <<"secret">>)),
-   {error, not_found} = oauth2:auth_client_confidential(digest(<<"undefined@org">>, <<"secret">>)).
-
-digest(Access, Secret) ->
-   <<"Basic ", (base64:encode(<<Access/binary, $:, Secret/binary>>))/binary>>.
-
-%%
-signup_authorization_code(_) ->
-   Request = <<"response_type=code&client_id=public@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signup(Request),
+signup_code_public(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=joe.c.p@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
+   authorization_code_check({iri, <<"org">>, <<"joe.c.p">>}, Uri).
+
+%%
+signin_code_public(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   authorization_code_check({iri, <<"org">>, <<"joe">>}, Uri).
+
+%%
+signup_code_confidential(_) ->
+   Request = <<"response_type=code&client_id=confidential@org&access=joe.c.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(digest(), Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/confidential">> = uri:path(Uri),
+   authorization_code_check({iri, <<"org">>, <<"joe.c.c">>}, Uri).
+
+%%
+signin_code_confidential(_) ->
+   Request = <<"response_type=code&client_id=confidential@org&access=joe.c.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/confidential">> = uri:path(Uri),
+   authorization_code_check({iri, <<"org">>, <<"joe.c.c">>}, Uri).
+
+authorization_code_check(Access, Uri) ->
    Code = uri:q(<<"code">>, undefined, Uri),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
@@ -99,15 +83,43 @@ signup_authorization_code(_) ->
    ,  <<"idp">> := <<"org">>
    ,  <<"exp">> := _
    ,  <<"tji">> := _
-   ,  <<"sub">> := {iri, <<"org">>, <<"access">>}
+   ,  <<"sub">> := Access
    }} = permit:validate(Code),
    {ok, _} = permit:equals(Code, #{}).
 
-signup_implicit(_) ->
-   Request = <<"response_type=token&client_id=public@org&access=implicit@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signup(Request),
+%%
+signup_implicit_public(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=joe.i.p@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
+   access_token_check({iri, <<"org">>, <<"joe.i.p">>}, Uri).
+
+%%
+signin_implicit_public(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   access_token_check({iri, <<"org">>, <<"joe">>}, Uri).
+
+%%
+signup_implicit_confidential(_) ->
+   Request = <<"response_type=token&client_id=confidential@org&access=joe.i.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(digest(), Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/confidential">> = uri:path(Uri),
+   access_token_check({iri, <<"org">>, <<"joe.i.c">>}, Uri).
+
+%%
+signin_implicit_confidential(_) ->
+   Request = <<"response_type=token&client_id=confidential@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/confidential">> = uri:path(Uri),
+   access_token_check({iri, <<"org">>, <<"joe">>}, Uri).
+
+access_token_check(Access, Uri) ->
    Code = uri:q(<<"access_token">>, undefined, Uri),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
@@ -115,103 +127,101 @@ signup_implicit(_) ->
    ,  <<"idp">> := <<"org">>
    ,  <<"exp">> := _
    ,  <<"tji">> := _
-   ,  <<"sub">> := {iri, <<"org">>, <<"implicit">>}
+   ,  <<"sub">> := Access
    }} = permit:validate(Code),
-   {ok, _} = permit:equals(Code, #{<<"read">> => <<"true">>, <<"write">> => <<"true">>}).
+   {ok, _} = permit:equals(Code, #{<<"rd">> => <<"api">>, <<"wr">> => <<"ddb">>}).
 
 %%
-signup_conflict(_) ->
-   Request = <<"response_type=code&client_id=public@org&access=public@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signup(Request),
+signup_conflict_code(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
    <<"conflict">> = uri:q(<<"error">>, undefined, Uri).
 
 %%
-signup_client_unknown(_) ->
-   Request = <<"response_type=code&client_id=unknown@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {error, not_found} = oauth2:signup(Request).
-
-%%
-signin_authorization_code(_) ->
-   Request = <<"response_type=code&client_id=public@org&access=user@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+signup_conflict_implicit(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signup(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
-   Code = uri:q(<<"code">>, undefined, Uri),
-   {ok, #{
-      <<"iss">> := <<"https://example.com">>
-   ,  <<"aud">> := <<"oauth2">>
-   ,  <<"idp">> := <<"org">>
-   ,  <<"exp">> := _
-   ,  <<"tji">> := _
-   ,  <<"sub">> := {iri, <<"org">>, <<"user">>}
-   }} = permit:validate(Code),
-   {ok, _} = permit:equals(Code, #{}).
-
-signin_implicit(_) ->
-   Request = <<"response_type=token&client_id=public@org&access=user@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
-   <<"example.com">> = uri:host(Uri),
-   <<"/public">> = uri:path(Uri),
-   Code = uri:q(<<"access_token">>, undefined, Uri),
-   {ok, #{
-      <<"iss">> := <<"https://example.com">>
-   ,  <<"aud">> := <<"suite">>
-   ,  <<"idp">> := <<"org">>
-   ,  <<"exp">> := _
-   ,  <<"tji">> := _
-   ,  <<"sub">> := {iri, <<"org">>, <<"user">>}
-   }} = permit:validate(Code),
-   {ok, _} = permit:equals(Code, #{<<"read">> => <<"true">>, <<"write">> => <<"true">>}).
-
+   <<"conflict">> = uri:q(<<"error">>, undefined, Uri).
 
 %%
-signin_not_found(_) ->
-   Request = <<"response_type=code&client_id=public@org&access=unknown@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+signup_unknown_public(_) ->
+   Request = <<"response_type=code&client_id=unknown@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {error, not_found} = oauth2:signup(#{}, Request).
+
+%%
+signin_unknown_public(_) ->
+   Request = <<"response_type=code&client_id=unknown@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {error, not_found} = oauth2:signin(#{}, Request).
+
+%%
+signup_unknown_confidential(_) ->
+   Request = <<"response_type=code&client_id=unknown@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {error, not_found} = oauth2:signup(
+      #{<<"Authorization">> => <<"Basic ", (base64:encode(<<"unknown@org:secret">>))/binary>>},
+      Request
+   ).
+
+%%
+signin_unknown_confidential(_) ->
+   Request = <<"response_type=code&client_id=unknown@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {error, not_found} = oauth2:signin(
+      #{<<"Authorization">> => <<"Basic ", (base64:encode(<<"unknown@org:secret">>))/binary>>},
+      Request
+   ).
+
+%%
+signin_not_found_code(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=unknown@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
    <<"not_found">> = uri:q(<<"error">>, undefined, Uri).
 
 %%
-signin_client_unknown(_) ->
-   Request = <<"response_type=code&client_id=unknown@org&access=access@org&secret=secret&scope=read%3Dtrue%26write%3Dtrue">>,
-   {error, not_found} = oauth2:signin(Request).
+signin_not_found_implicit(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=unknown@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
+   <<"example.com">> = uri:host(Uri),
+   <<"/public">> = uri:path(Uri),
+   <<"not_found">> = uri:q(<<"error">>, undefined, Uri).
 
 %%
-signin_authorization_code_escalation_attack(_) ->
-   Request = <<"response_type=code&client_id=public@org&access=user@org&secret=secret&scope=read%3Dfalse%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+signin_escalation_attack_code(_) ->
+   Request = <<"response_type=code&client_id=public@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dall">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
    <<"forbidden">> = uri:q(<<"error">>, undefined, Uri).
 
 %%
-signin_implicit_escalation_attack(_) ->
-   Request = <<"response_type=token&client_id=public@org&access=user@org&secret=secret&scope=read%3Dfalse%26write%3Dtrue">>,
-   {ok, {uri, https, _} = Uri} = oauth2:signin(Request),
+signin_escalation_attack_implicit(_) ->
+   Request = <<"response_type=token&client_id=public@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dall">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
    <<"forbidden">> = uri:q(<<"error">>, undefined, Uri).
 
-%%
-token_gt_authorization_code(_) ->
-   Claims = #{<<"read">> => <<"true">>},
-   {ok, Code} = permit:stateless(
-      {iri, <<"org">>, <<"user">>},
-      <<"secret">>,
-      3600,
-      #{
-         <<"aud">> => <<"oauth2">>
-      ,  <<"app">> => base64url:encode(jsx:encode(Claims))
-      }
-   ),
-   Request = <<"grant_type=authorization_code&client_id=public@org&code=", Code/binary>>,
-   {ok, #{
-      <<"token_type">>   := <<"bearer">>
-   ,  <<"expires_in">>   := _
-   ,  <<"access_token">> := _
-   ,  <<"refresh_token">>:= _
-   ,  <<"read">>         := <<"true">>
-   }} = oauth2:token(Request).
+% %%
+% token_gt_authorization_code(_) ->
+%    Claims = #{<<"read">> => <<"true">>},
+%    {ok, Code} = permit:stateless(
+%       {iri, <<"org">>, <<"user">>},
+%       <<"secret">>,
+%       3600,
+%       #{
+%          <<"aud">> => <<"oauth2">>
+%       ,  <<"app">> => base64url:encode(jsx:encode(Claims))
+%       }
+%    ),
+%    Request = <<"grant_type=authorization_code&client_id=public@org&code=", Code/binary>>,
+%    {ok, #{
+%       <<"token_type">>   := <<"bearer">>
+%    ,  <<"expires_in">>   := _
+%    ,  <<"access_token">> := _
+%    ,  <<"refresh_token">>:= _
+%    ,  <<"read">>         := <<"true">>
+%    }} = oauth2:token(Request).
