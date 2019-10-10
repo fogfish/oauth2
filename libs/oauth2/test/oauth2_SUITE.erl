@@ -61,7 +61,7 @@ signin_code_public(_) ->
 
 %%
 signup_code_confidential(_) ->
-   Request = <<"response_type=code&client_id=confidential@org&access=joe.c.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   Request = <<"response_type=code&access=joe.c.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
    {ok, {uri, https, _} = Uri} = oauth2:signup(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
@@ -69,7 +69,7 @@ signup_code_confidential(_) ->
 
 %%
 signin_code_confidential(_) ->
-   Request = <<"response_type=code&client_id=confidential@org&access=joe.c.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   Request = <<"response_type=code&access=joe.c.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
    {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
@@ -105,7 +105,7 @@ signin_implicit_public(_) ->
 
 %%
 signup_implicit_confidential(_) ->
-   Request = <<"response_type=token&client_id=confidential@org&access=joe.i.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   Request = <<"response_type=token&access=joe.i.c@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
    {ok, {uri, https, _} = Uri} = oauth2:signup(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
@@ -113,7 +113,7 @@ signup_implicit_confidential(_) ->
 
 %%
 signin_implicit_confidential(_) ->
-   Request = <<"response_type=token&client_id=confidential@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   Request = <<"response_type=token&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
    {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
@@ -159,7 +159,7 @@ signin_unknown_public(_) ->
 
 %%
 signup_unknown_confidential(_) ->
-   Request = <<"response_type=code&client_id=unknown@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   Request = <<"response_type=code&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
    {error, not_found} = oauth2:signup(
       #{<<"Authorization">> => <<"Basic ", (base64:encode(<<"unknown@org:secret">>))/binary>>},
       Request
@@ -167,7 +167,7 @@ signup_unknown_confidential(_) ->
 
 %%
 signin_unknown_confidential(_) ->
-   Request = <<"response_type=code&client_id=unknown@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   Request = <<"response_type=code&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
    {error, not_found} = oauth2:signin(
       #{<<"Authorization">> => <<"Basic ", (base64:encode(<<"unknown@org:secret">>))/binary>>},
       Request
@@ -205,23 +205,34 @@ signin_escalation_attack_implicit(_) ->
    <<"/public">> = uri:path(Uri),
    <<"forbidden">> = uri:q(<<"error">>, undefined, Uri).
 
-% %%
-% token_gt_authorization_code(_) ->
-%    Claims = #{<<"read">> => <<"true">>},
-%    {ok, Code} = permit:stateless(
-%       {iri, <<"org">>, <<"user">>},
-%       <<"secret">>,
-%       3600,
-%       #{
-%          <<"aud">> => <<"oauth2">>
-%       ,  <<"app">> => base64url:encode(jsx:encode(Claims))
-%       }
-%    ),
-%    Request = <<"grant_type=authorization_code&client_id=public@org&code=", Code/binary>>,
-%    {ok, #{
-%       <<"token_type">>   := <<"bearer">>
-%    ,  <<"expires_in">>   := _
-%    ,  <<"access_token">> := _
-%    ,  <<"refresh_token">>:= _
-%    ,  <<"read">>         := <<"true">>
-%    }} = oauth2:token(Request).
+%%
+%%
+access_token_code_public(_) ->
+   RequestA = <<"response_type=code&client_id=public@org&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, RequestA),
+   Code = uri:q(<<"code">>, undefined, Uri),
+   RequestB = <<"grant_type=authorization_code&client_id=public@org&code=", Code/binary>>,
+   {ok, #{
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"expires_in">>   := _
+   ,  <<"access_token">> := _
+   ,  <<"refresh_token">>:= _
+   ,  <<"rd">>           := <<"api">>
+   ,  <<"wr">>           := <<"ddb">>
+   }} = oauth2:token(#{}, RequestB).
+
+%%
+%%
+access_token_code_confidential(_) ->
+   RequestA = <<"response_type=code&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), RequestA),
+   Code = uri:q(<<"code">>, undefined, Uri),
+   RequestB = <<"grant_type=authorization_code&client_id=public@org&code=", Code/binary>>,
+   {ok, #{
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"expires_in">>   := _
+   ,  <<"access_token">> := _
+   ,  <<"refresh_token">>:= _
+   ,  <<"rd">>           := <<"api">>
+   ,  <<"wr">>           := <<"ddb">>
+   }} = oauth2:token(#{}, RequestB).

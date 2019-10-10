@@ -52,7 +52,8 @@ auth_client_default(_) ->
 
 %%
 auth_client_confidential(_) ->
-   [_, _, Expect] = oauth2_FIXTURES:client_confidential(),
+   [Id, _, Spec] = oauth2_FIXTURES:client_confidential(),
+   Expect = Spec#{<<"client_id">> => Id},
    {ok, Expect} = oauth2_client:confidential(digest(<<"confidential@org">>, <<"secret">>)),
    {error,unauthorized} = oauth2_client:confidential(digest(<<"confidential@org">>, <<"undefined">>)),
    {error, forbidden} = oauth2_client:confidential(digest(<<"public@org">>, <<"secret">>)),
