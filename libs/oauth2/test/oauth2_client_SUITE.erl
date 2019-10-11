@@ -48,6 +48,7 @@ auth_client_public(_) ->
 %%
 auth_client_default(_) ->
    [_, _, Expect] = oauth2_FIXTURES:client_default(),
+   {ok, Expect} = oauth2_client:public(<<"account@oauth2">>),
    {ok, Expect} = oauth2_client:public(<<"account@oauth2">>).
 
 %%
