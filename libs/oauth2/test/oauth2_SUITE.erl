@@ -249,3 +249,16 @@ access_token_password_public(_) ->
    ,  <<"wr">>           := <<"ddb">>
    } = AccessToken } = oauth2:token(#{}, Request),
    false = maps:is_key(<<"refresh_token">>, AccessToken).
+
+%%
+%%
+access_token_password_confidential(_) ->
+   Request = <<"grant_type=password&username=joe@org&password=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, #{
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"expires_in">>   := _
+   ,  <<"access_token">> := _
+   ,  <<"refresh_token">>:= _
+   ,  <<"rd">>           := <<"api">>
+   ,  <<"wr">>           := <<"ddb">>
+   }} = oauth2:token(digest(), Request).
