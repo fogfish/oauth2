@@ -29,4 +29,8 @@
 %%       redirect_uri is defined by client reg process 
 %% redirect_uri  = undefined :: binary()
 ,  code       = undefined    :: binary()
+
+,  username   = undefined    :: {iri, binary(), binary()}
+,  password   = undefined    :: binary()
+,  scope      = undefined :: map()
 }).

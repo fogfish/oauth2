@@ -29,7 +29,8 @@ req_token_auth(#{<<"Authorization">> := Digest}, Request) ->
 req_token_auth(_, #access_token{client_id = Client} = Request) ->
    [either ||
       oauth2_client:public(Client),
-      req_token(Request)
+      req_token(Request),
+      cats:unit(maps:remove(<<"refresh_token">>, _))
    ].
 
 req_token(#access_token{
@@ -52,12 +53,28 @@ req_token(#access_token{
             }
          )
       )
-   ].
+   ];
 
-% token(#access_token{
-%    grant_type = <<"password">>
-% }) ->
-%    ok;
+req_token(#access_token{
+   grant_type = <<"password">>
+,  username   = {iri, _, _} = Access
+,  password   = Secret
+,  scope      = Claims
+}) ->
+   [either ||
+      Token  <- permit:revocable(Access, Secret, 3600, Claims), %% TODO: configurable ttl 
+      Refresh <- oauth2_authorize:exchange_code(Token, Claims),
+      cats:unit(
+         maps:merge(Claims,
+            #{
+               <<"token_type">>    => <<"bearer">>, 
+               <<"expires_in">>    => 3600,
+               <<"access_token">>  => Token,
+               <<"refresh_token">> => Refresh
+            }
+         )
+      )
+   ].
 
 % token(#access_token{
 %    grant_type = <<"password">>

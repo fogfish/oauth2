@@ -47,6 +47,8 @@ access_token() ->
    labelled:lens(
       #access_token{
          client_id = iri()
+      ,  username  = iri()
+      ,  scope     = scope()
       }
    ).
 
