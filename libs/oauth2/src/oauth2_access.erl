@@ -21,9 +21,9 @@ token(Headers, Request)
 req_token_auth(#{<<"Authorization">> := Digest}, Request) ->
    [either ||
       #{
-         <<"client_id">> := ClientId
+         <<"client_jwt">> := Identity
       } <- oauth2_client:confidential(Digest),
-      req_token(Request#access_token{client_id = ClientId})
+      req_token(Request#access_token{client_id = Identity})
    ];
 
 req_token_auth(_, #access_token{client_id = Client} = Request) ->
@@ -74,17 +74,31 @@ req_token(#access_token{
             }
          )
       )
-   ].
+   ];
 
-% token(#access_token{
-%    grant_type = <<"password">>
-% }) ->
-%    ok;
+req_token(#access_token{
+   grant_type = <<"client_credentials">>
+,  client_id  = Identity
+,  scope      = Claims
+}) when is_binary(Identity) ->
+   [either ||
+      permit:revocable(Identity, 3600, Claims), %% TODO: configurable ttl
+      cats:unit(
+         maps:merge(Claims,
+            #{
+               <<"token_type">>    => <<"bearer">>, 
+               <<"expires_in">>    => 3600,
+               <<"access_token">>  => _
+            }
+         )
+      )
+   ];
 
-% token(#access_token{
-%    grant_type = <<"client_credentials">>
-% }) ->
-%    ok;
+req_token(#access_token{
+   grant_type = <<"client_credentials">>
+}) ->
+   {error, forbidden}.
+
 
 % token(#access_token{
 %    grant_type = <<"refresh_token">>

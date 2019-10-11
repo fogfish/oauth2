@@ -4,7 +4,8 @@
 -module(oauth2_client).
 
 -compile({parse_transform, category}).
--include_lib("oauth2/include/oauth2.hrl").
+-include_lib("include/oauth2.hrl").
+-include_lib("permit/src/permit.hrl").
 
 -export([
    public/1
@@ -57,10 +58,13 @@ confidential(<<"Basic ", Digest/binary>>) ->
    [either ||
       [Access, Secret] <- cats:unit(binary:split(base64:decode(Digest), <<$:>>)),
       Identity <- iri(Access),
-      permit:stateless(Identity, Secret, 1, #{}),
-      permit:lookup(Identity),
-      permit:include(_, #{<<"security">> => <<"confidential">>}),
-      cats:unit(_#{<<"client_id">> => Identity})
+      #pubkey{claims = Claims} = Spec <- permit:lookup(Identity),
+      Stateless <- permit:stateless(Identity, Secret, 10, Claims),
+      permit:include(Spec, #{<<"security">> => <<"confidential">>}),
+      cats:unit(_#{
+         <<"client_id">>  => Identity
+      ,  <<"client_jwt">> => Stateless
+      })
    ].
 
 %%

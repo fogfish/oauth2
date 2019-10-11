@@ -262,3 +262,20 @@ access_token_password_confidential(_) ->
    ,  <<"rd">>           := <<"api">>
    ,  <<"wr">>           := <<"ddb">>
    }} = oauth2:token(digest(), Request).
+
+%%
+%%
+access_token_public(_) ->
+   Request = <<"grant_type=client_credentials&client_id=public@org">>,
+   {error, forbidden} = oauth2:token(#{}, Request).
+
+%%
+%%
+access_token_confidential(_) ->
+   Request = <<"grant_type=client_credentials">>,
+   {ok, #{
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"expires_in">>   := _
+   ,  <<"access_token">> := _
+   } = AccessToken} = oauth2:token(digest(), Request),
+   false = maps:is_key(<<"refresh_token">>, AccessToken).
