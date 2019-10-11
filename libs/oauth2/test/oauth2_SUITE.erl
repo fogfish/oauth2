@@ -267,7 +267,7 @@ access_token_password_confidential(_) ->
 %%
 access_token_public(_) ->
    Request = <<"grant_type=client_credentials&client_id=public@org">>,
-   {error, forbidden} = oauth2:token(#{}, Request).
+   {error, invalid_request} = oauth2:token(#{}, Request).
 
 %%
 %%
@@ -279,3 +279,30 @@ access_token_confidential(_) ->
    ,  <<"access_token">> := _
    } = AccessToken} = oauth2:token(digest(), Request),
    false = maps:is_key(<<"refresh_token">>, AccessToken).
+
+%%
+%%
+refresh_token_public(_) ->
+   Request = <<"grant_type=refresh_token&refresh_token=xxx&client_id=public@org">>,
+   {error, invalid_request} = oauth2:token(#{}, Request).
+
+%%
+%%
+refresh_token_confidential(_) ->
+   RequestA = <<"response_type=code&access=joe@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
+   {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), RequestA),
+   Code = uri:q(<<"code">>, undefined, Uri),
+   RequestB = <<"grant_type=authorization_code&code=", Code/binary>>,
+   {ok, #{
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"refresh_token">>:= Token
+   }} = oauth2:token(digest(), RequestB),
+   RequestC = <<"grant_type=refresh_token&refresh_token=", Token/binary>>,
+   {ok, #{
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"expires_in">>   := _
+   ,  <<"access_token">> := _
+   ,  <<"refresh_token">>:= _
+   ,  <<"rd">>           := <<"api">>
+   ,  <<"wr">>           := <<"ddb">>
+   }} = oauth2:token(digest(), RequestC).

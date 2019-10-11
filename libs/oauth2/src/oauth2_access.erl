@@ -95,15 +95,27 @@ req_token(#access_token{
    ];
 
 req_token(#access_token{
-   grant_type = <<"client_credentials">>
-}) ->
-   {error, forbidden}.
+   grant_type    = <<"refresh_token">>
+,  client_id  = Identity
+,  refresh_token = Code
+}) when is_binary(Identity) ->
+   [either ||
+      permit:include(Code, #{<<"aud">> => <<"oauth2">>}),
+      #{<<"app">> := Encoded} <- permit:equals(Code, #{}),
+      Claims  <- cats:unit(jsx:decode(base64url:decode(Encoded), [return_maps])),
+      Access  <- permit:revocable(Code, 3600, Claims), %% TODO: configurable ttl 
+      Refresh <- oauth2_authorize:exchange_code(Code, Claims),
+      cats:unit(
+         maps:merge(Claims,
+            #{
+               <<"token_type">>    => <<"bearer">>, 
+               <<"expires_in">>    => 3600,
+               <<"access_token">>  => Access,
+               <<"refresh_token">> => Refresh
+            }
+         )
+      )
+   ];
 
-
-% token(#access_token{
-%    grant_type = <<"refresh_token">>
-% }) ->
-%    ok;
-
-% token(_) ->
-%    {error, invalid_request}.
+req_token(_) ->
+   {error, invalid_request}.

@@ -22,6 +22,8 @@
 %% Access Token Request
 %%
 %% https://tools.ietf.org/html/rfc6749#section-4.1.3
+%% https://tools.ietf.org/html/rfc6749#section-4.3.2
+%% https://tools.ietf.org/html/rfc6749#section-6
 -record(access_token, {
    grant_type = undefined    :: binary()
 ,  client_id  = undefined    :: {iri, binary(), binary()}
@@ -30,7 +32,10 @@
 %% redirect_uri  = undefined :: binary()
 ,  code       = undefined    :: binary()
 
+   %% 
 ,  username   = undefined    :: {iri, binary(), binary()}
 ,  password   = undefined    :: binary()
-,  scope      = undefined :: map()
+,  scope      = undefined    :: map()
+
+,  refresh_token = undefined :: binary()
 }).
