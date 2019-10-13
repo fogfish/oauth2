@@ -20,9 +20,7 @@ init_per_suite(Config) ->
    os:putenv("PERMIT_ISSUER", "https://example.com"),
    os:putenv("PERMIT_AUDIENCE", "suite"),
    os:putenv("PERMIT_CLAIMS", "read=true&write=true"),
-   {ok, _} = application:ensure_all_started(permit),
-   {ok, _} = permit:create({iri, <<"org">>, <<"confidential">>}, <<"secret">>),
-   {ok, _} = permit:create({iri, <<"org">>, <<"access">>}, <<"secret">>),
+   {ok, _} = application:ensure_all_started(oauth2),
    Config.
 
 
@@ -45,14 +43,14 @@ signup_public_client(_) ->
       ,  <<"headers">> => #{
             <<"Content-Type">> => <<"application/x-www-form-urlencoded">>
          }
-      ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=signup-public@org&secret=secret">>
+      ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=joe@org&secret=secret">>
       }
    ),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
-   ,  <<"aud">> := <<"suite">>
+   ,  <<"aud">> := <<"oauth2">>
    ,  <<"idp">> := <<"org">>
-   ,  <<"sub">> := {iri, <<"org">>, <<"signup-public">>}
+   ,  <<"sub">> := {iri, <<"org">>, <<"joe">>}
    ,  <<"exp">> := _
    ,  <<"tji">> := _
    }} = permit:validate( uri:q(<<"code">>, undefined, uri:new(Location)) ).
@@ -73,14 +71,14 @@ signin_public_client(_) ->
       ,  <<"headers">> => #{
             <<"Content-Type">> => <<"application/x-www-form-urlencoded">>
          }
-      ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=access@org&secret=secret">>
+      ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=joe@org&secret=secret">>
       }
    ),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
-   ,  <<"aud">> := <<"suite">>
+   ,  <<"aud">> := <<"oauth2">>
    ,  <<"idp">> := <<"org">>
-   ,  <<"sub">> := {iri, <<"org">>, <<"access">>}
+   ,  <<"sub">> := {iri, <<"org">>, <<"joe">>}
    ,  <<"exp">> := _
    ,  <<"tji">> := _
    }} = permit:validate( uri:q(<<"code">>, undefined, uri:new(Location)) ).

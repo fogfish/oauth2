@@ -32,54 +32,20 @@ api(_) ->
 dispatch(#{
    <<"path">> := <<"/signin">>,
    <<"headers">> := #{
-      <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>,
-      <<"Authorization">> := Digest
-   },
-   <<"body">> := Request
-}) ->
-   [either ||
-      oauth2:auth_client_confidential(Digest),
-      oauth2:signin(Request)
-   ];
-
-dispatch(#{
-   <<"path">> := <<"/signin">>,
-   <<"headers">> := #{
       <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>
-   },
+   } = Headers,
    <<"body">> := Request
 }) ->
-   [either ||
-      #{<<"client_id">> := Client} =< oauth2_codec:decode(Request),
-      oauth2:auth_client_public(Client),
-      oauth2:signin(Request)
-   ];
-
-dispatch(#{
-   <<"path">> := <<"/signup">>,
-   <<"headers">> := #{
-      <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>,
-      <<"Authorization">> := Digest
-   },
-   <<"body">> := Request
-}) ->
-   [either ||
-      oauth2:auth_client_confidential(Digest),
-      oauth2:signup(Request)
-   ];
+   oauth2:signin(Headers, Request);
 
 dispatch(#{
    <<"path">> := <<"/signup">>,
    <<"headers">> := #{
       <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>
-   },
+   } = Headers,
    <<"body">> := Request
 }) ->
-   [either ||
-      #{<<"client_id">> := Client} =< oauth2_codec:decode(Request),
-      oauth2:auth_client_public(Client),
-      oauth2:signup(Request)
-   ];
+   oauth2:signup(Headers, Request);
 
 dispatch(_) ->
    {error, not_supported}.

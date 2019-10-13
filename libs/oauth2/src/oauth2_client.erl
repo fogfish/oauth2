@@ -20,19 +20,24 @@
 %%
 -spec public(digest()) -> datum:either(permit:claims()).
 
-public(<<"account@oauth2">>) ->
+public(Access)
+ when is_binary(Access) ->
+   [either || iri(Access), public(_)];
+
+public({iri, <<"oauth2">>, <<"account">>} = Access) ->
    %% Note: account@oauth2 is built-in expereince
    %%       the not_found fallback simplifies management of clients registrations
-   case public({iri, <<"oauth2">>, <<"account">>}) of
+   case 
+      [either ||
+         permit:lookup(Access),
+         permit:include(_, #{<<"security">> => <<"public">>})
+      ]
+   of
       {error, not_found} ->
          public_default();
       Result ->
          Result
    end;
-
-public(Access)
- when is_binary(Access) ->
-   [either || iri(Access), public(_)];
 
 public({iri, _, _} = Access) ->
    [either ||
