@@ -1,5 +1,6 @@
 _build/
 cdk.out/
+cdk.context.json
 log/
 node_modules/
 rebar3

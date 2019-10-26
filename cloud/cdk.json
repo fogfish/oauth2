@@ -1,4 +1,4 @@
 {
-  "app": "ts-node app",
+  "app": "ts-node src/app",
   "requireApproval": "never"
 }
