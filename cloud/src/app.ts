@@ -9,7 +9,7 @@ const vsn = process.env.VSN || 'local'
 //
 const api = staticweb.Gateway({
   domain: 'fog.fish',
-  subdomain: 'auth',
+  subdomain: `${vsn}.auth`,
   siteRoot: 'oauth2/authorize',
 })
 
