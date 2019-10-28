@@ -10,15 +10,15 @@ const vsn = process.env.VSN || 'local'
 const api = staticweb.Gateway({
   domain: 'fog.fish',
   subdomain: `${vsn}.auth`,
-  siteRoot: 'oauth2/authorize',
+  siteRoot: 'api/oauth2/authorize',
 })
 
 const auth = Auth()
 
 pure.use({ api, auth })
-  .effect(x => x.api.root.addResource('signin').addMethod('POST', x.auth))
-  .effect(x => x.api.root.addResource('signup').addMethod('POST', x.auth))
-
+  .effect(x => x.api.root.addResource('oauth2').addResource('signin').addMethod('POST', x.auth))
+  .effect(x => x.api.root.addResource('oauth2').addResource('signup').addMethod('POST', x.auth))
+  
 //
 //
 const app = new cdk.App()
