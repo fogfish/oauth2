@@ -1,19 +1,19 @@
 {
   "name": "oauth2-default-ux",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
-    "dress-code": "^2.4.0",
+    "@blueprintjs/core": "^3.19.1",
     "font-awesome": "^4.7.0",
-    "query-string": "^6.2.0",
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3",
-    "react-dress-code": "^0.5.1",
-    "react-router-dom": "^4.3.1",
-    "react-scripts": "2.1.1",
-    "recompose": "^0.30.0"
+    "query-string": "^6.8.3",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "react-router-dom": "^5.1.2",
+    "reflexbox": "^4.0.6"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "react-scripts": "3.2.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

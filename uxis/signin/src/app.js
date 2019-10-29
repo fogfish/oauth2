@@ -1,17 +1,14 @@
 import React from 'react'
-import './App.css'
-
 import {
   HashRouter as Router,
   Route
 } from 'react-router-dom'
-
-import { Page, Container } from 'react-dress-code'
 import SignIn from './components/SignIn'
 import SignUp from './components/SignUp'
 import { SecretReset } from 'components/SecretReset'
 import { SecretRecover } from 'components/SecretRecover'
 import queryString from 'query-string'
+import './app.css'
 
 const { response_type, client_id, state, ...params } = queryString.parse(window.location.search)
 const oauth2 = { 
@@ -20,10 +17,8 @@ const oauth2 = {
   client_id: client_id || "oauth2-account", 
   state: state || ''
 }
-
+console.log(oauth2)
 const App = (props) => (
-  <Page>
-    <Container limited>
       <Router hashType="noslash">
         <React.Fragment>
           <Route exact path="/" component={() => <SignIn { ...oauth2 } />} />
@@ -32,8 +27,6 @@ const App = (props) => (
           <Route exact path="/recover" component={() => <SecretRecover { ...oauth2 } />} />
         </React.Fragment>
       </Router>
-    </Container>
-  </Page>
 )
 
 export default App

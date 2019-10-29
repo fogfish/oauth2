@@ -1,0 +1,41 @@
+@import "../node_modules/@blueprintjs/core/lib/css/blueprint.css";
+@import "../node_modules/font-awesome/css/font-awesome.min.css";
+
+body
+{
+   background: #F5F8FA;
+}
+
+.bp3-text-muted
+{
+  font-size: 12px;
+  color: #BFCCD6;
+}
+
+h1.bp3-heading
+{
+   font-weight: 100;
+   color: #293742;
+}
+
+input 
+{
+   width: 100%;
+}
+
+.oauth2-chip
+{
+   display: inline-block;
+   padding: 0 25px;
+   height: 32px;
+   line-height: 30px;
+   border-radius: 16px;
+   background-color: #f7f7f7;
+   color: #4a4a4a;
+}
+
+.oauth2__secret,
+.oauth2__access
+{
+   word-wrap: break-word;
+}
