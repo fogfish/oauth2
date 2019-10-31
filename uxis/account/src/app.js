@@ -11,7 +11,7 @@ import './app.css'
 
 const App = () => (
   <div>
-    <Notification />
+    {/* <Notification /> */}
     <OAuth2>
       <Router>
         <div>

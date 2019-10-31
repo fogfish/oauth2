@@ -1,17 +1,20 @@
 import React from 'react'
+import { Card, H2, Button, Intent } from '@blueprintjs/core'
+
+
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 import { lifecycle } from 'recompose'
-import { H2, Card, Button, LoadingBar } from 'react-dress-code'
+import { LoadingBar } from 'react-dress-code'
 import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'
 import { lookup } from './ducks'
 
 const Registry = (props) => (
   <Card>
-    <H2>
+    <H2 style={{display: 'flex', justifyContent: 'space-between'}}>
       OAuth Apps 
-      <Button link small onClick={ () => props.history.push('/oauth2/account/app') }>
+      <Button minimal small intent={Intent.PRIMARY} onClick={ () => props.history.push('/oauth2/account/app') }>
         New OAuth App
       </Button>
     </H2>

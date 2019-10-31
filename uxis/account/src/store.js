@@ -21,6 +21,6 @@ const root = combineReducers({
 // const logger = createLogger()
 // const store  = createStore(root, applyMiddleware(thunk, logger))
 const store  = createStore(root, applyMiddleware(thunk))
-store.dispatch(accessToken())
+// store.dispatch(accessToken())
 
 export default store

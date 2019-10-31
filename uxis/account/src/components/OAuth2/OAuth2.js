@@ -22,15 +22,17 @@ const Failure  = (props) => (
   </div>   
 )
 
-const OAuth2 = props => (
-  <div className="oauth2-container">
-    {props.exchange && <LoadingBar />}
-    {!props.exchange && props.error === null &&
-      (props.requireAuth() ? props.authorize() : props.children)
-    }
-    {props.error && <Failure {...props} />}
-  </div>
-)
+const OAuth2 = props => (<>{props.children}</>)
+
+  // <div className="oauth2-container">
+  //   {props.exchange && <LoadingBar />}
+  //   {!props.exchange && props.error === null &&
+  //     (props.requireAuth() ? props.authorize() : props.children)
+  //   }
+  //   {props.error && <Failure {...props} />}
+  // </div>
+
+
 
 const model = state => (state.oauth2)
 const actions = dispatch => bindActionCreators({ requireAuth, authorize }, dispatch)
