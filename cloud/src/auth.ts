@@ -31,7 +31,14 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
     memorySize: 256,
     role,
     logRetention: logs.RetentionDays.FIVE_DAYS,
-    layers
+    layers,
+    environment: {
+      'PERMIT_ISSUER': 'https://auth.fog.fish',
+      'PERMIT_AUDIENCE': 'any',
+      'PERMIT_CLAIMS': 'uid=true',
+      'PERMIT_KEYPAIR': 'permit_config_ddb',
+      'PERMIT_STORAGE': `ddb+https://dynamodb.${cdk.Aws.REGION}.amazonaws.com:443/oauth2-db-dev-pubkey`
+    }
   })
   return iaac(Auth)
 }
