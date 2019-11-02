@@ -7,6 +7,15 @@ import { Auth } from './auth'
 const vsn = process.env.VSN || 'local'
 
 //
+const app = new cdk.App()
+const stack = new cdk.Stack(app, `oauth2-${vsn}`, {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION
+  }
+})
+
+//
 const api = staticweb.Gateway({
   domain: 'fog.fish',
   subdomain: `${vsn}.auth`,
@@ -15,18 +24,12 @@ const api = staticweb.Gateway({
 
 const auth = Auth()
 
-pure.use({ api, auth })
-  .effect(x => x.api.root.addResource('oauth2').addResource('signin').addMethod('POST', x.auth))
-  .effect(x => x.api.root.addResource('oauth2').addResource('signup').addMethod('POST', x.auth))
-  
+pure.join(stack,
+  pure.use({ api, auth })
+    .effect(x => x.api.root.addResource('oauth2').addResource('signin').addMethod('POST', x.auth))
+    .effect(x => x.api.root.addResource('oauth2').addResource('signup').addMethod('POST', x.auth))
+)
+
 //
-//
-const app = new cdk.App()
-const stack = new cdk.Stack(app, `oauth2-${vsn}`, {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION
-  }
-})
 pure.join(stack, api)
 app.synth()

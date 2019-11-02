@@ -39,14 +39,14 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
 //
 const Layer = (): pure.IPure<lambda.ILayerVersion> => {
   const iaac = pure.include(lambda.LayerVersion.fromLayerVersionArn)
-  const Layer= (): string => `arn:aws:lambda:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:layer:${LAYER}`
-  return iaac(Layer)
+  const AuthLayer= (): string => `arn:aws:lambda:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:layer:${LAYER}`
+  return iaac(AuthLayer)
 }
 
 //
 const Role = (): pure.IPure<iam.IRole> => {
   const role = pure.iaac(iam.Role)
-  const Role = (): iam.RoleProps => ({
+  const AuthRole = (): iam.RoleProps => ({
     assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com')
   })
 
@@ -57,5 +57,5 @@ const Role = (): pure.IPure<iam.IRole> => {
     })
   )
 
-  return role(Role).effect(x => x.addToPolicy(ReadWrite()))
+  return role(AuthRole).effect(x => x.addToPolicy(ReadWrite()))
 }
