@@ -7,7 +7,7 @@ phases:
     commands:
       - |-
         echo "==> install"
-      - (cd cloud; npm install)
+      - (cd cloud && npm install)
 
   pre_build:
     commands:
@@ -17,8 +17,8 @@ phases:
     commands:
       - |-
         echo "==> build"
-      - (cd apps/auth; make; make dist)
-      - (cd js/signin; make VSN=${BUILD_RELEASE})
+      - (cd apps/authorize && make && make dist)
+      - (cd js/signin && make VSN=${BUILD_RELEASE})
 
   post_build:
     commands:
@@ -27,10 +27,10 @@ phases:
       - |-
           case $BUILD in
             CleanUp)
-              (cd cloud; VSN=${BUILD_RELEASE} cdk destroy -f)
+              (cd cloud && VSN=${BUILD_RELEASE} cdk destroy -f)
               ;;
             *)
-              (cd cloud; VSN=${BUILD_RELEASE} cdk deploy)
-              (cd js/signin; make dist-up VSN=${BUILD_RELEASE})
+              (cd cloud && VSN=${BUILD_RELEASE} cdk deploy)
+              (cd js/signin && make dist-up VSN=${BUILD_RELEASE})
               ;;
           esac
