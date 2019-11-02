@@ -18,6 +18,7 @@ phases:
       - |-
         echo "==> build"
       - (cd apps/auth; make; make dist)
+      - (cd js/signin; make VSN=${BUILD_RELEASE})
 
   post_build:
     commands:
@@ -30,5 +31,6 @@ phases:
               ;;
             *)
               (cd cloud; VSN=${BUILD_RELEASE} cdk deploy)
+              (cd js/signin; make dist-up VSN=${BUILD_RELEASE})
               ;;
           esac
