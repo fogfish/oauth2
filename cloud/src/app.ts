@@ -26,10 +26,10 @@ const auth = Auth()
 
 pure.join(stack,
   pure.use({ api, auth })
-    .effect(x => x.api.root.addResource('oauth2').addResource('signin').addMethod('POST', x.auth))
-    .effect(x => x.api.root.addResource('oauth2').addResource('signup').addMethod('POST', x.auth))
+    .effect(x => {
+      const oauth2 = x.api.root.getResource('oauth2')
+      oauth2.addResource('signin').addMethod('POST', x.auth)
+      oauth2.addResource('signup').addMethod('POST', x.auth)
+    })
 )
-
-//
-pure.join(stack, api)
 app.synth()

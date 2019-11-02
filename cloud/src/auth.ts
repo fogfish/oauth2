@@ -25,7 +25,7 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
   const iaac = pure.iaac(lambda.Function)
   const Auth = (): lambda.FunctionProps => ({
     runtime: lambda.Runtime.PROVIDED,
-    code: new lambda.AssetCode('../../apps/auth/_build/default/bin'),
+    code: new lambda.AssetCode('../apps/authorize/_build/default/bin'),
     handler: 'index.main',
     timeout: cdk.Duration.seconds(10),
     memorySize: 256,
@@ -47,7 +47,7 @@ const Layer = (): pure.IPure<lambda.ILayerVersion> => {
 const Role = (): pure.IPure<iam.IRole> => {
   const role = pure.iaac(iam.Role)
   const AuthRole = (): iam.RoleProps => ({
-    assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com')
+    assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
   })
 
   const ReadWrite = (): iam.PolicyStatement => (
