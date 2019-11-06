@@ -39,7 +39,7 @@ signup_public_client(_) ->
    } = serverless:mock(authorize,
       #{
          <<"httpMethod">> => <<"POST">>
-      ,  <<"path">> => <<"/signup">>
+      ,  <<"path">> => <<"/oauth2/signup">>
       ,  <<"headers">> => #{
             <<"Content-Type">> => <<"application/x-www-form-urlencoded">>
          }
@@ -67,7 +67,7 @@ signin_public_client(_) ->
    } = serverless:mock(authorize,
       #{
          <<"httpMethod">> => <<"POST">>
-      ,  <<"path">> => <<"/signin">>
+      ,  <<"path">> => <<"/oauth2/signin">>
       ,  <<"headers">> => #{
             <<"Content-Type">> => <<"application/x-www-form-urlencoded">>
          }
