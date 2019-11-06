@@ -9,7 +9,7 @@ import * as iam from '@aws-cdk/aws-iam'
 import * as pure from 'aws-cdk-pure'
 import * as api from '@aws-cdk/aws-apigateway'
 
-const LAYER='erlang-serverless:3'
+const LAYER='erlang-serverless:4'
 
 // 
 //   
