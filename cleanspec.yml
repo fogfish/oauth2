@@ -6,9 +6,7 @@ phases:
   install:
     commands:
       - echo "==> install"
-      - make -C apps/authorize deps
       - npm --prefix cloud install
-      - npm --prefix js/signin install
 
   pre_build:
     commands:
@@ -16,12 +14,8 @@ phases:
   build:
     commands:
       - echo "==> build"
-      - make -C apps/authorize
-      - make -C apps/authorize dist
-      - make -C js/signin VSN=${BUILD_RELEASE}
 
   post_build:
     commands:
       - echo "==> post build"
-      - (cd cloud && cdk deploy oauth2-api-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE})
-      - make -C js/signin dist-up VSN=${BUILD_RELEASE}
+      - (cd cloud && cdk destroy -f oauth2-api-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE})

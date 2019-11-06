@@ -41,6 +41,9 @@ all: rebar3 test
 compile: rebar3
 	@./rebar3 compile
 
+deps: rebar3
+	@./rebar3 get-deps
+
 run: _build/default/bin/${APP}
 	@test -z ${JSON} \
 		&& $^ -f ${EVENT} \

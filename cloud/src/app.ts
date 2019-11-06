@@ -4,20 +4,26 @@ import { staticweb } from 'aws-cdk-pure-hoc'
 import { Auth } from './auth'
 import { DDB } from './storage'
 
+//-----------------------------------------------------------------------------
+//
+// Config
+//
+//-----------------------------------------------------------------------------
 const app = new cdk.App()
-const vsn = process.env.VSN || 'local'
+const vsn = app.node.tryGetContext('vsn') || 'dev'
+const stack = {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION
+  }
+}
 
 //-----------------------------------------------------------------------------
 //
 // API Gateway
 //
 //-----------------------------------------------------------------------------
-const gateway = new cdk.Stack(app, `oauth2-api-${vsn}`, {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION
-  }
-})
+const gateway = new cdk.Stack(app, `oauth2-api-${vsn}`, { ...stack })
 
 //
 const api = staticweb.Gateway({
@@ -41,20 +47,10 @@ pure.join(gateway,
 // Storage
 //
 //-----------------------------------------------------------------------------
-const dev = new cdk.Stack(app, `oauth2-db-dev`, {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION
-  }
-})
+const dev = new cdk.Stack(app, `oauth2-db-dev`, { ...stack })
 pure.join(dev, DDB())
 
-const live = new cdk.Stack(app, `oauth2-db-live`, {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION
-  }
-})
+const live = new cdk.Stack(app, `oauth2-db-live`, { ...stack })
 pure.join(live, DDB())
 
 app.synth()
