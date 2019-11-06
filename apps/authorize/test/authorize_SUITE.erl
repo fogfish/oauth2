@@ -41,7 +41,7 @@ signup_public_client(_) ->
          <<"httpMethod">> => <<"POST">>
       ,  <<"path">> => <<"/oauth2/signup">>
       ,  <<"headers">> => #{
-            <<"Content-Type">> => <<"application/x-www-form-urlencoded">>
+            <<"content-type">> => <<"application/x-www-form-urlencoded">>
          }
       ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=joe@org&secret=secret">>
       }
@@ -69,7 +69,7 @@ signin_public_client(_) ->
          <<"httpMethod">> => <<"POST">>
       ,  <<"path">> => <<"/oauth2/signin">>
       ,  <<"headers">> => #{
-            <<"Content-Type">> => <<"application/x-www-form-urlencoded">>
+            <<"content-type">> => <<"application/x-www-form-urlencoded">>
          }
       ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=joe@org&secret=secret">>
       }

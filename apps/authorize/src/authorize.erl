@@ -24,7 +24,8 @@ api(#{
       {error, _} = Error ->
          serverless_api:return(Error)
    end;
-api(_) -> 
+api(Json) ->
+   serverless:warning(Json),
    {error, not_supported}.
 
 %%
@@ -32,7 +33,7 @@ api(_) ->
 dispatch(#{
    <<"path">> := <<"/oauth2/signin">>,
    <<"headers">> := #{
-      <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>
+      <<"content-type">>  := <<"application/x-www-form-urlencoded", _/binary>>
    } = Headers,
    <<"body">> := Request
 }) ->
@@ -41,7 +42,7 @@ dispatch(#{
 dispatch(#{
    <<"path">> := <<"/oauth2/signup">>,
    <<"headers">> := #{
-      <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>
+      <<"content-type">>  := <<"application/x-www-form-urlencoded", _/binary>>
    } = Headers,
    <<"body">> := Request
 }) ->
