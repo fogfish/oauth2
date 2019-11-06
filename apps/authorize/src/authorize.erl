@@ -47,5 +47,6 @@ dispatch(#{
 }) ->
    oauth2:signup(Headers, Request);
 
-dispatch(_) ->
+dispatch(Json) ->
+   serverless:warning(Json),
    {error, not_supported}.
