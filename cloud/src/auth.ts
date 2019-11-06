@@ -9,6 +9,7 @@ import * as iam from '@aws-cdk/aws-iam'
 import * as pure from 'aws-cdk-pure'
 import * as api from '@aws-cdk/aws-apigateway'
 
+// TODO: global config
 const LAYER='erlang-serverless:4'
 
 // 
