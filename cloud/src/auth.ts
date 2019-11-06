@@ -12,6 +12,7 @@ import * as api from '@aws-cdk/aws-apigateway'
 // TODO: global config
 const LAYER='erlang-serverless:4'
 
+
 // 
 //   
 export const Auth = (): pure.IPure<api.LambdaIntegration> =>
