@@ -7,6 +7,7 @@ export const SecretKey = () => (
     <input
       className={Classes.INPUT}
       id="secret"
+      name="secret"
       type="password"
       required
     />

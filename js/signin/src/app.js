@@ -14,7 +14,7 @@ const { response_type, client_id, state, ...params } = queryString.parse(window.
 const oauth2 = { 
   ...params, 
   response_type: response_type || "code", 
-  client_id: client_id || "oauth2-account", 
+  client_id: client_id || "account@oauth2", 
   state: state || ''
 }
 console.log(oauth2)

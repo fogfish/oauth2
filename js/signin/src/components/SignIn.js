@@ -5,6 +5,8 @@ import { Dialog } from 'components/Dialog'
 import { KeyPair } from 'components/KeyPair'
 import { GitHub } from 'components/GitHub'
 
+const prefix = process.env.REACT_APP_PREFIX || ''
+
 const Actions = () => (
   <>
     {window.env.KEYPAIR &&
@@ -30,7 +32,7 @@ const SignIn = props => (
   <Dialog
     icon="fa-user-circle"
     title="Sign In"
-    url="/oauth2/signin"
+    url={`${prefix}/oauth2/signin`}
     Actions={Actions}
     Links={Links}
   >

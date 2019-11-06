@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { Dialog } from 'components/Dialog'
 import { KeyPair } from 'components/KeyPair'
 
+const prefix = process.env.REACT_APP_PREFIX || ''
+
 const Actions = () => (
   <>
     <Link className="bp3-button bp3-minimal bp3-intent-primary" to="/">
@@ -17,7 +19,7 @@ const SignUp = props => (
   <Dialog
     icon="fa-user-circle-o"
     title="Sign Up"
-    url="/oauth2/signup"
+    url={`${prefix}/oauth2/signup`}
     Actions={Actions}
   >
     <KeyPair { ...props } />

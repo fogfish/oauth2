@@ -7,6 +7,7 @@ export const AccessKey = () => (
     <input
       className={Classes.INPUT}
       id="access"
+      name="access"
       type="email"
       autoFocus
       required

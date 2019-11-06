@@ -30,7 +30,7 @@ api(_) ->
 %%
 %%
 dispatch(#{
-   <<"path">> := <<"/signin">>,
+   <<"path">> := <<"/oauth2/signin">>,
    <<"headers">> := #{
       <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>
    } = Headers,
@@ -39,7 +39,7 @@ dispatch(#{
    oauth2:signin(Headers, Request);
 
 dispatch(#{
-   <<"path">> := <<"/signup">>,
+   <<"path">> := <<"/oauth2/signup">>,
    <<"headers">> := #{
       <<"Content-Type">>  := <<"application/x-www-form-urlencoded", _/binary>>
    } = Headers,
