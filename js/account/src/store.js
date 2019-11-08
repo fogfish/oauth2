@@ -6,13 +6,11 @@ import thunk from 'redux-thunk'
 
 //
 //
-import { default as oauth2, accessToken } from './components/OAuth2/ducks'
 import { default as app } from './components/NewApp/ducks'
 import { default as registry } from './components/Registry/ducks'
 import { default as notification } from './components/Notification/ducks'
 
 const root = combineReducers({
-   oauth2,
    app,
    registry,
    notification
