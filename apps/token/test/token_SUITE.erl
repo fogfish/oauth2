@@ -49,9 +49,15 @@ code_exchange(_) ->
       }
    ),
    #{
-      <<"token_type">>   := <<"bearer">>,
-      <<"access_token">> := AccessToken,
-      <<"expires_in">>   := _
+      <<"token_type">>   := <<"bearer">>
+   ,  <<"access_token">> := AccessToken
+   ,  <<"expires_in">>   := _
+   ,  <<"aud">>          := <<"suite">>
+   ,  <<"idp">>          := <<"org">>
+   ,  <<"iss">>          := <<"https://example.com">>
+   ,  <<"sub">>          := <<"joe@org">>
+   ,  <<"exp">>          := _
+   ,  <<"tji">>          := _
    } = jsx:decode(Json, [return_maps]),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
@@ -60,4 +66,5 @@ code_exchange(_) ->
    ,  <<"sub">> := {iri, <<"org">>, <<"joe">>}
    ,  <<"exp">> := _
    ,  <<"tji">> := _
+   ,  <<"rev">> := true
    }} = permit:validate( AccessToken ).

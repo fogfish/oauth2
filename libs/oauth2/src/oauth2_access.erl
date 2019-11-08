@@ -40,9 +40,10 @@ req_token(#access_token{
    [either ||
       permit:include(Code, #{<<"aud">> => <<"oauth2">>}),
       #{<<"app">> := Encoded} <- permit:equals(Code, #{}),
-      Claims  <- cats:unit(jsx:decode(base64url:decode(Encoded), [return_maps])),
-      Access  <- permit:revocable(Code, 3600, Claims), %% TODO: configurable ttl 
-      Refresh <- oauth2_authorize:exchange_code(Code, Claims),
+      Scopes  <- cats:unit(jsx:decode(base64url:decode(Encoded), [return_maps])),
+      Access  <- permit:revocable(Code, 3600, Scopes), %% TODO: configurable ttl 
+      Refresh <- oauth2_authorize:exchange_code(Code, Scopes),
+      Claims  <- permit:claims(Access),
       cats:unit(
          maps:merge(Claims,
             #{
