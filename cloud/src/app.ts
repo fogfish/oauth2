@@ -3,6 +3,7 @@ import * as pure from 'aws-cdk-pure'
 import { staticweb } from 'aws-cdk-pure-hoc'
 import { Auth } from './auth'
 import { Token } from './token'
+import { Client } from './client'
 import { DDB } from './storage'
 
 //-----------------------------------------------------------------------------
@@ -32,17 +33,20 @@ const api = staticweb.Gateway({
   subdomain: `${vsn}.auth`,
   siteRoot: 'api/oauth2/authorize',
 })
-const auth = Auth()
-const token = Token()
 
 pure.join(gateway,
-  pure.use({ api, auth, token })
+  pure.use({ api, auth: Auth(), token: Token(), client: Client() })
     .effect(x => {
       const oauth2 = x.api.root.getResource('oauth2')
       oauth2.addResource('signin').addMethod('POST', x.auth)
       oauth2.addResource('signup').addMethod('POST', x.auth)
-      oauth2.addResource('token').addMethod('POST', x.token)
       
+      oauth2.addResource('token').addMethod('POST', x.token)
+
+      const client = oauth2.addResource('client')
+      client.addMethod('GET', x.client)
+      client.addMethod('POST', x.client)
+      client.addResource('{id}').addMethod('DELETE', x.client)
     })
 )
 

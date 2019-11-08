@@ -120,9 +120,9 @@ const isValidToken = ({ token, expires }) => {
 const tokenIssue = ({ token, expires }) => {
   const now = +new Date()
   if (token && expires <= now)
-    return 'expired'
+    return new Issue({status: 401}, {title: 'expired'})
 
-  return 'unauthorized'
+  return new Issue({status: 401}, {title: 'unauthorized'})
 }
 
 //
@@ -228,7 +228,7 @@ export const secureRemove = url => secureIO(url, { method: 'DELETE', headers: { 
 export class Issue extends Error {
   constructor(http, json) {
     super(http.status)
-    this.type = json.type
+    this.type = `https://httpstatuses.com/${http.status}`
     this.instance = json.instance
     this.title = json.title
     this.details = json.details

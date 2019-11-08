@@ -1,7 +1,7 @@
 import React from 'react'
-import { Navbar, Alignment, H2, Icon, Tooltip, Intent } from '@blueprintjs/core'
+import { Navbar, Alignment, Icon, Tooltip, Intent } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
-import { signout, WhoIs } from 'components/OAuth2'
+import { authorize, WhoIs } from 'components/OAuth2'
 
 const Account = () => WhoIs(({ sub }) => (<>{sub}</>))
 
@@ -14,7 +14,7 @@ const Header = () => (
     </Navbar.Group>
     <Navbar.Group align={Alignment.RIGHT}>
       <Tooltip intent={Intent.DANGER} content="Sign Out">
-        <Icon iconSize={20} icon={IconNames.POWER} onClick={signout} />
+        <Icon iconSize={20} icon={IconNames.POWER} onClick={authorize} />
       </Tooltip>
     </Navbar.Group>
   </Navbar>

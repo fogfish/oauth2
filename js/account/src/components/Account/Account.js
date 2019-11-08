@@ -3,10 +3,10 @@ import { Flex, Box } from 'reflexbox'
 import { useOAuth2 } from 'components/OAuth2'
 import { WhileIO } from 'components/WhileIO'
 import Header from './Header'
-import Error from './Error'
 import { Registry } from '../Registry'
+import { Issue } from '../Issue'
 
-const IO = WhileIO(undefined, Error, Registry)
+const IO = WhileIO(undefined, Issue, Registry)
 
 const UI = () => {
   const status = useOAuth2()

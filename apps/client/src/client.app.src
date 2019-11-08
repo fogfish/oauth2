@@ -1,6 +1,6 @@
-{application, token,
+{application, client,
    [
-      {description, "oauth2 token api"},
+      {description, "oauth2 client api"},
       {vsn,         "0.0.0"},
       {modules,     []},
       {registered,  []},
