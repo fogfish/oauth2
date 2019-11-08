@@ -46,6 +46,7 @@ export const signout = () => {
 
 //
 export const WhoIs = (Component) => {
+  // TODO: how to redefine memo when access token is updated
   const whois = useMemo(() => (accessTokenStorage()))
 
   return (<Component {...whois} />)
@@ -111,17 +112,14 @@ const encode = json =>
 
 //
 //
-const isValidToken = ({ token, expires, acc }) => {
+const isValidToken = ({ token, expires }) => {
   const now = +new Date()
-  return (token && acc && expires > now)
+  return (token && expires > now)
 }
 
-const tokenIssue = ({ token, expires, acc }) => {
+const tokenIssue = ({ token, expires }) => {
   const now = +new Date()
-  if (token && !acc && expires > now)
-    return 'standby'
-
-  if (token && acc && expires <= now)
+  if (token && expires <= now)
     return 'expired'
 
   return 'unauthorized'
