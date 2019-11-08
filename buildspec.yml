@@ -7,6 +7,7 @@ phases:
     commands:
       - echo "==> install"
       - make -C apps/authorize deps
+      - make -C apps/token deps
       - npm --prefix cloud install
       - npm --prefix js/signin install
 
@@ -18,6 +19,8 @@ phases:
       - echo "==> build"
       - make -C apps/authorize
       - make -C apps/authorize dist
+      - make -C apps/token
+      - make -C apps/token dist
       - make -C js/signin VSN=${BUILD_RELEASE}
 
   post_build:

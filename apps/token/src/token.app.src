@@ -1,6 +1,6 @@
-{application, authorize,
+{application, token,
    [
-      {description, "serverless authorize api"},
+      {description, "serverless token api"},
       {vsn,         "0.0.0"},
       {modules,     []},
       {registered,  []},

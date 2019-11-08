@@ -2,6 +2,7 @@ import * as cdk from '@aws-cdk/core'
 import * as pure from 'aws-cdk-pure'
 import { staticweb } from 'aws-cdk-pure-hoc'
 import { Auth } from './auth'
+import { Token } from './token'
 import { DDB } from './storage'
 
 //-----------------------------------------------------------------------------
@@ -32,13 +33,16 @@ const api = staticweb.Gateway({
   siteRoot: 'api/oauth2/authorize',
 })
 const auth = Auth()
+const token = Token()
 
 pure.join(gateway,
-  pure.use({ api, auth })
+  pure.use({ api, auth, token })
     .effect(x => {
       const oauth2 = x.api.root.getResource('oauth2')
       oauth2.addResource('signin').addMethod('POST', x.auth)
       oauth2.addResource('signup').addMethod('POST', x.auth)
+      oauth2.addResource('token').addMethod('POST', x.token)
+      
     })
 )
 
