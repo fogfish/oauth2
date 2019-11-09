@@ -1,4 +1,5 @@
 import React from 'react'
+import { withRouter } from 'react-router-dom'
 import { H5, Button, Intent } from '@blueprintjs/core'
 
 const RegistryNone = (props) => (
@@ -11,4 +12,4 @@ const RegistryNone = (props) => (
     </div>
 )
 
-export default RegistryNone
+export default withRouter(RegistryNone)
