@@ -27,7 +27,7 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
   const iaac = pure.iaac(lambda.Function)
   const Client = (): lambda.FunctionProps => ({
     runtime: lambda.Runtime.PROVIDED,
-    code: new lambda.AssetCode('../apps/token/_build/default/bin'),
+    code: new lambda.AssetCode('../apps/client/_build/default/bin'),
     handler: 'index.main',
     timeout: cdk.Duration.seconds(10),
     memorySize: 256,

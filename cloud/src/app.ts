@@ -1,10 +1,12 @@
 import * as cdk from '@aws-cdk/core'
 import * as pure from 'aws-cdk-pure'
-import { staticweb } from 'aws-cdk-pure-hoc'
+import { staticweb, gateway } from 'aws-cdk-pure-hoc'
 import { Auth } from './auth'
 import { Token } from './token'
 import { Client } from './client'
 import { DDB } from './storage'
+
+import * as apix from '@aws-cdk/aws-apigateway'
 
 //-----------------------------------------------------------------------------
 //
@@ -25,7 +27,7 @@ const stack = {
 // API Gateway
 //
 //-----------------------------------------------------------------------------
-const gateway = new cdk.Stack(app, `oauth2-api-${vsn}`, { ...stack })
+const oauth2 = new cdk.Stack(app, `oauth2-api-${vsn}`, { ...stack })
 
 //
 const api = staticweb.Gateway({
@@ -34,7 +36,7 @@ const api = staticweb.Gateway({
   siteRoot: 'api/oauth2/authorize',
 })
 
-pure.join(gateway,
+pure.join(oauth2,
   pure.use({ api, auth: Auth(), token: Token(), client: Client() })
     .effect(x => {
       const oauth2 = x.api.root.getResource('oauth2')
@@ -43,10 +45,10 @@ pure.join(gateway,
       
       oauth2.addResource('token').addMethod('POST', x.token)
 
-      const client = oauth2.addResource('client')
+      const client = gateway.CORS(oauth2.addResource('client'))
       client.addMethod('GET', x.client)
       client.addMethod('POST', x.client)
-      client.addResource('{id}').addMethod('DELETE', x.client)
+      gateway.CORS(client.addResource('{id}')).addMethod('DELETE', x.client)
     })
 )
 

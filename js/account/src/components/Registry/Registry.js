@@ -56,7 +56,7 @@ const RegistryWithData = () => {
 const lookup = async (updateRegistry) => {
   updateRegistry({status: PENDING, apps: undefined})
   try {
-    const x = await secureLookup('https://pr15.auth.fog.fish/oauth2/clients')
+    const x = await secureLookup('https://pr15.auth.fog.fish/oauth2/client')
     console.log(x)
   } catch (error) {
     updateRegistry({status: FAILURE, error})
