@@ -1,20 +1,18 @@
 import React from 'react'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
-import { Label, Input } from 'react-dress-code'
-import { identity } from '../ducks'
+import { Label, Classes } from '@blueprintjs/core'
 
-const Identity = ({ identity }) => (
-   <div>
-      <Label sub="required">Application</Label>
-      <Input 
-         type="input"
-         autoFocus
-         required
-         onChange={identity} />
-   </div>
+const Identity = ({ app, update }) => (
+  <Label>
+    <b>Application</b>&nbsp;<span className="bp3-text-muted">required</span>
+    <input
+      className={Classes.INPUT}
+      type="input"
+      autoFocus
+      required
+      value={app.identity}
+      onChange={(e) => update({ ...app, identity: e.target.value })}
+    />
+  </Label>
 )
 
-const model = state => (state.app)
-const actions = dispatch => bindActionCreators({ identity }, dispatch)
-export default connect(model, actions)(Identity)
+export default Identity

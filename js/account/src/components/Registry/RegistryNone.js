@@ -4,10 +4,10 @@ import { H5, Button, Intent } from '@blueprintjs/core'
 
 const RegistryNone = (props) => (
    <div>
-      <H5>No OAuth applications...</H5>
+      <H5>No OAuth applications in your account...</H5>
       <p>OAuth applications are used to access REST API.</p>
       <Button intent={Intent.PRIMARY} onClick={ () => props.history.push('/oauth2/account/app') }>
-        Register a new Application
+        Register New OAuth App
       </Button>
     </div>
 )

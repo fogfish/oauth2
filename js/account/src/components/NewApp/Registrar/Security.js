@@ -1,20 +1,19 @@
 import React from 'react'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
-import { Label, Select } from 'react-dress-code'
-import { security } from '../ducks'
+import { Label, RadioGroup, Radio } from '@blueprintjs/core'
 
-const Security = ({ security }) => (
-   <div>
-      <Label sub="required">Application Type</Label>
-      <Select small onChange={security}>
-         <option value="public">public</option>
-         <option value="confidential">confidential</option>
-      </Select>
-   </div>
+const Security = ({ app, update }) => (
+  <Label>
+    <b>Application Type</b>&nbsp;<span className="bp3-text-muted">required</span>
+    <RadioGroup 
+      label=" "
+      inline={true}
+      selectedValue={app.security}
+      onChange={(e) => update({ ...app, security: e.target.value }) }
+    >
+      <Radio label="Public" value="public" />
+      <Radio label="Confidential" value="confidential" />
+    </RadioGroup>
+  </Label>
 )
 
-const model = state => (state.app)
-const actions = dispatch => bindActionCreators({ security }, dispatch)
-export default connect(model, actions)(Security)
-
+export default Security

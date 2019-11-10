@@ -4,10 +4,11 @@ import { secureLookup } from '../OAuth2'
 import { Issue } from '../Issue'
 import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'
+import { NewApp } from '../NewApp'
 import { WhileIO, SUCCESS, PENDING, FAILURE } from '../WhileIO'
 
 //
-const Head = ({ history, status }) => (
+const Head = ({ status, showRegistrar }) => (
   <H2 style={{display: 'flex', justifyContent: 'space-between'}}>
     OAuth Apps
     {status === SUCCESS &&
@@ -15,7 +16,7 @@ const Head = ({ history, status }) => (
         minimal
         small
         intent={Intent.PRIMARY}
-        onClick={ () =>history.push('/oauth2/account/app') }
+        onClick={ () => showRegistrar(true) }
       >
         New OAuth App
       </Button>
@@ -31,12 +32,15 @@ const IO = WhileIO(Spinner, Issue, Registry)
 
 const RegistryWithData = () => {
   const [registry, updateRegistry] = useState({status: PENDING, apps: undefined})
+  const [registrar, showRegistrar] = useState(false)
+
   useEffect(() => { lookup(updateRegistry) }, [])
-  
+
   return (
     <Card>
-      <Head { ...registry }/>
+      <Head { ...registry } showRegistrar={showRegistrar} />
       <IO { ...registry }/>
+      <NewApp registrar={registrar} showRegistrar={showRegistrar} />
     </Card>)
 }
 
