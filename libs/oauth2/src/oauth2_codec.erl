@@ -61,8 +61,8 @@ iri() ->
 iri(undefined) ->
    undefined;
 iri(IRI) ->
-   [Suffix, Prefix] = binary:split(IRI, <<$@>>),
-   {iri, Prefix, Suffix}.
+   {ok, Access} = permit:to_access(IRI),
+   Access.
 
 %%
 scope() ->

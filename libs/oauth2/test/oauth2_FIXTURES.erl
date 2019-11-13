@@ -10,7 +10,7 @@
 %%
 client_default() ->
    [
-      {iri, <<"oauth2">>, <<"account">>}
+      {iri, <<"Jaba3STOV1Ioz1GrJ-W_wA">>, <<"account@oauth2">>}
    ,  undefined
    ,  #{
          <<"security">> => <<"public">>,
@@ -21,7 +21,7 @@ client_default() ->
 %%
 client_public() ->
    [
-      {iri, <<"org">>, <<"public">>}
+      {iri, <<"mz_riE1VVY7WvBJLdbDygw">>, <<"public@org">>}
    ,  <<"secret">>
    ,  #{
          <<"security">> => <<"public">>,
@@ -32,7 +32,7 @@ client_public() ->
 %%
 client_confidential() ->
    [
-      {iri, <<"org">>, <<"confidential">>}
+      {iri, <<"KdGtZCcUFSHGwNOWY7deAg">>, <<"confidential@org">>}
    ,  <<"secret">>
    ,  #{
          <<"security">> => <<"confidential">>,
@@ -43,7 +43,7 @@ client_confidential() ->
 %%
 joe() ->
    [
-      {iri, <<"org">>, <<"joe">>}
+      {iri, <<"lxQBL4BKinfHjtnPvWIONw">>, <<"joe@org">>}
    ,  <<"secret">>
    ,  #{
          <<"rd">> => <<"api">>,

@@ -10,6 +10,7 @@ all() ->
       Test =/= module_info,
       Test =/= init_per_suite,
       Test =/= end_per_suite,
+      Test =/= access,
       NAry =:= 1
    ].
 
@@ -43,13 +44,18 @@ end_per_suite(_Config) ->
 digest() ->
    #{<<"Authorization">> => <<"Basic ", (base64:encode(<<"confidential@org:secret">>))/binary>>}.
 
+access(Suffix) ->
+   Prefix = base64url:encode(crypto:hash(md5, Suffix)),
+   {iri, Prefix, Suffix}.
+
 %%
 signup_code_public(_) ->
    Request = <<"response_type=code&client_id=public@org&access=joe.c.p@org&secret=secret&scope=rd%3Dapi%26wr%3Dddb">>,
    {ok, {uri, https, _} = Uri} = oauth2:signup(#{}, Request),
+   ct:pal("==> ~p~n", [Uri]),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
-   authorization_code_check({iri, <<"org">>, <<"joe.c.p">>}, Uri).
+   authorization_code_check(access(<<"joe.c.p@org">>), Uri).
 
 %%
 signin_code_public(_) ->
@@ -57,7 +63,7 @@ signin_code_public(_) ->
    {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
-   authorization_code_check({iri, <<"org">>, <<"joe">>}, Uri).
+   authorization_code_check(access(<<"joe@org">>), Uri).
 
 %%
 signup_code_confidential(_) ->
@@ -65,7 +71,7 @@ signup_code_confidential(_) ->
    {ok, {uri, https, _} = Uri} = oauth2:signup(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
-   authorization_code_check({iri, <<"org">>, <<"joe.c.c">>}, Uri).
+   authorization_code_check(access(<<"joe.c.c@org">>), Uri).
 
 %%
 signin_code_confidential(_) ->
@@ -73,14 +79,14 @@ signin_code_confidential(_) ->
    {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
-   authorization_code_check({iri, <<"org">>, <<"joe.c.c">>}, Uri).
+   authorization_code_check(access(<<"joe.c.c@org">>), Uri).
 
-authorization_code_check(Access, Uri) ->
+authorization_code_check({iri, IDP, _} = Access, Uri) ->
    Code = uri:q(<<"code">>, undefined, Uri),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
    ,  <<"aud">> := <<"oauth2">>
-   ,  <<"idp">> := <<"org">>
+   ,  <<"idp">> := IDP
    ,  <<"exp">> := _
    ,  <<"tji">> := _
    ,  <<"sub">> := Access
@@ -93,7 +99,7 @@ signup_implicit_public(_) ->
    {ok, {uri, https, _} = Uri} = oauth2:signup(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
-   access_token_check({iri, <<"org">>, <<"joe.i.p">>}, Uri).
+   access_token_check(access(<<"joe.i.p@org">>), Uri).
 
 %%
 signin_implicit_public(_) ->
@@ -101,7 +107,7 @@ signin_implicit_public(_) ->
    {ok, {uri, https, _} = Uri} = oauth2:signin(#{}, Request),
    <<"example.com">> = uri:host(Uri),
    <<"/public">> = uri:path(Uri),
-   access_token_check({iri, <<"org">>, <<"joe">>}, Uri).
+   access_token_check(access(<<"joe@org">>), Uri).
 
 %%
 signup_implicit_confidential(_) ->
@@ -109,7 +115,7 @@ signup_implicit_confidential(_) ->
    {ok, {uri, https, _} = Uri} = oauth2:signup(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
-   access_token_check({iri, <<"org">>, <<"joe.i.c">>}, Uri).
+   access_token_check(access(<<"joe.i.c@org">>), Uri).
 
 %%
 signin_implicit_confidential(_) ->
@@ -117,14 +123,14 @@ signin_implicit_confidential(_) ->
    {ok, {uri, https, _} = Uri} = oauth2:signin(digest(), Request),
    <<"example.com">> = uri:host(Uri),
    <<"/confidential">> = uri:path(Uri),
-   access_token_check({iri, <<"org">>, <<"joe">>}, Uri).
+   access_token_check(access(<<"joe@org">>), Uri).
 
-access_token_check(Access, Uri) ->
+access_token_check({iri, IDP, _} = Access, Uri) ->
    Code = uri:q(<<"access_token">>, undefined, Uri),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
    ,  <<"aud">> := <<"suite">>
-   ,  <<"idp">> := <<"org">>
+   ,  <<"idp">> := IDP
    ,  <<"exp">> := _
    ,  <<"tji">> := _
    ,  <<"sub">> := Access

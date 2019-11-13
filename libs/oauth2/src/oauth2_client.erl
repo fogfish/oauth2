@@ -10,11 +10,14 @@
 -export([
    public/1
 ,  confidential/1
+,  create/2
 ]).
 
 %%
 %% data types
 -type digest() :: binary().
+
+-define(CLAIMS,  [<<"name">>, <<"redirect_uri">>, <<"security">>]).
 
 %%
 %%
@@ -22,9 +25,9 @@
 
 public(Access)
  when is_binary(Access) ->
-   [either || iri(Access), public(_)];
+   [either || permit:to_access(Access), public(_)];
 
-public({iri, <<"oauth2">>, <<"account">>} = Access) ->
+public({iri, _, <<"account@oauth2">>} = Access) ->
    %% Note: account@oauth2 is built-in expereince
    %%       the not_found fallback simplifies management of clients registrations
    case 
@@ -51,7 +54,8 @@ public_default() ->
          <<"security">> => <<"public">>,
          <<"redirect_uri">> => uri:s(uri:path("/oauth2/account", uri:new(permit_config:iss())))
       },
-      permit:create({iri, <<"oauth2">>, <<"account">>}, crypto:strong_rand_bytes(30), Spec),
+      permit:to_access(<<"account@oauth2">>),
+      permit:create(_, crypto:strong_rand_bytes(30), Spec),
       cats:unit(Spec)
    ].
 
@@ -62,7 +66,7 @@ public_default() ->
 confidential(<<"Basic ", Digest/binary>>) ->
    [either ||
       [Access, Secret] <- cats:unit(binary:split(base64:decode(Digest), <<$:>>)),
-      Identity <- iri(Access),
+      Identity <- permit:to_access(Access),
       #pubkey{claims = Claims} = Spec <- permit:lookup(Identity),
       Stateless <- permit:stateless(Identity, Secret, 10, Claims),
       permit:include(Spec, #{<<"security">> => <<"confidential">>}),
@@ -73,11 +77,58 @@ confidential(<<"Basic ", Digest/binary>>) ->
    ].
 
 %%
+create(Jwt, Claims) ->
+   [either ||
+      #{<<"sub">> := {iri, Prefix, Suffix}} <- permit:validate(Jwt),
+      Spec <- claims(Claims),
+      Master <- cats:unit(
+         base64url:encode(crypto:hash(md5, <<Suffix/binary, $@, Prefix/binary>>))
+      ),
+      %% TODO: Master shall be valid, pubkey uses it
+      {Access, Secret} <- permit:pubkey({iri, Master, undefined}, Spec),
+      cats:unit(#{access => Access, secret => Secret})
+   ].
+
 %%
-iri(Access) ->
-   case binary:split(Access, <<$@>>) of
-      [Suffix, Prefix] ->
-         {ok, {iri, Prefix, Suffix}};
+claims(Claims) ->
+   [either ||
+      cats:unit(maps:with(?CLAIMS, Claims)),
+      claims_security(_),
+      claims_redirect_uri(_)
+   ].
+
+claims_security(#{<<"security">> := <<"public">>} = Claims) ->
+   {ok, Claims};
+claims_security(#{<<"security">> := <<"confidential">>} = Claims) ->
+   {ok, Claims};
+claims_security(_) ->
+   {error, invalid_security_profile}.
+
+claims_redirect_uri(#{<<"redirect_uri">> := Uri} = Profile) ->
+   [either ||
+      cats:unit( uri:new(Uri) ),
+      is_some(fun uri:schema/1, _),
+      is_some(fun uri:authority/1, _),
+      is_some(fun uri:path/1, _),
+      is_none(fun uri:q/1, _),
+      is_none(fun uri:anchor/1, _),
+      cats:unit(Profile)
+   ].
+
+is_some(Fun, Uri) ->
+   case Fun(Uri) of
+      undefined ->
+         {error, invalid_uri};
+      {<<>>, undefined} ->
+         {error, invalid_uri};
       _ ->
-         {error, {badarg, Access}}
+         {ok, Uri}
+   end.
+
+is_none(Fun, Uri) ->
+   case Fun(Uri) of
+      undefined ->
+         {ok, Uri};
+      _ ->
+         {error, invalid_uri}
    end.

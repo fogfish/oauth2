@@ -26,8 +26,8 @@ authorization(_) ->
    Generic = oauth2_codec:decode(Request),
    #authorization{
       response_type  = <<"code">>
-   ,  client_id      = {iri, <<"org">>, <<"public">>}
-   ,  access         = {iri, <<"org">>, <<"access">>}
+   ,  client_id      = {iri, <<"mz_riE1VVY7WvBJLdbDygw">>, <<"public@org">>}
+   ,  access         = {iri, <<"dCZsHW4qX7ocGpZyZy8hMw">>, <<"access@org">>}
    ,  secret         = <<"secret">>
    ,  scope          = #{<<"read">> := <<"true">>, <<"write">> := <<"true">>}
    } = lens:get(oauth2_codec:authorization(), Generic).
