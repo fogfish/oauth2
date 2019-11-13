@@ -79,13 +79,9 @@ confidential(<<"Basic ", Digest/binary>>) ->
 %%
 create(Jwt, Claims) ->
    [either ||
-      #{<<"sub">> := {iri, Prefix, Suffix}} <- permit:validate(Jwt),
+      #{<<"sub">> := Access} <- permit:validate(Jwt),
       Spec <- claims(Claims),
-      Master <- cats:unit(
-         base64url:encode(crypto:hash(md5, <<Suffix/binary, $@, Prefix/binary>>))
-      ),
-      %% TODO: Master shall be valid, pubkey uses it
-      {Access, Secret} <- permit:pubkey({iri, Master, undefined}, Spec),
+      {Access, Secret} <- permit:pubkey(Access, Spec),
       cats:unit(#{access => Access, secret => Secret})
    ].
 

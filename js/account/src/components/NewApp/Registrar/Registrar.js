@@ -1,5 +1,5 @@
 import React from 'react'
-import { AnchorButton, Button, Classes, Code, Dialog, H5, Intent, Switch, Tooltip } from "@blueprintjs/core";
+import { Button, Classes, Code, Dialog, H5, Intent, Switch, Tooltip } from "@blueprintjs/core";
 
 // import { Dialog, DialogContent, DialogBody, DialogTitle, DialogSubTitle, DialogActions, Button } from 'react-dress-code'
 import Identity from './Identity'
@@ -30,6 +30,7 @@ const Registrar = (props) => (
           <div className={Classes.DIALOG_FOOTER_ACTIONS}>
               <Button
                 intent={Intent.PRIMARY}
+                onClick={props.commit}
               >
                 Register
               </Button>

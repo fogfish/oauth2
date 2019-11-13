@@ -19,7 +19,7 @@ api(#{
    <<"httpMethod">> := <<"GET">>,
    <<"path">> := <<"/oauth2/client">>,
    <<"headers">> := #{
-      <<"Authorization">>  := <<"Bearer ", _/binary>>
+      <<"Authorization">> := <<"Bearer ", _/binary>>
    }
 }) ->
    serverless_api:return({ok, []});
@@ -28,10 +28,14 @@ api(#{
    <<"httpMethod">> := <<"POST">>,
    <<"path">> := <<"/oauth2/client">>,
    <<"headers">> := #{
-      <<"Authorization">>  := <<"Bearer ", _/binary>>
-   }
+      <<"Authorization">> := <<"Bearer ", Token/binary>>,
+      <<"content-type">> := <<"application/json", _/binary>>
+   },
+   <<"body">> := Json
 }) ->
-   serverless_api:return({ok, []});
+   serverless_api:return(
+      oauth2_client:create(Token, jsx:decode(Json, [return_maps]))
+   );
 
 api(#{
    <<"httpMethod">> := <<"DELETE">>,

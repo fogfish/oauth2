@@ -21,7 +21,7 @@ const Secret = () => (
           <p><Code>Access Key</Code></p>
 
           <H5>Secret Key</H5>
-          <p><Code>Access Key</Code></p>
+          <p><Code>Secret Key</Code></p>
         </Callout>
 
       </div>

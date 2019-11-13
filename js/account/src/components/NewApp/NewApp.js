@@ -1,10 +1,17 @@
-import React, { useState } from 'react'
-import { Dialog } from "@blueprintjs/core";
+import React, { useState, useCallback } from 'react'
+import { Dialog } from '@blueprintjs/core'
 import { KeyPair } from './KeyPair'
-import { Registrar } from './Registrar' 
+import { Registrar } from './Registrar'
+import { secureCreate } from '../OAuth2'
 
 const NewApp = ({ registrar, showRegistrar }) => {
-  const [app, updateApp] = useState({ identity: undefined, endpoint: undefined, security: 'public' })
+  const [app, update] = useState({ identity: undefined, redirect_uri: undefined, security: 'public' })
+  const commit = useCallback(
+    async () => {
+      const z = await secureCreate('https://pr15.auth.fog.fish/oauth2/client', app)
+    },
+    [app]
+  )
 
   return (
     <Dialog
@@ -14,8 +21,8 @@ const NewApp = ({ registrar, showRegistrar }) => {
       isOpen={registrar}
       onClose={() => showRegistrar(false)}
     >
-      {/* <Registrar app={app} update={updateApp} /> */}
-      <KeyPair />
+      <Registrar { ...{ app, update, commit }} />
+      {/* <KeyPair /> */}
     </Dialog>
   )
 }

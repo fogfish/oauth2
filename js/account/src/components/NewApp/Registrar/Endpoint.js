@@ -9,7 +9,7 @@ const Endpoint = ({ app, update }) => (
       type="input"
       required
       value={app.endpoint}
-      onChange={(e) => update({ ...app, endpoint: e.target.value })}
+      onChange={(e) => update({ ...app, redirect_uri: e.target.value })}
     />
   </Label>
 )
