@@ -22,7 +22,8 @@ init_per_suite(Config) ->
    os:putenv("PERMIT_AUDIENCE", "suite"),
    os:putenv("PERMIT_CLAIMS", "read=true&write=true"),
    {ok, _} = application:ensure_all_started(oauth2),
-   permit:create({iri, <<"org">>, <<"joe">>}, <<"secret">>, #{}),
+   IDP = base64url:encode(crypto:hash(md5, <<"joe@org">>)),
+   permit:create({iri, IDP, <<"joe@org">>}, <<"secret">>, #{}),
    Config.
 
 end_per_suite(_Config) ->
@@ -31,8 +32,9 @@ end_per_suite(_Config) ->
 %%
 %%
 code_exchange(_) ->
+   IDP = base64url:encode(crypto:hash(md5, <<"joe@org">>)),
    {ok, Code} = [either ||
-      permit:stateless({iri, <<"org">>, <<"joe">>}, <<"secret">>, 10, #{}),
+      permit:stateless({iri, IDP, <<"joe@org">>}, <<"secret">>, 10, #{}),
       oauth2_authorize:exchange_code(_, #{})
    ],
    #{
@@ -53,7 +55,7 @@ code_exchange(_) ->
    ,  <<"access_token">> := AccessToken
    ,  <<"expires_in">>   := _
    ,  <<"aud">>          := <<"suite">>
-   ,  <<"idp">>          := <<"org">>
+   ,  <<"idp">>          := IDP
    ,  <<"iss">>          := <<"https://example.com">>
    ,  <<"sub">>          := <<"joe@org">>
    ,  <<"exp">>          := _
@@ -62,8 +64,8 @@ code_exchange(_) ->
    {ok, #{
       <<"iss">> := <<"https://example.com">>
    ,  <<"aud">> := <<"suite">>
-   ,  <<"idp">> := <<"org">>
-   ,  <<"sub">> := {iri, <<"org">>, <<"joe">>}
+   ,  <<"idp">> := IDP
+   ,  <<"sub">> := {iri, IDP, <<"joe@org">>}
    ,  <<"exp">> := _
    ,  <<"tji">> := _
    ,  <<"rev">> := true
