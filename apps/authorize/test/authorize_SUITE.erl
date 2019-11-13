@@ -46,11 +46,12 @@ signup_public_client(_) ->
       ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=joe@org&secret=secret">>
       }
    ),
+   IDP = base64url:encode(crypto:hash(md5, <<"joe@org">>)),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
    ,  <<"aud">> := <<"oauth2">>
-   ,  <<"idp">> := <<"org">>
-   ,  <<"sub">> := {iri, <<"org">>, <<"joe">>}
+   ,  <<"idp">> := IDP
+   ,  <<"sub">> := {iri, IDP, <<"joe@org">>}
    ,  <<"exp">> := _
    ,  <<"tji">> := _
    }} = permit:validate( uri:q(<<"code">>, undefined, uri:new(Location)) ).
@@ -74,11 +75,12 @@ signin_public_client(_) ->
       ,  <<"body">> => <<"response_type=code&client_id=account@oauth2&access=joe@org&secret=secret">>
       }
    ),
+   IDP = base64url:encode(crypto:hash(md5, <<"joe@org">>)),
    {ok, #{
       <<"iss">> := <<"https://example.com">>
    ,  <<"aud">> := <<"oauth2">>
-   ,  <<"idp">> := <<"org">>
-   ,  <<"sub">> := {iri, <<"org">>, <<"joe">>}
+   ,  <<"idp">> := IDP
+   ,  <<"sub">> := {iri, IDP, <<"joe@org">>}
    ,  <<"exp">> := _
    ,  <<"tji">> := _
    }} = permit:validate( uri:q(<<"code">>, undefined, uri:new(Location)) ).
