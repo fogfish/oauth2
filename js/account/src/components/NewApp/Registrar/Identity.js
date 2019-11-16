@@ -9,8 +9,8 @@ const Identity = ({ app, update }) => (
       type="input"
       autoFocus
       required
-      value={app.identity}
-      onChange={(e) => update({ ...app, identity: e.target.value })}
+      value={app.app}
+      onChange={(e) => update({ ...app, app: e.target.value })}
     />
   </Label>
 )

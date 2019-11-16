@@ -1,6 +1,12 @@
 @import "../node_modules/dress-code/dist/css/dress-code.min.css";
 @import "../node_modules/@blueprintjs/core/lib/css/blueprint.css";
 
+table.bp3-html-table th,
+table.bp3-html-table td
+{
+  vertical-align: middle;
+}
+
 .dc-row
 {
   margin-top: 18px; 

@@ -10,9 +10,12 @@ const OAUTH2_FLOW_TYPE = process.env.REACT_APP_OAUTH2_FLOW_TYPE
 const OAUTH2_SCOPE = process.env.REACT_APP_OAUTH2_SCOPE
 
 //
-const PENDING = 'pending'
-const FAILURE = 'failure'
-const SUCCESS = 'success'
+export const UNKNOWN = 'unknown'
+export const PENDING = 'pending'
+export const FAILURE = 'failure'
+export const SUCCESS = 'success'
+
+export const unknown = () => ({ status: UNKNOWN, error: undefined })
 
 //
 // 
@@ -163,17 +166,16 @@ const accessTokenExchange = async oauth2 => (
 
 const jsonify = contentType => async http => {
   if (http.status >= 200 && http.status < 300) {
-    return contentType === 'application/json' ? http.json() : http.text()
+      return contentType === 'application/json' ? http.json() : http.text()
   } else {
     const error = await http.json()
     throw new Issue(http, error)
   }
 }
 
-
-
 //
 // Network I/O
+//
 export const secureIO = (url, { headers = {}, ...spec }) => 
   fetch(
     url, 
@@ -188,6 +190,7 @@ export const secureIO = (url, { headers = {}, ...spec }) =>
   )
     .catch(recoverIncorrectCORS)
     .then(jsonify(headers['Accept']))
+    .catch(recoverIncorrectJSON)
 
 
 const recoverIncorrectCORS = (error) => {
@@ -197,6 +200,16 @@ const recoverIncorrectCORS = (error) => {
     throw new Issue(
       {status: 500},
       {title: 'Unable to load remote resource due to access control check'},
+    )
+  }
+  throw error
+}
+
+const recoverIncorrectJSON = (error) => {
+  if (error instanceof SyntaxError) {
+    throw new Issue(
+      {status: 500},
+      {title: error.message},
     )
   }
   throw error
@@ -233,4 +246,159 @@ export class Issue extends Error {
     this.title = json.title
     this.details = json.details
   }
+}
+
+//
+// Hooks
+//
+export const WhileIO = (Loading, Recover, Component) => ({status, ...props}) => {
+  if (status.status === PENDING) {
+    return (!Loading ? null : <Loading status={status} {...props} />)
+  }
+
+  if (status.status === FAILURE) {
+    return (!Recover ? null : <Recover status={status} {...props} />)
+  }
+
+  return <Component status={status} {...props} />
+}
+
+//
+export const useSecureLookup = (url, monoid = (_, x) => x) => { 
+  const [endpoint, sequence] = useState(url)
+  const [state, updateState] = useState()
+  const [status, updateStatus] = useState({
+    status: endpoint ? PENDING : UNKNOWN,
+    error: undefined,
+  })
+
+  useEffect(() => {
+    let effectMounted = true
+
+    const effect = async () => {
+      updateStatus({ status: PENDING, error: undefined })
+
+      try {
+        const content = await secureLookup(endpoint)
+        if (!effectMounted) return
+        updateState(monoid(state, content))
+        updateStatus({ status: SUCCESS, error: undefined })
+      } catch (error) {
+        if (!effectMounted) return
+        updateStatus({ status: FAILURE, error })
+      }
+    }
+
+    endpoint && effect()
+    return () => { effectMounted = false }
+  }, [endpoint])
+
+  if (status.status === FAILURE && !(status.error instanceof Issue)) {
+    throw status.error
+  }
+
+  return [status, state, sequence]
+}
+
+//
+//
+const ioEffect = (eff, url, updateStatus, updateContent) => {
+  let effectMounted = true
+  const effect = async () => {
+    updateStatus({ status: PENDING, error: undefined })
+
+    try {
+      const content = await eff(url)
+      if (!effectMounted) return
+      updateContent(content)
+      updateStatus({ status: SUCCESS, error: undefined })
+    } catch (error) {
+      if (!effectMounted) return
+      updateStatus({ status: FAILURE, error })
+    }
+  }
+  url && effect()
+  return () => { effectMounted = false }
+}
+
+//
+export const useSecureRemove = (endpoint) => {
+  const [url, updateUrl] = useState(endpoint)
+  const [content, updateContent] = useState()
+  const [status, updateStatus] = useState({
+    status: endpoint ? PENDING : UNKNOWN,
+    error: undefined,
+  })
+
+  useEffect(() => {
+    ioEffect(secureRemove, url, updateStatus, updateContent)
+  }, [url])
+
+  return { status, updateStatus, content, url, updateUrl }
+}
+
+//
+export const useSecureCreate = (url, json) => {
+  const [state, updateState] = useState()
+  const [status, updateStatus] = useState({ status: PENDING, error: undefined })
+
+  useEffect(() => {
+    let effectMounted = true
+
+    const effect = async () => {
+      updateStatus({ status: PENDING, error: undefined })
+
+      try {
+        const content = await secureCreate(url, json)
+        if (!effectMounted) return
+        updateState(content)
+        updateStatus({ status: SUCCESS, error: undefined })
+      } catch (error) {
+        if (!effectMounted) return
+        updateStatus({ status: FAILURE, error })
+      }
+    }
+
+    url && effect()
+    return () => { effectMounted = false }
+  }, [url, json])
+
+  if (status.status === FAILURE && !(status.error instanceof Issue)) {
+    throw status.error
+  }
+
+  return [status, state]
+}
+
+//
+export const useSecureUpdate = (url, json) => {
+  const [state, updateState] = useState()
+  const [status, updateStatus] = useState({ status: PENDING, error: undefined })
+
+  useEffect(() => {
+    let effectMounted = true
+
+    const effect = async () => {
+      updateStatus({ status: PENDING, error: undefined })
+
+      try {
+        const content = await secureUpdate(url, json)
+        if (!effectMounted) return
+        updateState(content)
+        updateStatus({ status: SUCCESS, error: undefined })
+      } catch (error) {
+        if (!effectMounted) return
+        updateStatus({ status: FAILURE, error })
+      }
+    }
+
+    url && effect()
+    return () => { effectMounted = false }
+  }, [url, json])
+
+  if (status.status === FAILURE && !(status.error instanceof Issue)) {
+    throw status.error
+  }
+
+  return [status, state]
 }

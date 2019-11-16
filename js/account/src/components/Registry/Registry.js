@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { Card, H2, Button, Intent, Spinner } from '@blueprintjs/core'
-import { secureLookup } from '../OAuth2'
+import { WhileIO, SUCCESS, PENDING, FAILURE, useSecureLookup, secureRemove } from '../OAuth2'
 import { Issue } from '../Issue'
 import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'
 import { NewApp } from '../NewApp'
-import { WhileIO, SUCCESS, PENDING, FAILURE } from '../WhileIO'
 
 //
 const Head = ({ status, showRegistrar }) => (
   <H2 style={{display: 'flex', justifyContent: 'space-between'}}>
     OAuth Apps
-    {status === SUCCESS &&
+    {status.status === SUCCESS &&
       <Button 
         minimal
         small
@@ -24,35 +23,23 @@ const Head = ({ status, showRegistrar }) => (
   </H2>
 )
 
-//
-const Registry = ({ apps }) => 
-  apps.length > 0 ? <RegistryList apps={apps} /> : <RegistryNone apps={apps} />
+// revoke={revoke}
+const Registry = (props) => 
+  props.registry.length > 0 ? <RegistryList { ...props } /> : <RegistryNone { ...props } />
 
 const IO = WhileIO(Spinner, Issue, Registry)
 
 const RegistryWithData = () => {
-  const [registry, updateRegistry] = useState({status: PENDING, apps: undefined})
+  const [status, registry] = useSecureLookup('https://pr15.auth.fog.fish/oauth2/client')
   const [registrar, showRegistrar] = useState(false)
-
-  useEffect(() => { lookup(updateRegistry) }, [])
 
   return (
     <Card>
-      <Head { ...registry } showRegistrar={showRegistrar} />
-      <IO { ...registry }/>
+      <Head status={status} showRegistrar={showRegistrar} />
+      <IO status={status} registry={registry} />
       <NewApp registrar={registrar} showRegistrar={showRegistrar} />
     </Card>)
 }
 
-const lookup = async (updateRegistry) => {
-  updateRegistry({status: PENDING, apps: undefined})
-  try {
-    const apps = await secureLookup('https://pr15.auth.fog.fish/oauth2/client')
-    console.log(apps)
-    updateRegistry({status: SUCCESS, apps})
-  } catch (error) {
-    updateRegistry({status: FAILURE, error})
-  }
-}
 
 export default RegistryWithData
