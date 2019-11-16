@@ -1,87 +1,49 @@
 @import "../node_modules/dress-code/dist/css/dress-code.min.css";
 @import "../node_modules/@blueprintjs/core/lib/css/blueprint.css";
 
+table.bp3-html-table
+{
+  width: 100%; 
+  border-collapse: collapse;
+}
+
+@media only screen and 
+(max-width: 980px),
+(min-device-width: 980px) and (max-device-width: 1024px)
+{
+  table.bp3-html-table,
+  table.bp3-html-table thead,
+  table.bp3-html-table tbody,
+  table.bp3-html-table th,
+  table.bp3-html-table td,
+  table.bp3-html-table tr { 
+    display: block; 
+  }
+  
+  table.bp3-html-table thead tr {
+    display: none;
+  }
+
+  table.bp3-html-table tbody tr:first-child td { 
+    border: none;
+    box-shadow: none;
+  }
+
+  table.bp3-html-table td:before {
+    display: block;
+    font-weight: bold;
+    content: attr(data-col);
+ }
+
+}
+
 table.bp3-html-table th,
 table.bp3-html-table td
 {
   vertical-align: middle;
 }
 
-.dc-row
+input
 {
-  margin-top: 18px; 
+  width: 100%;
 }
-
-.dc-tab__element--right
-{
-  float: right;
-}
-
-.dc-h2 .dc-btn
-{
-  margin-left: auto;
-}
-
-
-.dc-page 
-{
-   height: calc(100% - 81px);
-   overflow: auto;
-}
-
-.dc-tab--header
-{
-   margin-bottom: 24px;
-   display: flex;
-}
-
-.dc-tab__element--right
-{
-  margin-left: auto;
-  margin-right: 18px;
-}
-
-.dc-dialog 
-{
-   max-width: 420px;
-   margin: 40px auto;
-   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-   padding: inherit;
-   z-index: inherit;
-   transition: inherit;
-   transform: inherit;
-}
-
-.dc-dialog__content 
-{
-   margin: 0;
-}
-
-
-input 
-{
-   width: 100%;
-}
-
-
-.dc-tab__element--header
-{
-  font-weight: bold;
-  color: #333;
-}
-
-.dc-h2
-{
-   display: flex;
-}
-
-.dc-h2 button
-{
-  margin-left: auto;
-}
-
-.oauth-key
-{
-  word-wrap: break-word;
-}
-

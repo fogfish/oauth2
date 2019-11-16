@@ -1,18 +1,15 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState } from 'react'
 import { Dialog } from '@blueprintjs/core'
 import { KeyPair } from './KeyPair'
 import { Registrar } from './Registrar'
-import { secureCreate } from '../OAuth2'
+import { useSecureCreate, SUCCESS, unknown } from '../OAuth2'
+
+const emptyApp = { identity: undefined, redirect_uri: undefined, security: 'public' }
 
 const NewApp = ({ registrar, showRegistrar }) => {
-  const [app, update] = useState({ identity: undefined, redirect_uri: undefined, security: 'public' })
-  const commit = useCallback(
-    async () => {
-      const z = await secureCreate('https://pr15.auth.fog.fish/oauth2/client', app)
-    },
-    [app]
-  )
-
+  const [app, update] = useState(emptyApp)
+  const { status, updateStatus, content, commit } = useSecureCreate('https://pr15.auth.fog.fish/oauth2/client')
+  
   return (
     <Dialog
       icon="code"
@@ -21,24 +18,24 @@ const NewApp = ({ registrar, showRegistrar }) => {
       isOpen={registrar}
       onClose={() => showRegistrar(false)}
     >
-      <Registrar { ...{ app, update, commit }} />
-      {/* <KeyPair /> */}
+      {status.status !== SUCCESS
+        ? <Registrar 
+            status={status}
+            app={app}
+            update={update}
+            commit={() => commit(app)}
+          />
+        : <KeyPair { ...content} 
+            hide={() => {
+              showRegistrar(false)
+              commit(undefined)
+              updateStatus(unknown())
+              update(emptyApp)
+            }}
+          />
+      }
     </Dialog>
   )
 }
-
-/*
-(props) => (
-   <div>
-      {props.keys ? <KeyPair { ...props } /> : <Registrar { ...props } />}
-   </div>
-)
-*/
-
-/*
-const model = state => (state.app)
-const actions = dispatch => bindActionCreators({}, dispatch)
-export default connect(model, actions)(NewApp)
-*/
 
 export default NewApp

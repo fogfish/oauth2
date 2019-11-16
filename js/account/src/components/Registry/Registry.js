@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Card, H2, Button, Intent, Spinner } from '@blueprintjs/core'
-import { WhileIO, SUCCESS, PENDING, FAILURE, useSecureLookup, secureRemove } from '../OAuth2'
+import { WhileIO, SUCCESS, useSecureLookup } from '../OAuth2'
 import { Issue } from '../Issue'
 import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'
@@ -23,23 +23,21 @@ const Head = ({ status, showRegistrar }) => (
   </H2>
 )
 
-// revoke={revoke}
 const Registry = (props) => 
   props.registry.length > 0 ? <RegistryList { ...props } /> : <RegistryNone { ...props } />
 
 const IO = WhileIO(Spinner, Issue, Registry)
 
 const RegistryWithData = () => {
-  const [status, registry] = useSecureLookup('https://pr15.auth.fog.fish/oauth2/client')
+  const {status, content} = useSecureLookup('https://pr15.auth.fog.fish/oauth2/client')
   const [registrar, showRegistrar] = useState(false)
 
   return (
     <Card>
       <Head status={status} showRegistrar={showRegistrar} />
-      <IO status={status} registry={registry} />
+      <IO status={status} showRegistrar={showRegistrar} registry={content} />
       <NewApp registrar={registrar} showRegistrar={showRegistrar} />
     </Card>)
 }
-
 
 export default RegistryWithData

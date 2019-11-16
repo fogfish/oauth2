@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 
 //
 // Global OAuth2 configuration
@@ -49,9 +49,21 @@ export const signout = () => {
 
 //
 export const WhoIs = (Component) => {
-  // TODO: how to redefine memo when access token is updated
-  const whois = useMemo(() => (accessTokenStorage()))
+  const [whois, updateState] = useState({})
 
+  useEffect(() => {
+    let ref = setInterval(
+      () => {
+        const t = accessTokenStorage()
+        if (Object.keys(t).length !== 0) {
+          clearInterval(ref)
+          updateState(t)
+        }
+      },
+      500
+    )
+    return () => clearInterval(ref)    
+  }, [])
   return (<Component {...whois} />)
 }
 
@@ -264,51 +276,14 @@ export const WhileIO = (Loading, Recover, Component) => ({status, ...props}) => 
 }
 
 //
-export const useSecureLookup = (url, monoid = (_, x) => x) => { 
-  const [endpoint, sequence] = useState(url)
-  const [state, updateState] = useState()
-  const [status, updateStatus] = useState({
-    status: endpoint ? PENDING : UNKNOWN,
-    error: undefined,
-  })
-
-  useEffect(() => {
-    let effectMounted = true
-
-    const effect = async () => {
-      updateStatus({ status: PENDING, error: undefined })
-
-      try {
-        const content = await secureLookup(endpoint)
-        if (!effectMounted) return
-        updateState(monoid(state, content))
-        updateStatus({ status: SUCCESS, error: undefined })
-      } catch (error) {
-        if (!effectMounted) return
-        updateStatus({ status: FAILURE, error })
-      }
-    }
-
-    endpoint && effect()
-    return () => { effectMounted = false }
-  }, [endpoint])
-
-  if (status.status === FAILURE && !(status.error instanceof Issue)) {
-    throw status.error
-  }
-
-  return [status, state, sequence]
-}
-
 //
-//
-const ioEffect = (eff, url, updateStatus, updateContent) => {
+const ioEffect = (eff, updateStatus, updateContent) => {
   let effectMounted = true
   const effect = async () => {
     updateStatus({ status: PENDING, error: undefined })
 
     try {
-      const content = await eff(url)
+      const content = await eff()
       if (!effectMounted) return
       updateContent(content)
       updateStatus({ status: SUCCESS, error: undefined })
@@ -317,9 +292,35 @@ const ioEffect = (eff, url, updateStatus, updateContent) => {
       updateStatus({ status: FAILURE, error })
     }
   }
-  url && effect()
+  eff && effect()
   return () => { effectMounted = false }
 }
+
+
+//
+export const useSecureLookup = (endpoint, monoid = (_, x) => x) => { 
+  const [url, updateUrl] = useState(endpoint)
+  const [content, updateContent] = useState()
+  const [status, updateStatus] = useState({
+    status: endpoint ? PENDING : UNKNOWN,
+    error: undefined,
+  })
+  
+  useEffect(() => {
+    ioEffect(
+      !url ? undefined : () => secureLookup(url),
+      updateStatus,
+      x => updateContent(monoid(content, x)),
+    )
+  }, [url])
+
+  if (status.status === FAILURE && !(status.error instanceof Issue)) {
+    throw status.error
+  }
+
+  return { status, updateStatus, content, url, updateUrl }
+}
+
 
 //
 export const useSecureRemove = (endpoint) => {
@@ -331,74 +332,66 @@ export const useSecureRemove = (endpoint) => {
   })
 
   useEffect(() => {
-    ioEffect(secureRemove, url, updateStatus, updateContent)
+    ioEffect(
+      !url ? undefined : () => secureRemove(url),
+      updateStatus,
+      updateContent,
+    )
   }, [url])
+
+  if (status.status === FAILURE && !(status.error instanceof Issue)) {
+    throw status.error
+  }
 
   return { status, updateStatus, content, url, updateUrl }
 }
 
 //
-export const useSecureCreate = (url, json) => {
-  const [state, updateState] = useState()
-  const [status, updateStatus] = useState({ status: PENDING, error: undefined })
+export const useSecureCreate = (endpoint, json) => {
+  const [url, updateUrl] = useState(endpoint)
+  const [payload, commit] = useState(json)
+  const [content, updateContent] = useState()
+  const [status, updateStatus] = useState({
+    status: (endpoint && json) ? PENDING : UNKNOWN,
+    error: undefined,
+  })
 
   useEffect(() => {
-    let effectMounted = true
-
-    const effect = async () => {
-      updateStatus({ status: PENDING, error: undefined })
-
-      try {
-        const content = await secureCreate(url, json)
-        if (!effectMounted) return
-        updateState(content)
-        updateStatus({ status: SUCCESS, error: undefined })
-      } catch (error) {
-        if (!effectMounted) return
-        updateStatus({ status: FAILURE, error })
-      }
-    }
-
-    url && effect()
-    return () => { effectMounted = false }
-  }, [url, json])
+    ioEffect(
+      !(url && payload) ? undefined : () => secureCreate(url, payload),
+      updateStatus,
+      updateContent,
+    )
+  }, [url, payload])
 
   if (status.status === FAILURE && !(status.error instanceof Issue)) {
     throw status.error
   }
 
-  return [status, state]
+  return { status, updateStatus, content, url, updateUrl, commit }
 }
 
 //
-export const useSecureUpdate = (url, json) => {
-  const [state, updateState] = useState()
-  const [status, updateStatus] = useState({ status: PENDING, error: undefined })
+export const useSecureUpdate = (endpoint, json) => {
+  const [url, updateUrl] = useState(endpoint)
+  const [payload, commit] = useState(json)
+  const [content, updateContent] = useState()
+  const [status, updateStatus] = useState({
+    status: (endpoint && json) ? PENDING : UNKNOWN,
+    error: undefined,
+  })
 
   useEffect(() => {
-    let effectMounted = true
-
-    const effect = async () => {
-      updateStatus({ status: PENDING, error: undefined })
-
-      try {
-        const content = await secureUpdate(url, json)
-        if (!effectMounted) return
-        updateState(content)
-        updateStatus({ status: SUCCESS, error: undefined })
-      } catch (error) {
-        if (!effectMounted) return
-        updateStatus({ status: FAILURE, error })
-      }
-    }
-
-    url && effect()
-    return () => { effectMounted = false }
-  }, [url, json])
+    ioEffect(
+      !(url && json) ? undefined : () => secureUpdate(url, payload),
+      updateStatus,
+      updateContent,
+    )
+  }, [url, payload])
 
   if (status.status === FAILURE && !(status.error instanceof Issue)) {
     throw status.error
   }
 
-  return [status, state]
+  return { status, updateStatus, content, url, updateUrl, commit }
 }

@@ -16,12 +16,12 @@ const Item = ({ app, access, security, redirect_uri }) => {
     updateUrl(undefined)
   }
 
-  return (/*status.status === SUCCESS ? null :*/
+  return (status.status === SUCCESS ? null :
     <tr>
-      <td>{app}</td>
-      <td><Code>{access}</Code></td>
-      <td>{security}</td>
-      <td>{redirect_uri}</td>
+      <td data-col="Application">{app}</td>
+      <td data-col="Client ID"><Code>{access}</Code></td>
+      <td data-col="Security">{security}</td>
+      <td data-col="Redirect">{redirect_uri}</td>
       <td>
         <AnchorButton
           intent={Intent.DANGER}

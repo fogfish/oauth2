@@ -17,16 +17,16 @@ const oauth2 = {
   client_id: client_id || "account@oauth2", 
   state: state || ''
 }
-console.log(oauth2)
+
 const App = (props) => (
-      <Router hashType="noslash">
-        <React.Fragment>
-          <Route exact path="/" component={() => <SignIn { ...oauth2 } />} />
-          <Route exact path="/signup" component={() => <SignUp { ...oauth2} />} />
-          <Route exact path="/reset" component={() => <SecretReset { ...oauth2 } />} />
-          <Route exact path="/recover" component={() => <SecretRecover { ...oauth2 } />} />
-        </React.Fragment>
-      </Router>
+  <Router hashType="noslash">
+    <>
+      <Route exact path="/" component={() => <SignIn { ...oauth2 } />} />
+      <Route exact path="/signup" component={() => <SignUp { ...oauth2} />} />
+      <Route exact path="/reset" component={() => <SecretReset { ...oauth2 } />} />
+      <Route exact path="/recover" component={() => <SecretRecover { ...oauth2 } />} />
+    </>
+  </Router>
 )
 
 export default App

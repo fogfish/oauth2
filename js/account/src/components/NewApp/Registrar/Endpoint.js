@@ -8,7 +8,7 @@ const Endpoint = ({ app, update }) => (
       className={Classes.INPUT}
       type="input"
       required
-      value={app.endpoint}
+      defaultValue={app.redirect_uri}
       onChange={(e) => update({ ...app, redirect_uri: e.target.value })}
     />
   </Label>

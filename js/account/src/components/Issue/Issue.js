@@ -3,8 +3,6 @@ import { NonIdealState, Button, Intent } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
 import { authorize } from '../OAuth2'
 
-// TODO: recovery actions
-
 const Unauthorized = () => (
   <NonIdealState
     icon={IconNames.USER} 
