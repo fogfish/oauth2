@@ -4,15 +4,12 @@ import * as lambda from '@aws-cdk/aws-lambda'
 import * as iam from '@aws-cdk/aws-iam'
 import * as pure from 'aws-cdk-pure'
 import * as api from '@aws-cdk/aws-apigateway'
-
-const LAYER='erlang-serverless:4'
   
-export const Client = (): pure.IPure<api.LambdaIntegration> =>
+export const Client = (layers: lambda.ILayerVersion[]): pure.IPure<api.LambdaIntegration> =>
   pure.wrap(api.LambdaIntegration)(
-    pure.use({ layer: Layer(), role: Role()})
-      .flatMap(x => ({ lambda: Lambda(x.role, [x.layer]) }))
-      .yield('lambda')
+    Role().flatMap(x => Lambda(x, layers))
   )
+
 
 //
 const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lambda.Function> => {
@@ -36,13 +33,6 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
     }
   })
   return iaac(Client)
-}
-
-//
-const Layer = (): pure.IPure<lambda.ILayerVersion> => {
-  const iaac = pure.include(lambda.LayerVersion.fromLayerVersionArn)
-  const ClientLayer= (): string => `arn:aws:lambda:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:layer:${LAYER}`
-  return iaac(ClientLayer)
 }
 
 //

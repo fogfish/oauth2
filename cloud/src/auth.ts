@@ -5,16 +5,11 @@ import * as iam from '@aws-cdk/aws-iam'
 import * as pure from 'aws-cdk-pure'
 import * as api from '@aws-cdk/aws-apigateway'
 
-// TODO: global config
-const LAYER='erlang-serverless:4'
-
 // 
 //   
-export const Auth = (): pure.IPure<api.LambdaIntegration> =>
+export const Auth = (layers: lambda.ILayerVersion[]): pure.IPure<api.LambdaIntegration> =>
   pure.wrap(api.LambdaIntegration)(
-    pure.use({ layer: Layer(), role: Role()})
-      .flatMap(x => ({ lambda: Lambda(x.role, [x.layer]) }))
-      .yield('lambda')
+    Role().flatMap(x => Lambda(x, layers))
   )
 
 //
@@ -39,13 +34,6 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
     }
   })
   return iaac(Auth)
-}
-
-//
-const Layer = (): pure.IPure<lambda.ILayerVersion> => {
-  const iaac = pure.include(lambda.LayerVersion.fromLayerVersionArn)
-  const AuthLayer= (): string => `arn:aws:lambda:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:layer:${LAYER}`
-  return iaac(AuthLayer)
 }
 
 //

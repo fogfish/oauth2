@@ -1,5 +1,6 @@
 import * as cdk from '@aws-cdk/core'
 import * as pure from 'aws-cdk-pure'
+import * as lambda from '@aws-cdk/aws-lambda'
 import { staticweb, gateway } from 'aws-cdk-pure-hoc'
 import { Auth } from './auth'
 import { Token } from './token'
@@ -34,8 +35,22 @@ const api = staticweb.Gateway({
   siteRoot: 'api/oauth2/authorize',
 })
 
+//
+const Layer = (): pure.IPure<lambda.ILayerVersion> => {
+  const LAYER='erlang-serverless:4'
+  const iaac = pure.include(lambda.LayerVersion.fromLayerVersionArn)
+  const AuthLayer= (): string => `arn:aws:lambda:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:layer:${LAYER}`
+  return iaac(AuthLayer)
+}
+
+
 pure.join(oauth2,
-  pure.use({ api, auth: Auth(), token: Token(), client: Client() })
+  pure.use({ api, runtime: Layer() })
+    .flatMap(x => ({
+      auth: Auth([x.runtime]),
+      token: Token([x.runtime]),
+      client: Client([x.runtime])
+    }))
     .effect(x => {
       const oauth2 = x.api.root.getResource('oauth2')
       oauth2.addResource('signin').addMethod('POST', x.auth)
