@@ -6,8 +6,6 @@ import { Token } from './token'
 import { Client } from './client'
 import { DDB } from './storage'
 
-import * as apix from '@aws-cdk/aws-apigateway'
-
 //-----------------------------------------------------------------------------
 //
 // Config

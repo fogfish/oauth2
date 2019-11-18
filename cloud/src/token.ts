@@ -1,7 +1,3 @@
-// @doc
-//   Authorization Request endpoint(s)
-//   See https://tools.ietf.org/html/rfc6749
-//      Section 4.1.1.  Authorization Request
 import * as cdk from '@aws-cdk/core'
 import * as logs from '@aws-cdk/aws-logs'
 import * as lambda from '@aws-cdk/aws-lambda'
@@ -11,7 +7,6 @@ import * as api from '@aws-cdk/aws-apigateway'
 
 // TODO: global config
 const LAYER='erlang-serverless:4'
-
 
 // 
 //   
@@ -33,6 +28,7 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
     memorySize: 256,
     role,
     logRetention: logs.RetentionDays.FIVE_DAYS,
+    reservedConcurrentExecutions: 5,
     layers,
     environment: {
       'PERMIT_ISSUER': 'https://auth.fog.fish',
