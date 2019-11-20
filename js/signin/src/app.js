@@ -7,6 +7,7 @@ import SignIn from './components/SignIn'
 import SignUp from './components/SignUp'
 import { SecretReset } from 'components/SecretReset'
 import { SecretRecover } from 'components/SecretRecover'
+import { ThemeProvider } from 'emotion-theming'
 import queryString from 'query-string'
 import './app.css'
 
@@ -18,15 +19,22 @@ const oauth2 = {
   state: state || ''
 }
 
+const theme = {
+  breakpoints: ['480px', '768px', '1024px'],
+  space: [0, 4, 8, 16, 32, 64, 128, 256, 512],
+}
+
 const App = (props) => (
-  <Router hashType="noslash">
-    <>
-      <Route exact path="/" component={() => <SignIn { ...oauth2 } />} />
-      <Route exact path="/signup" component={() => <SignUp { ...oauth2} />} />
-      <Route exact path="/reset" component={() => <SecretReset { ...oauth2 } />} />
-      <Route exact path="/recover" component={() => <SecretRecover { ...oauth2 } />} />
-    </>
-  </Router>
+  <ThemeProvider theme={theme}>
+    <Router hashType="noslash">
+      <>
+        <Route exact path="/" component={() => <SignIn { ...oauth2 } />} />
+        <Route exact path="/signup" component={() => <SignUp { ...oauth2} />} />
+        <Route exact path="/reset" component={() => <SecretReset { ...oauth2 } />} />
+        <Route exact path="/recover" component={() => <SecretRecover { ...oauth2 } />} />
+      </>
+    </Router>
+  </ThemeProvider>
 )
 
 export default App

@@ -3,7 +3,7 @@ import { Button, Intent } from '@blueprintjs/core'
 import { Link } from 'react-router-dom'
 import { Dialog } from 'components/Dialog'
 import { KeyPair } from 'components/KeyPair'
-import { GitHub } from 'components/GitHub'
+// import { GitHub } from 'components/GitHub'
 
 const prefix = process.env.REACT_APP_PREFIX || ''
 
@@ -20,6 +20,9 @@ const Actions = () => (
   </>
 )
 
+/*
+  TODO: Enable GitHub login feature
+        <Dialog ... Links={Links} />
 const Links = props => (
   <>
     {window.env.GITHUB &&
@@ -27,6 +30,7 @@ const Links = props => (
     }
   </>
 )
+*/
 
 const SignIn = props => (
   <Dialog
@@ -34,7 +38,6 @@ const SignIn = props => (
     title="Sign In"
     url={`${prefix}/oauth2/signin`}
     Actions={Actions}
-    Links={Links}
   >
     {window.env.KEYPAIR && 
       <KeyPair { ...props } />  

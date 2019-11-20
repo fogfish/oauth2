@@ -4,10 +4,11 @@
   "private": true,
   "dependencies": {
     "@blueprintjs/core": "^3.19.1",
+    "emotion-theming": "^10.0.19",
     "font-awesome": "^4.7.0",
-    "query-string": "^6.8.3",
-    "react": "^16.11.0",
-    "react-dom": "^16.11.0",
+    "query-string": "^6.9.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
     "react-router-dom": "^5.1.2",
     "reflexbox": "^4.0.6"
   },

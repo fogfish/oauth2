@@ -27,12 +27,12 @@ const Foot = ({ Actions, Links }) => (
 
 export const Dialog = ({ url, children, ...props }) => (
   <Flex alignItems="center" justifyContent="center">
-    <Box width={[1/2]} m={'2em'}>
+    <Box width={[1, 27/40, '35em']} m={['0em', '2em']}>
       <Card elevation={Elevation.FOUR} style={{padding: 0}}>
         <form className="form-group" action={url} method="post">
-          <Box p={'2em'}>
+          <Box p={['2em', '2em']}>
             <Head { ...props } />
-            <Box mt={'3em'}>{children}</Box>
+            <Box mt={['3em', '3em']}>{children}</Box>
           </Box>
           <Foot { ...props } />
         </form>
