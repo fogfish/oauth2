@@ -1,5 +1,10 @@
-@import "../node_modules/dress-code/dist/css/dress-code.min.css";
 @import "../node_modules/@blueprintjs/core/lib/css/blueprint.css";
+
+body
+{
+   background: #F5F8FA;
+   margin: 0;
+}
 
 table.bp3-html-table
 {

@@ -10,12 +10,23 @@ const OAUTH2_FLOW_TYPE = process.env.REACT_APP_OAUTH2_FLOW_TYPE
 const OAUTH2_SCOPE = process.env.REACT_APP_OAUTH2_SCOPE
 
 //
-export const UNKNOWN = 'unknown'
-export const PENDING = 'pending'
-export const FAILURE = 'failure'
-export const SUCCESS = 'success'
-
-export const unknown = () => ({ status: UNKNOWN, error: undefined })
+// Sum Types to define IO status
+//
+class IO {}
+export class UNKNOWN extends IO {}
+export class PENDING extends IO {}
+export class FAILURE extends IO {
+  constructor(reason) {
+    super()
+    this.reason = reason
+  }
+}
+export class SUCCESS extends IO {
+  constructor(content) {
+    super()
+    this.content = content
+  }
+}
 
 //
 // 
@@ -48,6 +59,7 @@ export const signout = () => {
 }
 
 //
+// HoC: provides token details to other Component
 export const WhoIs = (Component) => {
   const [whois, updateState] = useState({})
 
@@ -70,7 +82,7 @@ export const WhoIs = (Component) => {
 //
 //
 export const useOAuth2 = () => {
-  const [status, updateStatus] = useState({ status: PENDING, error: undefined })
+  const [status, updateStatus] = useState(new PENDING())
 
   useEffect(() => {
     accessToken(updateStatus)
@@ -82,31 +94,31 @@ export const useOAuth2 = () => {
 //
 //
 const accessToken = async (updateStatus) => {
-  updateStatus({ status: PENDING, error: undefined })
+  updateStatus(new PENDING())
   const oauth2 = decode(window.location.search.substring(1))
 
   window.history.replaceState({}, document.title, window.location.pathname + window.location.hash)
 
   if (oauth2.error) {
-    updateStatus({ status: FAILURE, error: oauth2.error })
+    updateStatus(new FAILURE(oauth2.error))
   } else if (oauth2.access_token) {
     const token = accessTokenImplicit(oauth2)
     !isValidToken(token)
-      ? updateStatus({ status: FAILURE, error: tokenIssue(token) })
+      ? updateStatus(new FAILURE(tokenIssue(token)))
       : refresh(token, updateStatus)
   } else if (oauth2.code) {
     try {
       const token = await accessTokenExchange(oauth2)
       !isValidToken(token)
-        ? updateStatus({ status: FAILURE, error: tokenIssue(token) })
+        ? updateStatus(new FAILURE(tokenIssue(token)))
         : refresh(token, updateStatus)
     } catch (e) {
-      updateStatus({ status: FAILURE, error: e })
+      updateStatus(new FAILURE(e))
     }
   } else {
     const token = accessTokenStorage()
     !isValidToken(token)
-      ? updateStatus({ status: FAILURE, error: tokenIssue(token) })
+      ? updateStatus(new FAILURE(tokenIssue(token)))
       : refresh(token, updateStatus) 
   }
 }
@@ -114,8 +126,8 @@ const accessToken = async (updateStatus) => {
 const refresh = ({ expires }, updateStatus) => {
   const now = +new Date()
   const timeout = Math.min(expires - now, 15 * 86400 * 1000)
-  setTimeout(() => updateStatus({ status: FAILURE, error: 'expired'}), timeout)
-  updateStatus({ status: SUCCESS, error: undefined })
+  setTimeout(() => updateStatus(new FAILURE('expired')), timeout)
+  updateStatus(new SUCCESS({}))
 }
 
 //
@@ -264,12 +276,16 @@ export class Issue extends Error {
 // Hooks
 //
 export const WhileIO = (Loading, Recover, Component) => ({status, ...props}) => {
-  if (status.status === PENDING) {
+  if (status instanceof PENDING) {
     return (!Loading ? null : <Loading status={status} {...props} />)
   }
 
-  if (status.status === FAILURE) {
+  if (status instanceof FAILURE) {
     return (!Recover ? null : <Recover status={status} {...props} />)
+  }
+
+  if (status instanceof SUCCESS) {
+    return <Component { ...status } {...props} />
   }
 
   return <Component status={status} {...props} />
@@ -277,121 +293,85 @@ export const WhileIO = (Loading, Recover, Component) => ({status, ...props}) => 
 
 //
 //
-const ioEffect = (eff, updateStatus, updateContent) => {
+const ioEffect = (eff, updateStatus) => {
   let effectMounted = true
   const effect = async () => {
-    updateStatus({ status: PENDING, error: undefined })
+    updateStatus(new PENDING())
 
     try {
       const content = await eff()
       if (!effectMounted) return
-      updateContent(content)
-      updateStatus({ status: SUCCESS, error: undefined })
+      updateStatus(new SUCCESS(content))
     } catch (error) {
       if (!effectMounted) return
-      updateStatus({ status: FAILURE, error })
+      updateStatus(new FAILURE(error))
     }
   }
   eff && effect()
   return () => { effectMounted = false }
 }
 
-
 //
-export const useSecureLookup = (endpoint, monoid = (_, x) => x) => { 
-  const [url, updateUrl] = useState(endpoint)
-  const [content, updateContent] = useState()
-  const [status, updateStatus] = useState({
-    status: endpoint ? PENDING : UNKNOWN,
-    error: undefined,
-  })
-  
-  useEffect(() => {
-    ioEffect(
-      !url ? undefined : () => secureLookup(url),
-      updateStatus,
-      x => updateContent(monoid(content, x)),
-    )
-  }, [url])
-
-  if (status.status === FAILURE && !(status.error instanceof Issue)) {
-    throw status.error
+const maybePanic = (status) => {
+  if (status instanceof FAILURE && !(status.reason instanceof Issue)) {
+    throw status.reason
   }
-
-  return { status, updateStatus, content, url, updateUrl }
 }
 
+//
+export const useSecureLookup = (endpoint) => {
+  const [url, sequence] = useState(endpoint)
+  const [status, updateStatus] = useState(endpoint ? new PENDING() : new UNKNOWN())
+  const [attempt, updateAttempt] = useState(0)
+  const retry = () => updateAttempt(attempt + 1)
+  const effect = !url ? undefined : () => secureLookup(url)
+  
+  useEffect(() => ioEffect(effect, updateStatus), [url, attempt])
+  maybePanic(status)
+  return { status, retry, sequence }
+}
 
 //
 export const useSecureRemove = (endpoint) => {
-  const [url, updateUrl] = useState(endpoint)
-  const [content, updateContent] = useState()
-  const [status, updateStatus] = useState({
-    status: endpoint ? PENDING : UNKNOWN,
-    error: undefined,
-  })
+  const [url, sequence] = useState(endpoint)
+  const [status, updateStatus] = useState(endpoint ? new PENDING() : new UNKNOWN())
+  const [attempt, updateAttempt] = useState(0)
+  const retry = () => updateAttempt(attempt + 1)
+  const effect = !url ? undefined : () => secureRemove(url)
 
-  useEffect(() => {
-    ioEffect(
-      !url ? undefined : () => secureRemove(url),
-      updateStatus,
-      updateContent,
-    )
-  }, [url])
-
-  if (status.status === FAILURE && !(status.error instanceof Issue)) {
-    throw status.error
-  }
-
-  return { status, updateStatus, content, url, updateUrl }
+  useEffect(() => ioEffect(effect, updateStatus), [url, attempt])
+  maybePanic(status)
+  return { status, retry, sequence }
 }
 
 //
 export const useSecureCreate = (endpoint, json) => {
-  const [url, updateUrl] = useState(endpoint)
+  const [url, sequence] = useState(endpoint)
   const [payload, commit] = useState(json)
-  const [content, updateContent] = useState()
-  const [status, updateStatus] = useState({
-    status: (endpoint && json) ? PENDING : UNKNOWN,
-    error: undefined,
-  })
+  const [status, updateStatus] = useState((endpoint && json) ? new PENDING() : new UNKNOWN())
+  const [attempt, updateAttempt] = useState(0)
+  const retry = () => updateAttempt(attempt + 1)
+  const effect = !(url && payload) ? undefined : () => secureCreate(url, payload)
 
-  useEffect(() => {
-    ioEffect(
-      !(url && payload) ? undefined : () => secureCreate(url, payload),
-      updateStatus,
-      updateContent,
-    )
-  }, [url, payload])
+  useEffect(() => {!(url && payload) && updateStatus(new UNKNOWN())}, [payload, url])
+  useEffect(() => ioEffect(effect, updateStatus), [url, payload, attempt])
+  maybePanic(status)
 
-  if (status.status === FAILURE && !(status.error instanceof Issue)) {
-    throw status.error
-  }
-
-  return { status, updateStatus, content, url, updateUrl, commit }
+  return { status, retry, commit, sequence }
 }
 
 //
 export const useSecureUpdate = (endpoint, json) => {
-  const [url, updateUrl] = useState(endpoint)
+  const [url, sequence] = useState(endpoint)
   const [payload, commit] = useState(json)
-  const [content, updateContent] = useState()
-  const [status, updateStatus] = useState({
-    status: (endpoint && json) ? PENDING : UNKNOWN,
-    error: undefined,
-  })
+  const [status, updateStatus] = useState((endpoint && json) ? new PENDING() : new UNKNOWN())
+  const [attempt, updateAttempt] = useState(0)
+  const retry = () => updateAttempt(attempt + 1)
+  const effect = !(url && payload) ? undefined : () => secureUpdate(url, payload)
 
-  useEffect(() => {
-    ioEffect(
-      !(url && json) ? undefined : () => secureUpdate(url, payload),
-      updateStatus,
-      updateContent,
-    )
-  }, [url, payload])
+  useEffect(() => {!(url && payload) && updateStatus(new UNKNOWN())}, [payload, url])
+  useEffect(() => ioEffect(effect, updateStatus), [url, payload, attempt])
+  maybePanic(status)
 
-  if (status.status === FAILURE && !(status.error instanceof Issue)) {
-    throw status.error
-  }
-
-  return { status, updateStatus, content, url, updateUrl, commit }
+  return { status, retry, commit, sequence }
 }

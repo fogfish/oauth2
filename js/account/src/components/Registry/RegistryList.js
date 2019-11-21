@@ -1,22 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Code, AnchorButton, Intent, Icon } from '@blueprintjs/core'
 import { useSecureRemove, PENDING, SUCCESS, FAILURE, unknown } from '../OAuth2'
 
-const Item = ({ app, access, security, redirect_uri }) => {
-  // useSecureRemove hook allows to evaluate IO-effect sequentially
-  // updateUrl causes its re-evaluation if url is changes
-  // We need to handle gracefully degradation of IO
-  // Intermediate failure state caches previous failure and 
-  // resets the original IO to initial state
-  const { status, url, updateUrl, updateStatus } = useSecureRemove(undefined)
-  const [ failure, updateFailure ] = useState(status)
-  if (status.status === FAILURE && url !== undefined) {
-    updateFailure( status )
-    updateStatus(unknown())
-    updateUrl(undefined)
+const Item = ({ app, access, security, redirect_uri, revoke }) => {
+  const { status, retry, sequence } = useSecureRemove(undefined)
+  
+  if (status instanceof SUCCESS) {
+    revoke(access)
   }
 
-  return (status.status === SUCCESS ? null :
+  return (status.status instanceof SUCCESS ? null :
     <tr>
       <td data-col="Application">{app}</td>
       <td data-col="Client ID"><Code>{access}</Code></td>
@@ -26,14 +19,18 @@ const Item = ({ app, access, security, redirect_uri }) => {
         <AnchorButton
           intent={Intent.DANGER}
           minimal
-          loading={status.status === PENDING}
-          onClick={() => updateUrl(`https://pr15.auth.fog.fish/oauth2/client/${access}`)}
+          loading={status instanceof PENDING}
+          onClick={() =>
+            status instanceof FAILURE
+              ? retry()
+              : sequence(`https://pr15.auth.fog.fish/oauth2/client/${access}`)
+          }
         >
           revoke
         </AnchorButton>
       </td>
       <td>
-        {failure.status === FAILURE ? 
+        {status instanceof FAILURE ? 
           <Icon intent={Intent.DANGER} icon='warning-sign' /> : 
           <Icon icon='' />
         }
@@ -43,7 +40,7 @@ const Item = ({ app, access, security, redirect_uri }) => {
 }
 
 
-const RegistryList = ({ registry, revoke }) => (
+const RegistryList = ({ content, revoke }) => (
   <table className="bp3-html-table bp3-interactive" style={{width: '100%'}}>
     <thead>
       <tr>
@@ -56,7 +53,7 @@ const RegistryList = ({ registry, revoke }) => (
       </tr>
     </thead>
     <tbody>
-      {registry.map((x) => <Item key={x.access} {...x} revoke={revoke} />)}
+      {content.map((x) => <Item key={x.access} {...x} revoke={revoke}/>)}
     </tbody>
   </table>
 )

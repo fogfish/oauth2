@@ -29,14 +29,14 @@ const Unknown = ({ type, title }) => (
 )
 
 export default ({ status }) => {
-  switch (status.error.type) {
+  switch (status.reason.type) {
     case 'https://httpstatuses.com/401':
-      return (<Unauthorized {...status.error} />)
+      return (<Unauthorized { ...status.reason } />)
 
     case 'https://httpstatuses.com/404':
-      return (<NotFound {...status.error} />)
+      return (<NotFound { ...status.reason } />)
 
     default:
-      return (<Unknown {...status.error} />)
+      return (<Unknown { ...status.reason } />)
   }
 }

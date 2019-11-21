@@ -15,14 +15,14 @@ const Registrar = ({ status, ...props }) => (
         The authorization server issues the registered client a client identifier and client secret.
       </p>
 
-      {(status.status === FAILURE && status.error.details !== 'invalid_uri') &&
+      {(status instanceof FAILURE && status.reason.details !== 'invalid_uri') &&
         <Callout intent={Intent.DANGER}>
           Unable to register an application. Try again later.
         </Callout>
       }
       <Identity { ...props } />
 
-      {(status.status === FAILURE && status.error.details === 'invalid_uri') &&
+      {(status instanceof FAILURE && status.reason.details === 'invalid_uri') &&
         <Callout intent={Intent.DANGER}>
           Invalid <strong>Redirect Uri</strong>. The schema, host and path are required.
           <Code>https://example.com/path</Code>
@@ -37,7 +37,7 @@ const Registrar = ({ status, ...props }) => (
             <Button
               intent={Intent.PRIMARY}
               onClick={props.commit}
-              loading={status.status === PENDING}
+              loading={status instanceof PENDING}
             >
               Register
             </Button>

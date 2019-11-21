@@ -6,9 +6,9 @@ import { useSecureCreate, SUCCESS, unknown } from '../OAuth2'
 
 const emptyApp = { identity: undefined, redirect_uri: undefined, security: 'public' }
 
-const NewApp = ({ registrar, showRegistrar }) => {
+const NewApp = ({ registrar, showRegistrar, append }) => {
   const [app, update] = useState(emptyApp)
-  const { status, updateStatus, content, commit } = useSecureCreate('https://pr15.auth.fog.fish/oauth2/client')
+  const { status, commit } = useSecureCreate('https://pr15.auth.fog.fish/oauth2/client')
   
   return (
     <Dialog
@@ -18,18 +18,18 @@ const NewApp = ({ registrar, showRegistrar }) => {
       isOpen={registrar}
       onClose={() => showRegistrar(false)}
     >
-      {status.status !== SUCCESS
+      {!(status instanceof SUCCESS)
         ? <Registrar 
             status={status}
             app={app}
             update={update}
             commit={() => commit(app)}
           />
-        : <KeyPair { ...content} 
+        : <KeyPair { ...status.content} 
             hide={() => {
+              append({ access: status.content.access, ...app })
               showRegistrar(false)
               commit(undefined)
-              updateStatus(unknown())
               update(emptyApp)
             }}
           />
