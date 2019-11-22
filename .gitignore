@@ -19,6 +19,7 @@ relx.config
 
 ##
 ## used by ux
+.env.production
 *.map
 node_modules/
 build/

@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { Code, AnchorButton, Intent, Icon } from '@blueprintjs/core'
 import { useSecureRemove, PENDING, SUCCESS, FAILURE, unknown } from '../OAuth2'
+
+const OAUTH2_CLIENT = process.env.REACT_APP_OAUTH2_CLIENT
 
 const Item = ({ app, access, security, redirect_uri, revoke }) => {
   const { status, retry, sequence } = useSecureRemove(undefined)
@@ -23,7 +25,7 @@ const Item = ({ app, access, security, redirect_uri, revoke }) => {
           onClick={() =>
             status instanceof FAILURE
               ? retry()
-              : sequence(`https://pr15.auth.fog.fish/oauth2/client/${access}`)
+              : sequence(`${OAUTH2_CLIENT}/${access}`)
           }
         >
           revoke

@@ -16,8 +16,9 @@ all: compile
 compile: | node_modules .env.production
 	@PUBLIC_URL=${ROOT} npm run build
 
-.env.production:
-	@echo "# do nothing" | tee -a $@
+.env.production: .env
+	cp $^ $@
+	sed -i '' 's/SITE/${SITE}/g' $@
 
 node_modules:
 	@npm install 

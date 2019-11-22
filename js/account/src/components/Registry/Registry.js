@@ -6,6 +6,8 @@ import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'
 import { NewApp } from '../NewApp'
 
+const OAUTH2_CLIENT = process.env.REACT_APP_OAUTH2_CLIENT
+
 //
 const Head = ({ status, showRegistrar }) => (
   <H2 style={{display: 'flex', justifyContent: 'space-between'}}>
@@ -31,7 +33,7 @@ const Registry = (props) =>
 const IO = WhileIO(Spinner, Issue, Registry)
 
 const RegistryWithData = () => {
-  const { status } = useSecureLookup('https://pr15.auth.fog.fish/oauth2/client')
+  const { status } = useSecureLookup(OAUTH2_CLIENT)
   const [ registry, updateRegistry ] = useState(status)
   const [ registrar, showRegistrar ] = useState(false)
 

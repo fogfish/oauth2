@@ -4,11 +4,12 @@ import { KeyPair } from './KeyPair'
 import { Registrar } from './Registrar'
 import { useSecureCreate, SUCCESS, unknown } from '../OAuth2'
 
+const OAUTH2_CLIENT = process.env.REACT_APP_OAUTH2_CLIENT
 const emptyApp = { identity: undefined, redirect_uri: undefined, security: 'public' }
 
 const NewApp = ({ registrar, showRegistrar, append }) => {
   const [app, update] = useState(emptyApp)
-  const { status, commit } = useSecureCreate('https://pr15.auth.fog.fish/oauth2/client')
+  const { status, commit } = useSecureCreate(OAUTH2_CLIENT)
   
   return (
     <Dialog
