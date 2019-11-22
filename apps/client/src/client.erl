@@ -19,10 +19,12 @@ api(#{
    <<"httpMethod">> := <<"GET">>,
    <<"path">> := <<"/oauth2/client">>,
    <<"headers">> := #{
-      <<"Authorization">> := <<"Bearer ", _/binary>>
+      <<"Authorization">> := <<"Bearer ", Token/binary>>
    }
 }) ->
-   serverless_api:return({ok, []});
+   serverless_api:return(
+      oauth2_client:lookup(Token)
+   );
 
 api(#{
    <<"httpMethod">> := <<"POST">>,
@@ -41,11 +43,13 @@ api(#{
    <<"httpMethod">> := <<"DELETE">>,
    <<"path">> := <<"/oauth2/client/", _/binary>>,
    <<"headers">> := #{
-      <<"Authorization">>  := <<"Bearer ", _/binary>>
+      <<"Authorization">>  := <<"Bearer ", Token/binary>>
    },
-   <<"pathParameters">> := #{<<"id">> := _Id}
+   <<"pathParameters">> := #{<<"id">> := Id}
 }) ->
-   serverless_api:return({ok, []});
+   serverless_api:return(
+      oauth2_client:remove(Token, Id)
+   );
 
 api(Json) ->
    serverless:warning(Json),

@@ -7,7 +7,6 @@
 
 -compile({parse_transform, category}).
 -include_lib("include/oauth2.hrl").
--include_lib("common_test/include/ct.hrl").
 
 -export([
    signup/2
@@ -34,8 +33,6 @@ req_signup_auth(#{<<"Authorization">> := Digest}, Request) ->
    ];
 
 req_signup_auth(_, #authorization{client_id = Client} = Request) ->
-   ct:pal("==> ~p~n", [Request]),
-   ct:pal("==> ~p~n", [oauth2_client:public(Client)]),
    [either ||
       #{<<"redirect_uri">> := Redirect} <- oauth2_client:public(Client),
       req_signup(uri:new(Redirect), Request)
@@ -58,7 +55,6 @@ req_signup(Redirect, #authorization{
       {ok, Code} ->
          {ok, uri:q([{code, Code}, {state, State}], Redirect)};
       {error, Reason} ->
-         ct:pal("=[ r ]=> ~p~n", [Reason]),
          {ok, uri:q([{error, Reason}, {state, State}], Redirect)}
    end;
 

@@ -11,13 +11,15 @@
    public/1
 ,  confidential/1
 ,  create/2
+,  lookup/1
+,  remove/2
 ]).
 
 %%
 %% data types
 -type digest() :: binary().
 
--define(CLAIMS,  [<<"name">>, <<"redirect_uri">>, <<"security">>]).
+-define(CLAIMS,  [<<"app">>, <<"redirect_uri">>, <<"security">>]).
 
 %%
 %%
@@ -79,10 +81,11 @@ confidential(<<"Basic ", Digest/binary>>) ->
 %%
 create(Jwt, Claims) ->
    [either ||
-      #{<<"sub">> := Access} <- permit:validate(Jwt),
+      #{<<"sub">> := Master} <- permit:validate(Jwt),
       Spec <- claims(Claims),
-      {Access, Secret} <- permit:pubkey(Access, Spec),
-      cats:unit(#{access => Access, secret => Secret})
+      {Access, Secret} <- permit:pubkey(Master, Spec),
+      permit:as_access(Access),
+      cats:unit(#{access => _, secret => Secret})
    ].
 
 %%
@@ -128,3 +131,31 @@ is_none(Fun, Uri) ->
       _ ->
          {error, invalid_uri}
    end.
+
+%%
+lookup(Jwt) ->
+   [either ||
+      #{<<"sub">> := Master} <- permit:validate(Jwt),
+      permit_pubkey_db:keys(Master),
+      cats:unit(encode_clients(_))
+   ].
+
+encode_clients({PubKeys, _}) ->
+   [  Claim#{<<"access">> => erlang:element(2, permit:as_access(Access))}
+      || #pubkey{
+         id = Access,
+         claims = #{
+            <<"security">>     := _
+         ,  <<"redirect_uri">> := _
+         } = Claim
+      } <- PubKeys
+   ].
+
+%%
+remove(Jwt, Client) ->
+   [either ||
+      {iri, IDP, _} = Access <- permit:to_access(Client),
+      #{<<"sub">> := {iri, IDP, _} = Master} <- permit:validate(Jwt),
+      permit:revoke(Access),
+      cats:unit(#{access => Client})
+   ].

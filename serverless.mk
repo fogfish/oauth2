@@ -15,7 +15,7 @@ APP    := $(strip $(APP))
 VSN    ?= $(shell test -z "`git status --porcelain 2> /dev/null`" && git describe --tags --long 2> /dev/null | sed -e 's/-g[0-9a-f]*//' | sed -e 's/-0//' || echo "`git describe --abbrev=0 --tags 2> /dev/null`-a")
 TEST   ?= tests
 REBAR  ?= 3.9.1
-DOCKER  = fogfish/erlang-serverless:20.3
+DOCKER  = fogfish/erlang-serverless:22.1
 
 ## erlang runtime configration flags
 ROOT   = $(shell pwd)
