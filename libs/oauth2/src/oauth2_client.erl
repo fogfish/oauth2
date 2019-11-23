@@ -40,8 +40,8 @@ public({iri, _, <<"account@oauth2">>} = Access) ->
    of
       {error, not_found} ->
          public_default();
-      Result ->
-         Result
+      {ok, Client} ->
+         {ok, Client#{<<"redirect_uri">> => public_default_redirect()}}
    end;
 
 public({iri, _, _} = Access) ->
@@ -54,12 +54,15 @@ public_default() ->
    [either ||
       Spec =< #{
          <<"security">> => <<"public">>,
-         <<"redirect_uri">> => uri:s(uri:path("/oauth2/account", uri:new(permit_config:iss())))
+         <<"redirect_uri">> => public_default_redirect()
       },
       permit:to_access(<<"account@oauth2">>),
       permit:create(_, crypto:strong_rand_bytes(30), Spec),
       cats:unit(Spec)
    ].
+
+public_default_redirect() ->
+   uri:s(uri:path("/oauth2/account", uri:new(permit_config:iss()))).
 
 %%
 %%
