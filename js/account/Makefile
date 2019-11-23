@@ -19,7 +19,7 @@ compile: | node_modules .env.production
 
 .env.production: .env
 	cp $^ $@
-	sed -i '' 's/SITE/${SITE}/g' $@
+	sed -i 's/SITE/${SITE}/g' $@
 
 node_modules:
 	@npm install 
