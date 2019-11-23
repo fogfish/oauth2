@@ -4,9 +4,10 @@
 
 ##
 ## Global config
+APP  ?= account
 VSN  ?= $(shell test -z "`git status --porcelain`" && git describe --tags --long | sed -e 's/-g[0-9a-f]*//' | sed -e 's/-0//' || echo "`git describe --abbrev=0 --tags`-a")
 SITE ?= ${VSN}.auth.fog.fish
-ROOT ?= /oauth2/authorize
+ROOT ?= /oauth2/account
 BUILD = build
 
 ##
@@ -32,7 +33,7 @@ clean:
 dist-up:
 	@aws s3 sync ${BUILD} s3://${SITE}/ --delete
 	@find ${BUILD} -name "*.html" | cut -d'/' -f2- |\
-		xargs -L 1 -I {} aws s3 cp ${BUILD}/{} s3://${SITE}/{} --cache-control "max-age=20"
+		xargs -L 1 -I {} aws s3 cp ${BUILD}/{} s3://${SITE}/${APP}/{} --cache-control "max-age=20"
 
 dist-rm:
-	@aws s3 rm s3://${SITE}/ --recursive
+	@aws s3 rm s3://${SITE}/${APP} --recursive

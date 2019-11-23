@@ -2,15 +2,15 @@
   "name": "aws-oauth2",
   "version": "0.0.0",
   "dependencies": {
-    "@types/node": "12.12.11",
-    "aws-cdk-pure": "^1.2.6",
-    "aws-cdk-pure-hoc": "^1.5.4",
-    "@aws-cdk/core": "1.17.0",
-    "@aws-cdk/aws-iam": "1.17.0",
-    "@aws-cdk/aws-lambda": "1.17.0",
-    "@aws-cdk/aws-apigateway": "1.17.0",
-    "@aws-cdk/aws-logs": "1.17.0",
-    "@aws-cdk/aws-dynamodb": "1.17.0"
+    "@types/node": "12.12.12",
+    "aws-cdk-pure": "^1.2.7",
+    "aws-cdk-pure-hoc": "^1.6.0",
+    "@aws-cdk/core": "1.17.1",
+    "@aws-cdk/aws-iam": "1.17.1",
+    "@aws-cdk/aws-lambda": "1.17.1",
+    "@aws-cdk/aws-apigateway": "1.17.1",
+    "@aws-cdk/aws-logs": "1.17.1",
+    "@aws-cdk/aws-dynamodb": "1.17.1"
   },
   "scripts": {
     "clean": "rm -Rf cdk.out && rm -Rf node_modules"

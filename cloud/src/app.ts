@@ -32,7 +32,16 @@ const oauth2 = new cdk.Stack(app, `oauth2-api-${vsn}`, { ...stack })
 const api = staticweb.Gateway({
   domain: 'fog.fish',
   subdomain: `${vsn}.auth`,
-  siteRoot: 'api/oauth2/authorize',
+  sites: [
+    {
+      origin: 'signin',
+      site: 'api/oauth2/authorize'
+    },
+    {
+      origin: 'account',
+      site: 'api/oauth2/account'
+    }
+  ]
 })
 
 //
