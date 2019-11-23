@@ -5,14 +5,14 @@ import * as iam from '@aws-cdk/aws-iam'
 import * as pure from 'aws-cdk-pure'
 import * as api from '@aws-cdk/aws-apigateway'
   
-export const Client = (layers: lambda.ILayerVersion[]): pure.IPure<api.LambdaIntegration> =>
+export const Client = (host: string, layers: lambda.ILayerVersion[]): pure.IPure<api.LambdaIntegration> =>
   pure.wrap(api.LambdaIntegration)(
-    Role().flatMap(x => Lambda(x, layers))
+    Role().flatMap(x => Lambda(host, x, layers))
   )
 
 
 //
-const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lambda.Function> => {
+const Lambda = (host: string, role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lambda.Function> => {
   const iaac = pure.iaac(lambda.Function)
   const Client = (): lambda.FunctionProps => ({
     runtime: lambda.Runtime.PROVIDED,
@@ -25,7 +25,7 @@ const Lambda = (role: iam.IRole, layers: lambda.ILayerVersion[]): pure.IPure<lam
     layers,
     reservedConcurrentExecutions: 5,
     environment: {
-      'PERMIT_ISSUER': 'https://auth.fog.fish',
+      'PERMIT_ISSUER': `https://${host}`,
       'PERMIT_AUDIENCE': 'any',
       'PERMIT_CLAIMS': 'uid=true',
       'PERMIT_KEYPAIR': 'permit_config_ddb',

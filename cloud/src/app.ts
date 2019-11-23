@@ -14,6 +14,7 @@ import { DDB } from './storage'
 //-----------------------------------------------------------------------------
 const app = new cdk.App()
 const vsn = app.node.tryGetContext('vsn') || 'dev'
+const host = `${vsn}.auth.fog.fish`
 const stack = {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -56,9 +57,9 @@ const Layer = (): pure.IPure<lambda.ILayerVersion> => {
 pure.join(oauth2,
   pure.use({ api, runtime: Layer() })
     .flatMap(x => ({
-      auth: Auth([x.runtime]),
-      token: Token([x.runtime]),
-      client: Client([x.runtime])
+      auth: Auth(host, [x.runtime]),
+      token: Token(host, [x.runtime]),
+      client: Client(host, [x.runtime])
     }))
     .effect(x => {
       const oauth2 = x.api.root.getResource('oauth2')
