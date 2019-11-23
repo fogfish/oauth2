@@ -4,7 +4,7 @@
 
 ##
 ## Global config
-APP  ?= account
+APP  ?= signin
 VSN  ?= $(shell test -z "`git status --porcelain`" && git describe --tags --long | sed -e 's/-g[0-9a-f]*//' | sed -e 's/-0//' || echo "`git describe --abbrev=0 --tags`-a")
 SITE ?= ${VSN}.auth.fog.fish
 ROOT ?= /oauth2/authorize
