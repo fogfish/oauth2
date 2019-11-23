@@ -31,7 +31,7 @@ clean:
 ##
 ##
 dist-up:
-	@aws s3 sync ${BUILD} s3://${SITE}/ --delete
+	@aws s3 sync ${BUILD} s3://${SITE}/${APP}/ --delete
 	@find ${BUILD} -name "*.html" | cut -d'/' -f2- |\
 		xargs -L 1 -I {} aws s3 cp ${BUILD}/{} s3://${SITE}/${APP}/{} --cache-control "max-age=20"
 
