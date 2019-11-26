@@ -13,14 +13,26 @@ import { DDB } from './storage'
 //
 //-----------------------------------------------------------------------------
 const app = new cdk.App()
-const vsn = app.node.tryGetContext('vsn') || 'dev'
-const host = `${vsn}.auth.fog.fish`
+const vsn: string = app.node.tryGetContext('vsn') || 'latest'
+const host: string = `${vsn}.auth.fog.fish`
 const stack = {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION
   }
 }
+
+//-----------------------------------------------------------------------------
+//
+// Storage Backend
+//
+//-----------------------------------------------------------------------------
+const storage = (vsn.startsWith('pr') || vsn === 'latest')
+  ? `oauth2-db-${vsn}`
+  : `oauth2-db-live`
+
+const dev = new cdk.Stack(app, storage, { ...stack })
+const ddb = pure.join(dev, DDB())
 
 //-----------------------------------------------------------------------------
 //
@@ -53,13 +65,12 @@ const Layer = (): pure.IPure<lambda.ILayerVersion> => {
   return iaac(AuthLayer)
 }
 
-
 pure.join(oauth2,
   pure.use({ api, runtime: Layer() })
     .flatMap(x => ({
-      auth: Auth(host, [x.runtime]),
-      token: Token(host, [x.runtime]),
-      client: Client(host, [x.runtime])
+      auth: Auth(host, ddb, [x.runtime]),
+      token: Token(host, ddb, [x.runtime]),
+      client: Client(host, ddb, [x.runtime])
     }))
     .effect(x => {
       const oauth2 = x.api.root.getResource('oauth2')
@@ -80,10 +91,5 @@ pure.join(oauth2,
 // Storage
 //
 //-----------------------------------------------------------------------------
-const dev = new cdk.Stack(app, `oauth2-db-dev`, { ...stack })
-pure.join(dev, DDB())
-
-const live = new cdk.Stack(app, `oauth2-db-live`, { ...stack })
-pure.join(live, DDB())
 
 app.synth()
