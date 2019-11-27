@@ -39,3 +39,10 @@
 
 ,  refresh_token = undefined :: binary()
 }).
+
+%%
+%%
+-record(access_reset, {
+   client_id   = undefined    :: {iri, binary(), binary()}
+,  access      = undefined    :: {iri, binary(), binary()}
+}).

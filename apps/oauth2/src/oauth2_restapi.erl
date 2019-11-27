@@ -32,13 +32,13 @@ filters() ->
 endpoints() ->
    [
       %% https://tools.ietf.org/html/rfc6749
-      confidential_client_signin(),
-      confidential_client_signup(),
-      confidential_client_access_token(),
+      % confidential_client_signin(),
+      % confidential_client_signup(),
+      % confidential_client_access_token(),
 
-      public_client_signin(),
-      public_client_signup(),
-      public_client_access_token(),
+      % public_client_signin(),
+      % public_client_signup(),
+      % public_client_access_token(),
 
       %%
       public_client_password_reset(),
@@ -48,16 +48,16 @@ endpoints() ->
       introspect(),
       jwks(),
 
-      client_create(),
-      client_remove(),
-      client_lookup(),
+      % client_create(),
+      % client_remove(),
+      % client_lookup(),
 
       %%
       external_github(),
 
       restd_static:react_env_js("/oauth2/authorize", config()),
-      restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
-      restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
+      % restd_static:react("/oauth2/authorize", oauth2, 'oauth2-signin'),
+      % restd_static:react("/oauth2/account",   oauth2, 'oauth2-account')
    ].
 
 %%

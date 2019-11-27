@@ -20,7 +20,7 @@ api(#{
 } = Json) ->
    case dispatch(Json) of
       {ok, Redirect} ->
-         serverless_api:return({302, #{<<"Location">> => uri:s(Redirect)}, uri:s(Redirect)});
+         serverless_api:return({302, #{<<"Location">> => uri:s(Redirect)}, <<>>});
       {error, _} = Error ->
          serverless_api:return(Error)
    end;

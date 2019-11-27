@@ -4,6 +4,7 @@ import * as lambda from '@aws-cdk/aws-lambda'
 import { staticweb, gateway } from 'aws-cdk-pure-hoc'
 import { Auth } from './auth'
 import { Token } from './token'
+import { Reset } from './reset'
 import { Client } from './client'
 import { DDB } from './storage'
 
@@ -70,7 +71,8 @@ pure.join(oauth2,
     .flatMap(x => ({
       auth: Auth(host, ddb, [x.runtime]),
       token: Token(host, ddb, [x.runtime]),
-      client: Client(host, ddb, [x.runtime])
+      client: Client(host, ddb, [x.runtime]),
+      reset: Reset(host, ddb, [x.runtime]),
     }))
     .effect(x => {
       const oauth2 = x.api.root.getResource('oauth2')
@@ -78,6 +80,7 @@ pure.join(oauth2,
       oauth2.addResource('signup').addMethod('POST', x.auth)
       
       oauth2.addResource('token').addMethod('POST', x.token)
+      oauth2.addResource('reset').addMethod('POST', x.reset)
 
       const client = gateway.CORS(oauth2.addResource('client'))
       client.addMethod('GET', x.client)

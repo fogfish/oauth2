@@ -7,6 +7,7 @@
    signup/2
 ,  signin/2
 ,  token/2
+,  reset/2
 ]).
 
 %%
@@ -29,3 +30,10 @@ signin(Headers, Request) ->
 
 token(Headers, Request) ->
    oauth2_access:token(Headers, Request).
+
+%%
+%%
+-spec reset(#{}, binary()) -> datum:either(uri:uri()).
+
+reset(Headers, Request) ->
+   oauth2_access:reset(Headers, Request).
