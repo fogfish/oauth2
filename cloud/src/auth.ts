@@ -31,7 +31,9 @@ const Lambda = (host: string, db: ddb.Table, role: iam.IRole, layers: lambda.ILa
       'PERMIT_AUDIENCE': 'any',
       'PERMIT_CLAIMS': 'uid=true',
       'PERMIT_KEYPAIR': 'permit_config_ddb',
-      'PERMIT_STORAGE': `ddb+https://dynamodb.${cdk.Aws.REGION}.amazonaws.com:443/${db.tableName}`
+      'PERMIT_STORAGE': `ddb+https://dynamodb.${cdk.Aws.REGION}.amazonaws.com:443/${db.tableName}`,
+      'OAUTH2_EMAIL_SIGNATURE': 'Service',
+      'OAUTH2_EMAIL': 'auth@mobilana.mobi',
     }
   })
   return iaac(Auth)

@@ -47,6 +47,8 @@ const Role = (db: ddb.Table): pure.IPure<iam.IRole> => {
   const ReadWrite = (): iam.PolicyStatement => (
     new iam.PolicyStatement({
       actions: [
+        'dynamodb:PutItem',
+        'dynamodb:UpdateItem',
         'dynamodb:GetItem',
         'dynamodb:Query',
       ],
