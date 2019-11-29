@@ -7,10 +7,13 @@
 
 -compile({parse_transform, category}).
 -include_lib("include/oauth2.hrl").
+-include_lib("permit/src/permit.hrl").
+
 
 -export([
    signup/2
 ,  signin/2
+,  reset/2
 ,  exchange_code/2
 ]).
 
@@ -141,6 +144,60 @@ req_signin(Redirect, #authorization{
 
 req_signin(_, _) ->
    {error, invalid_request}.
+
+%%
+%%
+-spec reset(#{}, binary()) -> datum:either(#{}).
+
+reset(Headers, Request)
+ when is_binary(Request) ->
+   req_reset_auth(Headers, lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request))).
+
+req_reset_auth(#{<<"Authorization">> := Digest}, Request) ->
+   [either ||
+      #{
+         <<"client_jwt">> := Identity
+      } <- oauth2_client:confidential(Digest),
+      req_reset(Request#authorization{client_id = Identity})
+   ];
+
+req_reset_auth(_, #authorization{client_id = Client} = Request) ->
+   [either ||
+      oauth2_client:public(Client),
+      req_reset(Request)
+   ].
+
+req_reset(#authorization{client_id = Client, access = Access}) ->
+   [either ||
+      #pubkey{claims = Claims} <- permit:lookup(Access),
+      permit:update(Access, crypto:strong_rand_bytes(30), Claims),
+      permit:stateless(_, 3600, #{<<"aud">> => <<"oauth2">>, <<"app">> => <<"password">>}),
+      req_reset_link(Client, Access, _),
+      oauth2_email:password_reset(Access, _),
+      permit:as_access(Client),
+      cats:unit(
+         uri:q([{client_id, _}],
+            uri:path(<<"/oauth2/authorize">>, 
+               uri:new(permit_config:iss())
+            )
+         )
+      )
+   ].
+
+req_reset_link(Client, Access, Code) ->
+   [either ||
+      ClientId <- permit:as_access(Client),
+      AccessId <- permit:as_access(Access),
+      cats:unit(
+         uri:anchor(<<"recover">>,
+            uri:q([{client_id, ClientId}, {access, AccessId}, {code, Code}],
+               uri:path(<<"/oauth2/authorize">>, 
+                  uri:new(permit_config:iss())
+               )
+            )
+         )
+      )
+   ].
 
 %%
 %%

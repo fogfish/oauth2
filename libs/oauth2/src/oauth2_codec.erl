@@ -8,7 +8,6 @@
    decode/1
 ,  authorization/0
 ,  access_token/0
-,  access_reset/0
 ]).
 
 %%
@@ -50,18 +49,6 @@ access_token() ->
          client_id = iri()
       ,  username  = iri()
       ,  scope     = scope()
-      }
-   ).
-
-%%
-%%
--spec access_reset() -> lens:lens().
-
-access_reset() ->
-   labelled:lens(
-      #access_reset{
-         client_id = iri()
-      ,  access    = iri()
       }
    ).
 

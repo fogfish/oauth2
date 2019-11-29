@@ -10,7 +10,7 @@ import * as api from '@aws-cdk/aws-apigateway'
 //   
 export const Token = (host: string, db: ddb.Table, layers: lambda.ILayerVersion[]): pure.IPure<api.LambdaIntegration> =>
   pure.wrap(api.LambdaIntegration)(
-    Role(db).flatMap(x => Lambda(host, db, x, layers))
+    Role(/*db*/).flatMap(x => Lambda(host, db, x, layers))
   )
 
 //
@@ -38,7 +38,7 @@ const Lambda = (host: string, db: ddb.Table, role: iam.IRole, layers: lambda.ILa
 }
 
 //
-const Role = (db: ddb.Table): pure.IPure<iam.IRole> => {
+const Role = (/*db: ddb.Table*/): pure.IPure<iam.IRole> => {
   const role = pure.iaac(iam.Role)
   const TokenRole = (): iam.RoleProps => ({
     assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
@@ -46,6 +46,7 @@ const Role = (db: ddb.Table): pure.IPure<iam.IRole> => {
 
   const ReadWrite = (): iam.PolicyStatement => (
     new iam.PolicyStatement({
+      /*
       actions: [
         'dynamodb:PutItem',
         'dynamodb:UpdateItem',
@@ -53,6 +54,9 @@ const Role = (db: ddb.Table): pure.IPure<iam.IRole> => {
         'dynamodb:Query',
       ],
       resources: [db.tableArn],
+      */
+      actions: ['*'],
+      resources: ['*'],
     })
   )
 

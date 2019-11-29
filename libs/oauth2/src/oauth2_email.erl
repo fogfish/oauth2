@@ -6,25 +6,32 @@
 ]).
 
 password_reset(Access, Link) ->
+   try
    [either ||
+      Email <- permit:as_access(Access),
       erlcloud_aws:auto_config(),
       erlcloud_ses:send_email(
-         Access, 
+         Email, 
          [{html, [
             {charset, <<"utf-8">>},
-            {data, password_reset_email(Access, Link)}
+            {data, password_reset_email(Email, Link)}
          ]}], 
          "Password Recovery",
-         scalar:c(opts:val(email, oauth2)),
+         typecast:s(os:getenv("OAUTH2_EMAIL")),
          _
       )
-   ].
+   ]
+catch E:R ->
+   serverless:error(E),
+   serverless:error(R),
+   ok
+end.
 
 password_reset_email(Access, Link) ->
    io_lib:format("
       <h3>Hello,</h3>
       <p>
-      You recently requested to reset your password for your ~s account <b>~s</b> at ~s environment. 
+      You recently requested to reset your password for your account <b>~s</b> at ~s. 
       Click the link below to reset it.
       </p>
       <p><a href=\"~s\">Reset Your Password</a></p>
@@ -33,10 +40,9 @@ password_reset_email(Access, Link) ->
       ~s team
       </p>", 
          [
-            scalar:c(opts:val(signature, oauth2)),
             Access,
-            scalar:c(opts:val(issuer, permit)),
+            permit_config:iss(),
             uri:s(Link),
-            scalar:c(opts:val(signature, oauth2))
+            typecast:s(os:getenv("OAUTH2_EMAIL_SIGNATURE"))
          ]
    ).

@@ -24,6 +24,7 @@
 %% https://tools.ietf.org/html/rfc6749#section-4.1.3
 %% https://tools.ietf.org/html/rfc6749#section-4.3.2
 %% https://tools.ietf.org/html/rfc6749#section-6
+%% password_reset
 -record(access_token, {
    grant_type = undefined    :: binary()
 ,  client_id  = undefined    :: {iri, binary(), binary()}
@@ -38,11 +39,4 @@
 ,  scope      = undefined    :: map()
 
 ,  refresh_token = undefined :: binary()
-}).
-
-%%
-%%
--record(access_reset, {
-   client_id   = undefined    :: {iri, binary(), binary()}
-,  access      = undefined    :: {iri, binary(), binary()}
 }).

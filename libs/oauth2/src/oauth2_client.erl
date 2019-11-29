@@ -158,7 +158,7 @@ encode_clients({PubKeys, _}) ->
 remove(Jwt, Client) ->
    [either ||
       {iri, IDP, _} = Access <- permit:to_access(Client),
-      #{<<"sub">> := {iri, IDP, _} = Master} <- permit:validate(Jwt),
+      #{<<"sub">> := {iri, IDP, _}} <- permit:validate(Jwt),
       permit:revoke(Access),
       cats:unit(#{access => Client})
    ].

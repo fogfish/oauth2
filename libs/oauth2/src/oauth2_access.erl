@@ -10,7 +10,6 @@
 
 -export([
    token/2
-,  reset/2
 ]).
 
 %%
@@ -33,8 +32,8 @@ req_token_auth(#{<<"Authorization">> := Digest}, Request) ->
 req_token_auth(_, #access_token{client_id = Client} = Request) ->
    [either ||
       oauth2_client:public(Client),
-      req_token(Request),
-      cats:unit(maps:remove(<<"refresh_token">>, _))
+      req_token(Request)%,
+      % cats:unit(maps:remove(<<"refresh_token">>, _))
    ].
 
 req_token(#access_token{
@@ -122,54 +121,25 @@ req_token(#access_token{
       )
    ];
 
-req_token(_) ->
-   {error, invalid_request}.
-
-
-%%
-%%
--spec reset(#{}, binary()) -> datum:either(#{}).
-
-reset(Headers, Request)
- when is_binary(Request) ->
-   req_reset_auth(Headers, lens:get(oauth2_codec:access_reset(), oauth2_codec:decode(Request))).
-
-req_reset_auth(#{<<"Authorization">> := Digest}, Request) ->
+req_token(#access_token{
+   grant_type = <<"password_update">>
+,  client_id  = Client
+,  code       = Code
+,  password   = Secret
+}) ->
    [either ||
-      #{
-         <<"client_jwt">> := Identity
-      } <- oauth2_client:confidential(Digest),
-      req_reset(Request#access_reset{client_id = Identity})
+      permit:include(Code, #{<<"aud">> => <<"oauth2">>, <<"app">> => <<"password">>}),
+      cats:unit(lens:get(lens:at(<<"sub">>), _)),
+      Access <- permit:to_access(_),
+      #pubkey{claims = Claims} <- permit:lookup(Access),
+      permit:update(Access, Secret, Claims),
+      #pubkey{claims = #{<<"redirect_uri">> := Redirect}} <- permit:lookup(Client),
+      permit:stateless(Access, Secret, 3600, #{ %% TODO: configurable ttl 
+         <<"aud">> => <<"oauth2">>
+      ,  <<"app">> => base64url:encode(jsx:encode(Claims))
+      }),
+      cats:unit(uri:q([{code, _}], uri:new(Redirect)))
    ];
 
-req_reset_auth(_, #access_reset{client_id = Client} = Request) ->
-   [either ||
-      oauth2_client:public(Client),
-      req_reset(Request)
-   ].
-
-req_reset(#access_reset{client_id = Client, access = Access}) ->
-   [either ||
-      Ac <- permit:as_access(Access), 
-      Id <- permit:as_access(Client),
-      #pubkey{claims = Claims} <- permit:lookup(Access),
-      permit:update(Access, crypto:strong_rand_bytes(30), Claims),
-      permit:stateless(_, 3600, #{<<"aud">> => <<"oauth2">>}),
-      oauth2_email:password_reset(
-         Access,
-         uri:anchor(<<"recover">>,
-            uri:q([{client_id, Id}, {access, Ac}, {code, _}],
-               uri:path(<<"/oauth2/authorize">>, 
-                  uri:new(permit_config:iss())
-               )
-            )
-         )
-      ),
-      cats:unit(
-         uri:q([{client_id, Id}],
-            uri:path(<<"/oauth2/authorize">>, 
-               uri:new(permit_config:iss())
-            )
-         )
-      )
-   ].
+req_token(_) ->
+   {error, invalid_request}.
