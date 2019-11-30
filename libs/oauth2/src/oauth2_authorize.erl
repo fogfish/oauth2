@@ -13,7 +13,7 @@
 -export([
    signup/2
 ,  signin/2
-,  reset/2
+,  password/2
 ,  exchange_code/2
 ]).
 
@@ -147,27 +147,31 @@ req_signin(_, _) ->
 
 %%
 %%
--spec reset(#{}, binary()) -> datum:either(#{}).
+-spec password(#{}, binary()) -> datum:either(#{}).
 
-reset(Headers, Request)
+password(Headers, Request)
  when is_binary(Request) ->
-   req_reset_auth(Headers, lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request))).
+   req_password_auth(Headers, lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request))).
 
-req_reset_auth(#{<<"Authorization">> := Digest}, Request) ->
+req_password_auth(#{<<"Authorization">> := Digest}, Request) ->
    [either ||
       #{
          <<"client_jwt">> := Identity
       } <- oauth2_client:confidential(Digest),
-      req_reset(Request#authorization{client_id = Identity})
+      req_password(Request#authorization{client_id = Identity})
    ];
 
-req_reset_auth(_, #authorization{client_id = Client} = Request) ->
+req_password_auth(_, #authorization{client_id = Client} = Request) ->
    [either ||
       oauth2_client:public(Client),
-      req_reset(Request)
+      req_password(Request)
    ].
 
-req_reset(#authorization{client_id = Client, access = Access}) ->
+req_password(#authorization{
+   response_type = <<"password_reset">>
+,  client_id = Client
+,  access = Access
+}) ->
    [either ||
       #pubkey{claims = Claims} <- permit:lookup(Access),
       permit:update(Access, crypto:strong_rand_bytes(30), Claims),
@@ -182,7 +186,25 @@ req_reset(#authorization{client_id = Client, access = Access}) ->
             )
          )
       )
+   ];
+
+req_password(#authorization{
+   response_type = <<"password_recover">>
+,  client_id  = Client
+,  state      = Code
+,  secret     = Secret
+}) ->
+   [either ||
+      permit:include(Code, #{<<"aud">> => <<"oauth2">>, <<"app">> => <<"password">>}),
+      cats:unit(lens:get(lens:at(<<"sub">>), _)),
+      Access <- permit:to_access(_),
+      #pubkey{claims = Claims} <- permit:lookup(Access),
+      permit:update(Access, Secret, Claims),
+      #pubkey{claims = #{<<"redirect_uri">> := Redirect}} <- permit:lookup(Client),
+      exchange_code(Access, Secret, Claims),
+      cats:unit(uri:q([{code, _}], uri:new(Redirect)))
    ].
+
 
 req_reset_link(Client, Access, Code) ->
    [either ||
@@ -204,6 +226,13 @@ req_reset_link(Client, Access, Code) ->
 exchange_code(Token, Claims) ->
    %% TODO: configurable ttl
    permit:stateless(Token, 3600, #{
+      <<"aud">> => <<"oauth2">>
+   ,  <<"app">> => base64url:encode(jsx:encode(Claims))
+   }).
+
+exchange_code(Access, Secret, Claims) ->
+   %% TODO: configurable ttl
+   permit:stateless(Access, Secret, 3600, #{
       <<"aud">> => <<"oauth2">>
    ,  <<"app">> => base64url:encode(jsx:encode(Claims))
    }).

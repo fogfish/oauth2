@@ -23,12 +23,7 @@ api(#{
    } = Headers,
    <<"body">> := Request
 }) ->
-   case oauth2:token(Headers, Request) of
-      {ok, {uri, _, _} = Redirect} ->
-         serverless_api:return({302, #{<<"Location">> => uri:s(Redirect)}, <<>>});
-      Other ->
-         serverless_api:return(Other)
-   end;
+   serverless_api:return(oauth2:token(Headers, Request));
 
 api(Json) ->
    serverless:warning(Json),

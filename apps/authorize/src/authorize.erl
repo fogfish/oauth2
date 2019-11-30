@@ -49,13 +49,13 @@ dispatch(#{
    oauth2:signup(Headers, Request);
 
 dispatch(#{
-   <<"path">> := <<"/oauth2/reset">>,
+   <<"path">> := <<"/oauth2/password">>,
    <<"headers">> := #{
       <<"content-type">>  := <<"application/x-www-form-urlencoded", _/binary>>
    } = Headers,
    <<"body">> := Request
 }) ->
-   oauth2:reset(Headers, Request);
+   oauth2:password(Headers, Request);
 
 dispatch(Json) ->
    serverless:warning(Json),

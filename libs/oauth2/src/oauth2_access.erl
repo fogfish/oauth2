@@ -32,8 +32,8 @@ req_token_auth(#{<<"Authorization">> := Digest}, Request) ->
 req_token_auth(_, #access_token{client_id = Client} = Request) ->
    [either ||
       oauth2_client:public(Client),
-      req_token(Request)%,
-      % cats:unit(maps:remove(<<"refresh_token">>, _))
+      req_token(Request),
+      cats:unit(maps:remove(<<"refresh_token">>, _))
    ].
 
 req_token(#access_token{
@@ -119,26 +119,6 @@ req_token(#access_token{
             }
          )
       )
-   ];
-
-req_token(#access_token{
-   grant_type = <<"password_update">>
-,  client_id  = Client
-,  code       = Code
-,  password   = Secret
-}) ->
-   [either ||
-      permit:include(Code, #{<<"aud">> => <<"oauth2">>, <<"app">> => <<"password">>}),
-      cats:unit(lens:get(lens:at(<<"sub">>), _)),
-      Access <- permit:to_access(_),
-      #pubkey{claims = Claims} <- permit:lookup(Access),
-      permit:update(Access, Secret, Claims),
-      #pubkey{claims = #{<<"redirect_uri">> := Redirect}} <- permit:lookup(Client),
-      permit:stateless(Access, Secret, 3600, #{ %% TODO: configurable ttl 
-         <<"aud">> => <<"oauth2">>
-      ,  <<"app">> => base64url:encode(jsx:encode(Claims))
-      }),
-      cats:unit(uri:q([{code, _}], uri:new(Redirect)))
    ];
 
 req_token(_) ->

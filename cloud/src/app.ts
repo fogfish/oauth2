@@ -77,7 +77,7 @@ pure.join(oauth2,
       if (oauth2) {
         oauth2.addResource('signin').addMethod('POST', x.auth)
         oauth2.addResource('signup').addMethod('POST', x.auth)
-        oauth2.addResource('reset').addMethod('POST', x.auth)
+        oauth2.addResource('password').addMethod('POST', x.auth)
         
         oauth2.addResource('token').addMethod('POST', x.token)
 

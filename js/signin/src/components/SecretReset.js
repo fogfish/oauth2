@@ -17,7 +17,7 @@ export const SecretReset = ({ client_id }) => (
   <Dialog
     icon="fa-lock"
     title="Forgot Your Password ?"
-    url="/oauth2/reset"
+    url="/oauth2/password"
     Actions={Actions}
   >
     <p className="bp3-ui-text bp3-running-text">
@@ -26,6 +26,7 @@ export const SecretReset = ({ client_id }) => (
     </p>
     <AccessKey />
 
+    <input name="response_type" type="hidden" value="password_reset" />
     <input name="client_id" type="hidden" value={client_id} />
   </Dialog>
 )

@@ -14,24 +14,15 @@ export const SecretRecover = ({ client_id, code, access }) => (
   <Dialog
     icon="fa-key"
     title="Reset Password"
-    url="/oauth2/token"
+    url="/oauth2/password"
     Actions={Actions}
   >
     <p className="bp3-ui-text bp3-running-text">
       Create a new password for <b>{access}</b>
     </p>
-    <Label>
-      Password&nbsp;<span className="bp3-text-muted">required</span>
-      <input
-        className={Classes.INPUT}
-        id="password"
-        name="password"
-        type="password"
-        required
-      />
-    </Label>
-    <input name="grant_type" type="hidden" value="password_update" />
+    <SecretKey />
+    <input name="response_type" type="hidden" value="password_recover" />
     <input name="client_id" type="hidden" value={client_id} />
-    <input name="code" type="hidden" value={code} />
+    <input name="state" type="hidden" value={code} />
   </Dialog>
 )

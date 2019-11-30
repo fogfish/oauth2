@@ -6,7 +6,7 @@
 -export([
    signup/2
 ,  signin/2
-,  reset/2
+,  password/2
 ,  token/2
 ]).
 
@@ -26,10 +26,10 @@ signin(Headers, Request) ->
 
 %%
 %%
--spec reset(#{}, binary()) -> datum:either(uri:uri()).
+-spec password(#{}, binary()) -> datum:either(uri:uri()).
 
-reset(Headers, Request) ->
-   oauth2_authorize:reset(Headers, Request).
+password(Headers, Request) ->
+   oauth2_authorize:password(Headers, Request).
 
 %%
 %%
