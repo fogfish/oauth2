@@ -12,7 +12,10 @@ BUILD = build
 
 ##
 ##
-all: compile
+all: test compile
+
+test:
+	npm run lint
 
 compile: | node_modules .env.production
 	@PUBLIC_URL=${ROOT} npm run build

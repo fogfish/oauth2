@@ -1,7 +1,7 @@
 import React from 'react'
-import { Button, Intent, Label, Classes } from '@blueprintjs/core'
-import { SecretKey } from 'components/SecretKey'
-import { Dialog } from 'components/Dialog'
+import { Button, Intent } from '@blueprintjs/core'
+import SecretKey from 'components/SecretKey'
+import Dialog from 'components/Dialog'
 
 const Actions = () => (
   <>
@@ -10,7 +10,7 @@ const Actions = () => (
   </>
 )
 
-export const SecretRecover = ({ client_id, code, access }) => (
+const SecretRecover = ({ oauth2 }) => (
   <Dialog
     icon="fa-key"
     title="Reset Password"
@@ -18,11 +18,14 @@ export const SecretRecover = ({ client_id, code, access }) => (
     Actions={Actions}
   >
     <p className="bp3-ui-text bp3-running-text">
-      Create a new password for <b>{access}</b>
+      Create a new password for&nbsp;
+      <b>{oauth2.access}</b>
     </p>
     <SecretKey />
     <input name="response_type" type="hidden" value="password_recover" />
-    <input name="client_id" type="hidden" value={client_id} />
-    <input name="state" type="hidden" value={code} />
+    <input name="client_id" type="hidden" value={oauth2.clientId} />
+    <input name="state" type="hidden" value={oauth2.code} />
   </Dialog>
 )
+
+export default SecretRecover

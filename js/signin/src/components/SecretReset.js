@@ -1,8 +1,8 @@
 import React from 'react'
 import { Button, Intent } from '@blueprintjs/core'
 import { Link } from 'react-router-dom'
-import { Dialog } from 'components/Dialog'
-import { AccessKey } from 'components/AccessKey'
+import Dialog from 'components/Dialog'
+import AccessKey from 'components/AccessKey'
 
 const Actions = () => (
   <>
@@ -13,7 +13,7 @@ const Actions = () => (
   </>
 )
 
-export const SecretReset = ({ client_id }) => (
+const SecretReset = ({ oauth2 }) => (
   <Dialog
     icon="fa-lock"
     title="Forgot Your Password ?"
@@ -21,12 +21,16 @@ export const SecretReset = ({ client_id }) => (
     Actions={Actions}
   >
     <p className="bp3-ui-text bp3-running-text">
-      Type you <b>email</b> address to reset your password.
+      Type you&nbsp;
+      <b>email</b>
+      &nbsp;address to reset your password.
       We will send recovery instructions over email.
     </p>
     <AccessKey />
 
     <input name="response_type" type="hidden" value="password_reset" />
-    <input name="client_id" type="hidden" value={client_id} />
+    <input name="client_id" type="hidden" value={oauth2.clientId} />
   </Dialog>
 )
+
+export default SecretReset

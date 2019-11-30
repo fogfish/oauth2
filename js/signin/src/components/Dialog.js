@@ -4,39 +4,51 @@ import { Card, Elevation, Divider } from '@blueprintjs/core'
 
 const Head = ({ icon, title }) => (
   <h1 className="bp3-heading">
-    <i className={`fa ${icon}`} aria-hidden="true"></i>
-    &nbsp; &nbsp; {title}
+    <i className={`fa ${icon}`} aria-hidden="true" />
+    &nbsp; &nbsp;
+    {title}
   </h1>
 )
 
-const Foot = ({ Actions, Links }) => (
-  <Box p={'2em'} style={{backgroundColor: '#F5F8FA', borderTop: '1px solid #EBF1F5'}}>
-    <Flex justifyContent="space-between" mb={'1em'}>
-      <Actions />
+const FootLinks = (children) => (
+  <>
+    <Divider />
+    <Flex justifyContent="flex-end" mt="1em">
+      {children}
     </Flex>
-    {Links &&
-      <>
-        <Divider />
-        <Flex justifyContent="flex-end" mt={'1em'}>
-          <Links />
-        </Flex>
-      </>
-    }
-  </Box>  
+  </>
 )
 
-export const Dialog = ({ url, children, ...props }) => (
+const Foot = ({ Actions, Links }) => (
+  <Box p="2em" style={{ backgroundColor: '#F5F8FA', borderTop: '1px solid #EBF1F5' }}>
+    <Flex justifyContent="space-between" mb="1em">
+      <Actions />
+    </Flex>
+    {Links && <FootLinks>{Links}</FootLinks>}
+  </Box>
+)
+
+const Dialog = ({
+  icon,
+  title,
+  url,
+  Actions,
+  Links,
+  children,
+}) => (
   <Flex alignItems="center" justifyContent="center">
-    <Box width={[1, 27/40, '35em']} m={['0em', '2em']}>
-      <Card elevation={Elevation.FOUR} style={{padding: 0}}>
+    <Box width={[1, 27 / 40, '35em']} m={['0em', '2em']}>
+      <Card elevation={Elevation.FOUR} style={{ padding: 0 }}>
         <form className="form-group" action={url} method="post">
           <Box p={['2em', '2em']}>
-            <Head { ...props } />
+            <Head icon={icon} title={title} />
             <Box mt={['3em', '3em']}>{children}</Box>
           </Box>
-          <Foot { ...props } />
+          <Foot Actions={Actions} Links={Links} />
         </form>
       </Card>
     </Box>
   </Flex>
 )
+
+export default Dialog

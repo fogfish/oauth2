@@ -1,16 +1,18 @@
 import React from 'react'
 import { Label, Classes } from '@blueprintjs/core'
 
-export const AccessKey = () => (
+const AccessKey = () => (
   <Label>
-    Email&nbsp;<span className="bp3-text-muted">required</span>
+    Email&nbsp;
+    <span className="bp3-text-muted">required</span>
     <input
       className={Classes.INPUT}
       id="access"
       name="access"
       type="email"
-      autoFocus
       required
     />
   </Label>
 )
+
+export default AccessKey

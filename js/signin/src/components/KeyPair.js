@@ -1,13 +1,15 @@
 import React from 'react'
-import { AccessKey } from './AccessKey'
-import { SecretKey } from './SecretKey'
+import AccessKey from './AccessKey'
+import SecretKey from './SecretKey'
 
-export const KeyPair = ({ response_type, client_id, state }) => (
+const KeyPair = ({ oauth2 }) => (
   <div>
     <AccessKey />
     <SecretKey />
-    <input name="response_type" type="hidden" value={response_type}/>
-    <input name="client_id" type="hidden" value={client_id} />
-    <input name="state" type="hidden" value={state} />
+    <input name="response_type" type="hidden" value={oauth2.responseType} />
+    <input name="client_id" type="hidden" value={oauth2.clientId} />
+    <input name="state" type="hidden" value={oauth2.state} />
   </div>
 )
+
+export default KeyPair

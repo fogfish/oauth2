@@ -1,12 +1,15 @@
 import React from 'react'
 import { AnchorButton, Intent } from '@blueprintjs/core'
 
-export const GitHub = ({ client_id }) => (
+const GitHub = ({ clientId }) => (
   <AnchorButton
     intent={Intent.PRIMARY}
     minimal
-    href={`${window.env.GITHUB}&state=${client_id}`}
+    href={`${window.env.GITHUB}&state=${clientId}`}
   >
-    <i className="fa fa-github"></i>&nbsp;&nbsp;GitHub
+    <i className="fa fa-github" />
+    &nbsp;&nbsp;GitHub
   </AnchorButton>
 )
+
+export default GitHub

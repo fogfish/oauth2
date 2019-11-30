@@ -1,9 +1,10 @@
 import React from 'react'
 import { Label, Classes } from '@blueprintjs/core'
 
-export const SecretKey = () => (
+const SecretKey = () => (
   <Label>
-    Password&nbsp;<span className="bp3-text-muted">required</span>
+    Password&nbsp;
+    <span className="bp3-text-muted">required</span>
     <input
       className={Classes.INPUT}
       id="secret"
@@ -13,3 +14,5 @@ export const SecretKey = () => (
     />
   </Label>
 )
+
+export default SecretKey
