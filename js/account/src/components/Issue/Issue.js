@@ -5,24 +5,24 @@ import { authorize } from '../OAuth2'
 
 const Unauthorized = () => (
   <NonIdealState
-    icon={IconNames.USER} 
+    icon={IconNames.USER}
     title="Ops, Sorry!"
-    description={`Your session is expired!`}
+    description="Your session is expired!"
     action={<Button large intent={Intent.PRIMARY} onClick={authorize}>Please Sign-In!</Button>}
   />
 )
 
 const NotFound = () => (
-  <NonIdealState 
-    icon={IconNames.DOCUMENT} 
+  <NonIdealState
+    icon={IconNames.DOCUMENT}
     title="File Not Found!"
     description={<p className="bp3-text-large">Unable to find requested file.</p>}
   />
 )
 
 const Unknown = ({ type, title }) => (
-  <NonIdealState 
-    icon={IconNames.ERROR} 
+  <NonIdealState
+    icon={IconNames.ERROR}
     title="Ops, Sorry!"
     description={`Our server fails with '${title}' error. See details at ${type}.`}
   />
@@ -31,12 +31,12 @@ const Unknown = ({ type, title }) => (
 export default ({ status }) => {
   switch (status.reason.type) {
     case 'https://httpstatuses.com/401':
-      return (<Unauthorized { ...status.reason } />)
+      return (<Unauthorized />)
 
     case 'https://httpstatuses.com/404':
-      return (<NotFound { ...status.reason } />)
+      return (<NotFound />)
 
     default:
-      return (<Unknown { ...status.reason } />)
+      return (<Unknown type={status.reason.type} title={status.reason.title} />)
   }
 }

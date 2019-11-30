@@ -1,5 +1,11 @@
 import React from 'react'
-import { Navbar, Alignment, Icon, Tooltip, Intent } from '@blueprintjs/core'
+import {
+  Navbar,
+  Alignment,
+  Icon,
+  Tooltip,
+  Intent,
+} from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
 import { authorize, WhoIs } from 'components/OAuth2'
 

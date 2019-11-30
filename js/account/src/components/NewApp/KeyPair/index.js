@@ -1,1 +1,3 @@
-export { default as KeyPair } from './KeyPair'
+import KeyPair from './KeyPair'
+
+export default KeyPair

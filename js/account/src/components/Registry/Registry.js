@@ -7,7 +7,7 @@ import {
   Spinner,
 } from '@blueprintjs/core'
 import { WhileIO, SUCCESS, useSecureLookup } from '../OAuth2'
-import { Issue } from '../Issue'
+import Issue from '../Issue'
 import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'
 import NewApp from '../NewApp'

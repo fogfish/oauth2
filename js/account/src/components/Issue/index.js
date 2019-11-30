@@ -1,1 +1,3 @@
-export { default as Issue } from './Issue'
+import Issue from './Issue'
+
+export default Issue

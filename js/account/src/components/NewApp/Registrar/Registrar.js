@@ -1,12 +1,23 @@
 import React from 'react'
-import { Button, Classes,Intent, Callout, Code } from "@blueprintjs/core";
+import {
+  Button,
+  Classes,
+  Intent,
+  Callout,
+  Code,
+} from '@blueprintjs/core'
 import Identity from './Identity'
 import Endpoint from './Endpoint'
 import Security from './Security'
-import { PENDING, FAILURE } from '../../OAuth2';
+import { PENDING, FAILURE } from '../../OAuth2'
 
 
-const Registrar = ({ status, ...props }) => (
+const Registrar = ({
+  status,
+  commit,
+  app,
+  update,
+}) => (
   <>
     <div className={Classes.DIALOG_BODY}>
       <p>
@@ -15,33 +26,36 @@ const Registrar = ({ status, ...props }) => (
         The authorization server issues the registered client a client identifier and client secret.
       </p>
 
-      {(status instanceof FAILURE && status.reason.details !== 'invalid_uri') &&
-        <Callout intent={Intent.DANGER}>
-          Unable to register an application. Try again later.
-        </Callout>
-      }
-      <Identity { ...props } />
+      {(status instanceof FAILURE && status.reason.details !== 'invalid_uri')
+        && (
+          <Callout intent={Intent.DANGER}>
+            Unable to register an application. Try again later.
+          </Callout>
+        )}
+      <Identity app={app} update={update} />
 
-      {(status instanceof FAILURE && status.reason.details === 'invalid_uri') &&
-        <Callout intent={Intent.DANGER}>
-          Invalid <strong>Redirect Uri</strong>. The schema, host and path are required.
-          <Code>https://example.com/path</Code>
-        </Callout>
-      }
-      <Endpoint { ...props } />
-
-      <Security { ...props } />
+      {(status instanceof FAILURE && status.reason.details === 'invalid_uri')
+        && (
+          <Callout intent={Intent.DANGER}>
+            Invalid&nbsp;
+            <strong>Redirect Uri</strong>
+            .&nbsp;The schema, host and path are required.
+            <Code>https://example.com/path</Code>
+          </Callout>
+        )}
+      <Endpoint app={app} update={update} />
+      <Security app={app} update={update} />
     </div>
     <div className={Classes.DIALOG_FOOTER}>
-        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-            <Button
-              intent={Intent.PRIMARY}
-              onClick={props.commit}
-              loading={status instanceof PENDING}
-            >
-              Register
-            </Button>
-        </div>
+      <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+        <Button
+          intent={Intent.PRIMARY}
+          onClick={commit}
+          loading={status instanceof PENDING}
+        >
+          Register
+        </Button>
+      </div>
     </div>
   </>
 )
