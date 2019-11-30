@@ -3,12 +3,14 @@ import { Label, RadioGroup, Radio } from '@blueprintjs/core'
 
 const Security = ({ app, update }) => (
   <Label>
-    <b>Application Type</b>&nbsp;<span className="bp3-text-muted">required</span>
-    <RadioGroup 
+    <b>Application Type</b>
+    &nbsp;
+    <span className="bp3-text-muted">required</span>
+    <RadioGroup
       label=" "
-      inline={true}
+      inline
       selectedValue={app.security}
-      onChange={(e) => update({ ...app, security: e.target.value }) }
+      onChange={e => update({ ...app, security: e.target.value })}
     >
       <Radio label="Public" value="public" />
       <Radio label="Confidential" value="confidential" />

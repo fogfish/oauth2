@@ -1,1 +1,3 @@
-export { default as NewApp } from './NewApp'
+import NewApp from './NewApp'
+
+export default NewApp

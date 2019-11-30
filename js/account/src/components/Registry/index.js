@@ -1,1 +1,3 @@
-export { default as Registry } from './Registry'
+import Registry from './Registry'
+
+export default Registry

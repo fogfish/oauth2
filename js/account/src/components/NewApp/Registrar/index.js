@@ -1,1 +1,3 @@
-export { default as Registrar } from './Registrar'
+import Registrar from './Registrar'
+
+export default Registrar
