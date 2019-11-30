@@ -80,6 +80,7 @@ pure.join(oauth2,
         oauth2.addResource('password').addMethod('POST', x.auth)
         
         oauth2.addResource('token').addMethod('POST', x.token)
+        oauth2.addResource('introspect').addMethod('POST', x.token)
 
         const client = gateway.CORS(oauth2.addResource('client'))
         client.addMethod('GET', x.client)

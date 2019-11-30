@@ -41,8 +41,8 @@ endpoints() ->
       % public_client_access_token(),
 
       %%
-      public_client_password_reset(),
-      public_client_password_recover(),
+      % public_client_password_reset(),
+      % public_client_password_recover(),
 
       %% 
       introspect(),
