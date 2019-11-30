@@ -1,8 +1,0 @@
-##
-## spawn backing services required for oauth2 development
-version: '3'
-services:
-  aws-ddb:
-    build: ./ddb/
-    ports:
-      - "8000:8000"
