@@ -1,24 +1,23 @@
 ## @doc
 ##   static site deployment with AWS Gateway 
-.PHONY: all compile clean dist-up dist-rm
+.PHONY: all deps test clean dist dist-up dist-rm
 
 ##
 ## Global config
 APP  ?= signin
 VSN  ?= $(shell test -z "`git status --porcelain`" && git describe --tags --long | sed -e 's/-g[0-9a-f]*//' | sed -e 's/-0//' || echo "`git describe --abbrev=0 --tags`-a")
-SITE ?= ${VSN}.auth.fog.fish
+SITE ?= ${VSN}.${CONFIG_DOMAIN}
 ROOT ?= /oauth2/authorize
 BUILD = build
 
 ##
 ##
-all: test compile
+all: test
 
-test:
+deps: | node_modules
+
+test: deps
 	npm run lint
-
-compile: | node_modules .env.production
-	@PUBLIC_URL=${ROOT} npm run build
 
 .env.production:
 	@echo "# do nothing" | tee -a $@
@@ -32,6 +31,9 @@ clean:
 
 ##
 ##
+dist: deps .env.production
+	@PUBLIC_URL=${ROOT} npm run build
+
 dist-up:
 	@aws s3 sync ${BUILD} s3://${SITE}/${APP}/ --delete
 	@find ${BUILD} -name "*.html" | cut -d'/' -f2- |\

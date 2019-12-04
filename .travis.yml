@@ -1,17 +1,8 @@
+dist: bionic
+
 language: erlang
-dist: trusty
+otp_release:
+   - 22.1
 
 script: 
-   - make compile
    - make test
-   - ./rebar3 coveralls send
-
-otp_release:
-   - 20.0
-   - 20.1
-
-addons:
-  apt:
-    packages:
-      - openssl	
-
