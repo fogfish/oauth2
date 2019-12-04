@@ -5,12 +5,13 @@ import * as lambda from '@aws-cdk/aws-lambda'
 import * as iam from '@aws-cdk/aws-iam'
 import * as pure from 'aws-cdk-pure'
 import * as api from '@aws-cdk/aws-apigateway'
+import * as permit from './permit' 
 
 // 
 //   
 export const Token = (host: string, db: ddb.Table, layers: lambda.ILayerVersion[]): pure.IPure<api.LambdaIntegration> =>
   pure.wrap(api.LambdaIntegration)(
-    Role(/*db*/).flatMap(x => Lambda(host, db, x, layers))
+    Role(db).flatMap(x => Lambda(host, db, x, layers))
   )
 
 //
@@ -29,7 +30,7 @@ const Lambda = (host: string, db: ddb.Table, role: iam.IRole, layers: lambda.ILa
     environment: {
       'PERMIT_ISSUER': `https://${host}`,
       'PERMIT_AUDIENCE': 'any',
-      'PERMIT_CLAIMS': 'uid=true',
+      'PERMIT_CLAIMS': '',
       'PERMIT_KEYPAIR': 'permit_config_ddb',
       'PERMIT_STORAGE': `ddb+https://dynamodb.${cdk.Aws.REGION}.amazonaws.com:443/${db.tableName}`
     }
@@ -38,27 +39,14 @@ const Lambda = (host: string, db: ddb.Table, role: iam.IRole, layers: lambda.ILa
 }
 
 //
-const Role = (/*db: ddb.Table*/): pure.IPure<iam.IRole> => {
+const Role = (db: ddb.Table): pure.IPure<iam.IRole> => {
   const role = pure.iaac(iam.Role)
   const TokenRole = (): iam.RoleProps => ({
     assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
   })
 
-  const ReadWrite = (): iam.PolicyStatement => (
-    new iam.PolicyStatement({
-      /*
-      actions: [
-        'dynamodb:PutItem',
-        'dynamodb:UpdateItem',
-        'dynamodb:GetItem',
-        'dynamodb:Query',
-      ],
-      resources: [db.tableArn],
-      */
-      actions: ['*'],
-      resources: ['*'],
-    })
-  )
-
-  return role(TokenRole).effect(x => x.addToPolicy(ReadWrite()))
+  return role(TokenRole).effect(x => {
+    x.addToPolicy(permit.LambdaLogging())
+    x.addToPolicy(permit.DynamoDbReadOnly(db.tableArn))
+  })
 }

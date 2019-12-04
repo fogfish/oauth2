@@ -5,6 +5,7 @@ import * as lambda from '@aws-cdk/aws-lambda'
 import * as iam from '@aws-cdk/aws-iam'
 import * as pure from 'aws-cdk-pure'
 import * as api from '@aws-cdk/aws-apigateway'
+import * as permit from './permit' 
   
 export const Client = (host: string, db: ddb.Table, layers: lambda.ILayerVersion[]): pure.IPure<api.LambdaIntegration> =>
   pure.wrap(api.LambdaIntegration)(
@@ -28,7 +29,7 @@ const Lambda = (host: string, db: ddb.Table, role: iam.IRole, layers: lambda.ILa
     environment: {
       'PERMIT_ISSUER': `https://${host}`,
       'PERMIT_AUDIENCE': 'any',
-      'PERMIT_CLAIMS': 'uid=true',
+      'PERMIT_CLAIMS': '',
       'PERMIT_KEYPAIR': 'permit_config_ddb',
       'PERMIT_STORAGE': `ddb+https://dynamodb.${cdk.Aws.REGION}.amazonaws.com:443/${db.tableName}`
     }
@@ -43,17 +44,8 @@ const Role = (db: ddb.Table): pure.IPure<iam.IRole> => {
     assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com')
   })
 
-  const ReadWrite = (): iam.PolicyStatement => (
-    new iam.PolicyStatement({
-      actions: [
-        'dynamodb:PutItem',
-        'dynamodb:DeleteItem',
-        'dynamodb:GetItem',
-        'dynamodb:Query',
-      ],
-      resources: [db.tableArn],
-    })
-  )
-
-  return role(ClientRole).effect(x => x.addToPolicy(ReadWrite()))
+  return role(ClientRole).effect(x => {
+    x.addToPolicy(permit.LambdaLogging())
+    x.addToPolicy(permit.DynamoDbReadWrite(db.tableArn))
+  })
 }
