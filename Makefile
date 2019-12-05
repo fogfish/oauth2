@@ -3,7 +3,7 @@
 SRC = \
 	apps/authorize \
 	apps/token \
-	apps/clean \
+	apps/client \
 	js/signin \
 	js/account
 
