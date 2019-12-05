@@ -2,12 +2,12 @@ import * as iam from '@aws-cdk/aws-iam'
 
 export const LambdaLogging = (): iam.PolicyStatement =>
   new iam.PolicyStatement({
-    resources: ['*'],
     actions: [
       'logs:CreateLogGroup',
       'logs:CreateLogStream',
       'logs:PutLogEvents'
     ],
+    resources: ['*'],
   })
 
 export const DynamoDbReadWrite = (arn: string): iam.PolicyStatement =>
