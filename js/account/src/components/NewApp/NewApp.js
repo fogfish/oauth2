@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Dialog } from '@blueprintjs/core'
+import { useSecureCreate, SUCCESS } from 'react-hook-oauth2'
 import KeyPair from './KeyPair'
 import Registrar from './Registrar'
-import { useSecureCreate, SUCCESS } from '../OAuth2'
 
 const OAUTH2_CLIENT = process.env.REACT_APP_OAUTH2_CLIENT
 const emptyApp = { identity: undefined, redirect_uri: undefined, security: 'public' }

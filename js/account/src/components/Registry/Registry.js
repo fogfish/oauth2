@@ -6,7 +6,7 @@ import {
   Intent,
   Spinner,
 } from '@blueprintjs/core'
-import { WhileIO, SUCCESS, useSecureLookup } from '../OAuth2'
+import { WhileIO, SUCCESS, useSecureLookup } from 'react-hook-oauth2'
 import Issue from '../Issue'
 import RegistryNone from './RegistryNone'
 import RegistryList from './RegistryList'

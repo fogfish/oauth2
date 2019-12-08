@@ -6,11 +6,10 @@ import {
   Callout,
   Code,
 } from '@blueprintjs/core'
+import { PENDING, FAILURE } from 'react-hook-oauth2'
 import Identity from './Identity'
 import Endpoint from './Endpoint'
 import Security from './Security'
-import { PENDING, FAILURE } from '../../OAuth2'
-
 
 const Registrar = ({
   status,

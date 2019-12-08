@@ -1,7 +1,7 @@
 import React from 'react'
 import { NonIdealState, Button, Intent } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
-import { authorize } from '../OAuth2'
+import { authorize } from 'react-hook-oauth2'
 
 const Unauthorized = () => (
   <NonIdealState

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Flex, Box } from 'reflexbox'
-import { useOAuth2, WhileIO } from 'components/OAuth2'
+import { useOAuth2, WhileIO } from 'react-hook-oauth2'
 import Header from './Header'
 import Registry from '../Registry'
 import Issue from '../Issue'

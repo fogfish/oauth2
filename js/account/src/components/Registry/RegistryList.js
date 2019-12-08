@@ -10,7 +10,7 @@ import {
   PENDING,
   SUCCESS,
   FAILURE,
-} from '../OAuth2'
+} from 'react-hook-oauth2'
 
 const OAUTH2_CLIENT = process.env.REACT_APP_OAUTH2_CLIENT
 

@@ -7,7 +7,7 @@ import {
   Intent,
 } from '@blueprintjs/core'
 import { IconNames } from '@blueprintjs/icons'
-import { authorize, WhoIs } from 'components/OAuth2'
+import { authorize, WhoIs } from 'react-hook-oauth2'
 
 const Account = () => WhoIs(({ sub }) => (<>{sub}</>))
 
