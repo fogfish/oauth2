@@ -18,4 +18,4 @@ phases:
   post_build:
     commands:
       - echo "==> post build"
-      - (cd cloud && cdk destroy -f oauth2-api-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE})
+      - (cd cloud && cdk destroy -f oauth2-api-${BUILD_RELEASE} oauth2-db-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE} -c domain=${CONFIG_DOMAIN} -c email=${CONFIG_EMAIL})
