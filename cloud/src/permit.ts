@@ -17,6 +17,7 @@ export const DynamoDbReadWrite = (arn: string): iam.PolicyStatement =>
       'dynamodb:UpdateItem',
       'dynamodb:GetItem',
       'dynamodb:Query',
+      'dynamodb:DeleteItem',
     ],
     resources: [arn],
   })
