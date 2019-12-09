@@ -1,4 +1,6 @@
 _build/
+cdk.out/
+cdk.context.json
 log/
 rebar3
 *.sublime-*
@@ -17,7 +19,9 @@ relx.config
 
 ##
 ## used by ux
+.env.production
 *.map
 node_modules/
+build/
 .DS_Store
 

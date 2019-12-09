@@ -1,0 +1,26 @@
+{
+  "name": "aws-oauth2",
+  "version": "0.0.0",
+  "dependencies": {
+    "@types/node": "12.12.14",
+    "aws-cdk-pure": "^1.2.9",
+    "aws-cdk-pure-hoc": "^1.6.1",
+    "@aws-cdk/core": "1.18.0",
+    "@aws-cdk/aws-iam": "1.18.0",
+    "@aws-cdk/aws-lambda": "1.18.0",
+    "@aws-cdk/aws-apigateway": "1.18.0",
+    "@aws-cdk/aws-logs": "1.18.0",
+    "@aws-cdk/aws-dynamodb": "1.18.0"
+  },
+  "devDependencies": {
+    "ts-node": "^8.5.2",
+    "tslint": "^5.20.1",
+    "prettier": "^1.19.1",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.7.2"
+  },
+  "scripts": {
+    "clean": "rm -Rf cdk.out && rm -Rf node_modules",
+    "lint": "tslint -p tsconfig.json"
+  }
+}

@@ -1,0 +1,15 @@
+{application, client,
+   [
+      {description, "oauth2 client api"},
+      {vsn,         "0.0.0"},
+      {modules,     []},
+      {registered,  []},
+      {applications,[
+         kernel
+      ,  stdlib
+      ,  feta
+      ,  oauth2
+      ]},
+      {env, []}
+   ]
+}.

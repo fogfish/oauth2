@@ -1,0 +1,8 @@
+{
+  "httpMethod": "POST",
+  "path": "/oauth2/signup",
+  "headers": {
+    "content-type": "application/x-www-form-urlencoded"
+  },
+  "body": "response_type=code&client_id=account@oauth2&access=access@org&secret=secret"
+}

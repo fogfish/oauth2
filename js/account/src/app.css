@@ -1,0 +1,54 @@
+@import "../node_modules/@blueprintjs/core/lib/css/blueprint.css";
+
+body
+{
+   background: #F5F8FA;
+   margin: 0;
+}
+
+table.bp3-html-table
+{
+  width: 100%; 
+  border-collapse: collapse;
+}
+
+@media only screen and 
+(max-width: 980px),
+(min-device-width: 980px) and (max-device-width: 1024px)
+{
+  table.bp3-html-table,
+  table.bp3-html-table thead,
+  table.bp3-html-table tbody,
+  table.bp3-html-table th,
+  table.bp3-html-table td,
+  table.bp3-html-table tr { 
+    display: block; 
+  }
+  
+  table.bp3-html-table thead tr {
+    display: none;
+  }
+
+  table.bp3-html-table tbody tr:first-child td { 
+    border: none;
+    box-shadow: none;
+  }
+
+  table.bp3-html-table td:before {
+    display: block;
+    font-weight: bold;
+    content: attr(data-col);
+ }
+
+}
+
+table.bp3-html-table th,
+table.bp3-html-table td
+{
+  vertical-align: middle;
+}
+
+input
+{
+  width: 100%;
+}
