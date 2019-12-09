@@ -7,6 +7,9 @@ phases:
     commands:
       - echo "==> install"
       - npm --prefix cloud install
+      - make -C apps/authorize deps
+      - make -C apps/token deps
+      - make -C apps/client deps
 
   pre_build:
     commands:
@@ -14,6 +17,9 @@ phases:
   build:
     commands:
       - echo "==> build"
+      - make -C apps/authorize dist VSN=${BUILD_RELEASE}
+      - make -C apps/token dist VSN=${BUILD_RELEASE}
+      - make -C apps/client dist VSN=${BUILD_RELEASE}
 
   post_build:
     commands:
