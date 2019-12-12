@@ -58,8 +58,8 @@ const api = staticweb.Gateway({
       site: 'api/oauth2/account',
     }
   ],
-  tlsCertificate,
   subdomain,
+  tlsCertificate,
 })
 
 //
