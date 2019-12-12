@@ -36,7 +36,7 @@ const storage = (vsn.startsWith('pr') || vsn === 'latest')
   : `oauth2-db-live`
 
 const dev = new cdk.Stack(app, storage, { ...stack })
-const ddb = pure.join(dev, DDB())
+const ddb = pure.join(dev, DDB(vsn))
 
 // ----------------------------------------------------------------------------
 //
