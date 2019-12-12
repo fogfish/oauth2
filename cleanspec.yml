@@ -7,6 +7,9 @@ phases:
     commands:
       - echo "==> install"
       - npm --prefix cloud install
+      - make -C apps/authorize deps
+      - make -C apps/token deps
+      - make -C apps/client deps
 
   pre_build:
     commands:
@@ -14,8 +17,11 @@ phases:
   build:
     commands:
       - echo "==> build"
+      - make -C apps/authorize dist VSN=${BUILD_RELEASE}
+      - make -C apps/token dist VSN=${BUILD_RELEASE}
+      - make -C apps/client dist VSN=${BUILD_RELEASE}
 
   post_build:
     commands:
       - echo "==> post build"
-      - (cd cloud && cdk destroy -f oauth2-api-${BUILD_RELEASE} oauth2-db-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE} -c domain=${CONFIG_DOMAIN} -c email=${CONFIG_EMAIL})
+      - (cd cloud && cdk destroy -f oauth2-api-${BUILD_RELEASE} oauth2-db-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE} -c domain=${CONFIG_DOMAIN} -c email=${CONFIG_EMAIL} -c cert=${CONFIG_TLS_CERT})

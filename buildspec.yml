@@ -21,6 +21,6 @@ phases:
   post_build:
     commands:
       - echo "==> post build"
-      - (cd cloud && cdk deploy oauth2-api-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE} -c domain=${CONFIG_DOMAIN} -c email=${CONFIG_EMAIL})
+      - (cd cloud && cdk deploy oauth2-api-${BUILD_RELEASE} -c vsn=${BUILD_RELEASE} -c domain=${CONFIG_DOMAIN} -c email=${CONFIG_EMAIL} -c cert=${CONFIG_TLS_CERT})
       - make -C js/signin dist-up VSN=${BUILD_RELEASE}
       - make -C js/account dist-up VSN=${BUILD_RELEASE}

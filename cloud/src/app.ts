@@ -17,6 +17,7 @@ const vsn: string = app.node.tryGetContext('vsn') || 'latest'
 const domain: string = app.node.tryGetContext('domain')
 const subdomain: string = `${vsn}.auth`
 const email: string = app.node.tryGetContext('email')
+const tlsCertificate: string = app.node.tryGetContext('cert')
 const host: string = `${subdomain}.${domain}`
 const stack = {
   env: {
@@ -58,6 +59,7 @@ const api = staticweb.Gateway({
     }
   ],
   subdomain,
+  tlsCertificate,
 })
 
 //
