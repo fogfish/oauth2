@@ -26,19 +26,22 @@ signup(Headers, Request)
    req_signup_auth(Headers, lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request))).
 
 %%
-req_signup_auth(#{<<"Authorization">> := Digest}, Request) ->
+req_signup_auth(#{<<"Authorization">> := Digest}, #authorization{redirect_uri = RedirectAddOn} = Request) ->
    [either ||
       #{
          <<"client_id">>    := ClientId,
-         <<"redirect_uri">> := Redirect
+         <<"redirect_uri">> := RedirectBase
       } <- oauth2_client:confidential(Digest),
-      req_signup(uri:new(Redirect), Request#authorization{client_id = ClientId})
+      req_signup(
+         redirect_uri(RedirectBase, RedirectAddOn),
+         Request#authorization{client_id = ClientId}
+      )
    ];
 
-req_signup_auth(_, #authorization{client_id = Client} = Request) ->
+req_signup_auth(_, #authorization{client_id = Client, redirect_uri = RedirectAddOn} = Request) ->
    [either ||
-      #{<<"redirect_uri">> := Redirect} <- oauth2_client:public(Client),
-      req_signup(uri:new(Redirect), Request)
+      #{<<"redirect_uri">> := RedirectBase} <- oauth2_client:public(Client),
+      req_signup(redirect_uri(RedirectBase, RedirectAddOn), Request)
    ].
 
 %%
@@ -92,19 +95,22 @@ signin(Headers, Request)
    req_signin_auth(Headers, lens:get(oauth2_codec:authorization(), oauth2_codec:decode(Request))).
 
 %%
-req_signin_auth(#{<<"Authorization">> := Digest}, Request) ->
+req_signin_auth(#{<<"Authorization">> := Digest}, #authorization{redirect_uri = RedirectAddOn} = Request) ->
    [either ||
       #{
          <<"client_id">>    := ClientId,
-         <<"redirect_uri">> := Redirect
+         <<"redirect_uri">> := RedirectBase
       } <- oauth2_client:confidential(Digest),
-      req_signin(uri:new(Redirect), Request#authorization{client_id = ClientId})
+      req_signin(
+         redirect_uri(RedirectBase, RedirectAddOn),
+         Request#authorization{client_id = ClientId}
+      )
    ];
 
-req_signin_auth(_, #authorization{client_id = Client} = Request) ->
+req_signin_auth(_, #authorization{client_id = Client, redirect_uri = RedirectAddOn} = Request) ->
    [either ||
-      #{<<"redirect_uri">> := Redirect} <- oauth2_client:public(Client),
-      req_signin(uri:new(Redirect), Request)
+      #{<<"redirect_uri">> := RedirectBase} <- oauth2_client:public(Client),
+      req_signin(redirect_uri(RedirectBase, RedirectAddOn), Request)
    ].
 
 req_signin(Redirect, #authorization{
@@ -170,6 +176,7 @@ req_password_auth(_, #authorization{client_id = Client} = Request) ->
 req_password(#authorization{
    response_type = <<"password_reset">>
 ,  client_id = Client
+,  redirect_uri = RedirectAddOn
 ,  access = Access
 }) ->
    [either ||
@@ -180,7 +187,7 @@ req_password(#authorization{
       oauth2_email:password_reset(Access, _),
       permit:as_access(Client),
       cats:unit(
-         uri:q([{client_id, _}],
+         uri:q([{client_id, _}, {redirect_uri, RedirectAddOn}],
             uri:path(<<"/oauth2/authorize">>, 
                uri:new(permit_config:iss())
             )
@@ -191,6 +198,7 @@ req_password(#authorization{
 req_password(#authorization{
    response_type = <<"password_recover">>
 ,  client_id  = Client
+,  redirect_uri = RedirectAddOn
 ,  state      = Code
 ,  secret     = Secret
 }) ->
@@ -200,9 +208,9 @@ req_password(#authorization{
       Access <- permit:to_access(_),
       #pubkey{claims = Claims} <- permit:lookup(Access),
       permit:update(Access, Secret, Claims),
-      #pubkey{claims = #{<<"redirect_uri">> := Redirect}} <- permit:lookup(Client),
+      #pubkey{claims = #{<<"redirect_uri">> := RedirectBase}} <- permit:lookup(Client),
       exchange_code(Access, Secret, Claims),
-      cats:unit(uri:q([{code, _}], uri:new(Redirect)))
+      cats:unit(uri:q([{code, _}], redirect_uri(RedirectBase, RedirectAddOn)))
    ].
 
 
@@ -236,3 +244,29 @@ exchange_code(Access, Secret, Claims) ->
       <<"aud">> => <<"oauth2">>
    ,  <<"app">> => base64url:encode(jsx:encode(Claims))
    }).
+
+%%
+%%
+redirect_uri(Base, undefined) ->
+   uri:new(Base);
+redirect_uri(Base, <<>>) ->
+   uri:new(Base);
+redirect_uri(Base, AddOn) ->
+   Uri = uri:new(Base),
+   uri:segments(uri:segments(Uri) ++ only_ascii(uri:segments(uri:new(AddOn))), Uri).
+
+only_ascii(Segments) ->
+   lists:filter(
+      fun(X) -> X /= <<>> end,
+      lists:map(
+         fun(Segment) ->
+            << <<C:8>> || <<C:8>> <= Segment, is_ascii(C)>>
+         end,
+         Segments
+      )
+   ).
+
+is_ascii(X) when X >= $0 andalso X =< $9 -> true;
+is_ascii(X) when X >= $A andalso X =< $Z -> true;
+is_ascii(X) when X >= $a andalso X =< $z -> true;
+is_ascii(_) -> false.

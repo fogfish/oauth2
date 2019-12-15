@@ -9,6 +9,7 @@ const KeyPair = ({ oauth2 }) => (
     <input name="response_type" type="hidden" value={oauth2.responseType} />
     <input name="client_id" type="hidden" value={oauth2.clientId} />
     <input name="state" type="hidden" value={oauth2.state} />
+    <input name="redirect_uri" type="hidden" value={oauth2.redirectUri} />
   </div>
 )
 

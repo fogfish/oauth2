@@ -6,9 +6,7 @@
 -record(authorization, {
    response_type = undefined :: binary()
 ,  client_id     = undefined :: {iri, binary(), binary()}
-%% Note: disabled due to security issue
-%%       redirect_uri is defined by client reg process
-%% redirect_uri  = undefined :: binary()
+,  redirect_uri  = undefined :: binary()
 ,  scope         = undefined :: map()
 ,  state         = undefined :: binary()
 
