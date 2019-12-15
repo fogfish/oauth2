@@ -252,9 +252,14 @@ redirect_uri(Base, undefined) ->
 redirect_uri(Base, <<>>) ->
    uri:new(Base);
 redirect_uri(Base, AddOn) ->
-   Uri = uri:new(Base),
-   uri:segments(uri:segments(Uri) ++ only_ascii(uri:segments(uri:new(AddOn))), Uri).
-
+   UriBase = uri:new(Base),
+   UriAddOn = uri:new(AddOn),
+   Segments = uri:segments(UriBase) ++ only_ascii(uri:segments(UriAddOn)),
+   uri:anchor(
+      uri:anchor(UriAddOn),
+      uri:segments(Segments, UriBase)
+   ).
+ 
 only_ascii(Segments) ->
    lists:filter(
       fun(X) -> X /= <<>> end,
