@@ -255,14 +255,11 @@ redirect_uri(Base, AddOn) ->
    UriBase = uri:new(Base),
    UriAddOn = uri:new(AddOn),
    Segments = uri:segments(UriBase) ++ only_ascii(uri:segments(UriAddOn)),
-   uri:q(
-      uri:q(UriAddOn),
-      uri:anchor(
-         uri:anchor(UriAddOn),
-         uri:segments(Segments, UriBase)
-      )
+   uri:anchor(
+      uri:anchor(UriAddOn),
+      uri:segments(Segments, UriBase)
    ).
-
+ 
 only_ascii(Segments) ->
    lists:filter(
       fun(X) -> X /= <<>> end,
