@@ -17,6 +17,7 @@ const oauth2 = {
   responseType: params.response_type || 'code',
   clientId: params.client_id || 'account@oauth2',
   state: params.state || '',
+  redirectUri: params.redirect_uri || '',
 }
 
 const theme = {

@@ -25,6 +25,7 @@ const SecretRecover = ({ oauth2 }) => (
     <input name="response_type" type="hidden" value="password_recover" />
     <input name="client_id" type="hidden" value={oauth2.clientId} />
     <input name="state" type="hidden" value={oauth2.code} />
+    <input name="redirect_uri" type="hidden" value={oauth2.redirectUri} />
   </Dialog>
 )
 
