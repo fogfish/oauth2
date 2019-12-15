@@ -253,4 +253,20 @@ redirect_uri(Base, <<>>) ->
    uri:new(Base);
 redirect_uri(Base, AddOn) ->
    Uri = uri:new(Base),
-   uri:segments(uri:segments(Uri) ++ uri:segments(uri:new(AddOn)), Uri).
+   uri:segments(uri:segments(Uri) ++ only_ascii(uri:segments(uri:new(AddOn))), Uri).
+
+only_ascii(Segments) ->
+   lists:filter(
+      fun(X) -> X /= <<>> end,
+      lists:map(
+         fun(Segment) ->
+            << <<C:8>> || <<C:8>> <= Segment, is_ascii(C)>>
+         end,
+         Segments
+      )
+   ).
+
+is_ascii(X) when X >= $0 andalso X =< $9 -> true;
+is_ascii(X) when X >= $A andalso X =< $Z -> true;
+is_ascii(X) when X >= $a andalso X =< $z -> true;
+is_ascii(_) -> false.
