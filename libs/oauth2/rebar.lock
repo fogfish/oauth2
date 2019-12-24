@@ -22,7 +22,7 @@
  {<<"meck">>,{pkg,<<"meck">>,<<"0.8.13">>},2},
  {<<"permit">>,
   {git,"https://github.com/fogfish/permit",
-       {ref,"7972c31c9527eda470bd847322e8f3f1ea3e6905"}},
+       {ref,"7ace1307d2dd312aa140f3710efdbbba75c8f451"}},
   0},
  {<<"pipe">>,{pkg,<<"pipes">>,<<"2.0.1">>},1},
  {<<"pipes">>,{pkg,<<"pipes">>,<<"2.0.1">>},1},
